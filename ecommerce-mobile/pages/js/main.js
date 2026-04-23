@@ -182,7 +182,7 @@ document.addEventListener('click', (e) => {
   if (!id) return
   sessionStorage.setItem('productId', id)
   api.history.add({ id, name: card.dataset.name, price: card.dataset.price, img: card.querySelector('img')?.src || card.dataset.img }).catch(() => {})
-  window.location.href = `product-detail.html?id=${id}`
+  window.location.href = 'product-detail.html'
 })
 
 // ── 0. Home Page Data (index.html) ──

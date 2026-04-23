@@ -9,14 +9,11 @@ let cartLoaded = false
 
 async function loadCartFromServer() {
   try {
-    // Load from server (this syncs to localStorage internally)
-    await api.cart.getList()
-    // Use localStorage as source of truth for UI
-    cart = JSON.parse(localStorage.getItem('cart') || '[]')
+    cart = await api.cart.getList()
     cartLoaded = true
   } catch (e) {
     console.error('Failed to load cart from server:', e)
-    cart = JSON.parse(localStorage.getItem('cart') || '[]')
+    cart = []
     cartLoaded = true
   }
 }
@@ -186,8 +183,7 @@ function bindCartEvents() {
       } else if (item.id && !item.id.startsWith('local_')) {
         await api.cart.removeItem(item.id)
       }
-      cart.splice(idx, 1)
-      localStorage.setItem('cart', JSON.stringify(cart))
+      await loadCartFromServer()
       renderCart()
       showToast('已删除')
       updateTabBadge()
@@ -207,13 +203,13 @@ function bindCartEvents() {
   document.getElementById('storeCheck')?.addEventListener('click', async () => {
     const allSelected = cart.every(i => i.selected)
     cart.forEach(i => i.selected = !allSelected)
-    localStorage.setItem('cart', JSON.stringify(cart))
     // Sync to server
     for (const item of cart) {
       if (item.id && !item.id.startsWith('local_')) {
         await api.cart.toggleItem(item.id)
       }
     }
+    await loadCartFromServer()
     renderCart()
   })
 
@@ -226,13 +222,12 @@ function bindCartEvents() {
       const idx = parseInt(el.closest('.cart-product-wrap').dataset.index)
       if (!cart[idx]) return
       cart[idx].selected = !cart[idx].selected
-      localStorage.setItem('cart', JSON.stringify(cart))
       // Sync to server
       if (cart[idx].id && !cart[idx].id.startsWith('local_')) {
         await api.cart.toggleItem(cart[idx].id)
       }
-      el.classList.toggle('checked', cart[idx].selected)
-      updateTotals()
+      await loadCartFromServer()
+      renderCart()
     })
   })
 
@@ -240,19 +235,19 @@ function bindCartEvents() {
     btn.addEventListener('click', async () => {
       const idx = parseInt(btn.closest('.cart-product-wrap').dataset.index)
       if (!cart[idx]) return
-      const oldQty = cart[idx].qty
+      let newQty = cart[idx].qty
       if (btn.dataset.action === 'inc') {
-        cart[idx].qty = Math.min(cart[idx].qty + 1, 99)
+        newQty = Math.min(cart[idx].qty + 1, 99)
       } else if (btn.dataset.action === 'dec' && cart[idx].qty > 1) {
-        cart[idx].qty -= 1
+        newQty = cart[idx].qty - 1
       }
-      localStorage.setItem('cart', JSON.stringify(cart))
       // Update quantity on server
       if (cart[idx].cartId && !cart[idx].cartId.startsWith('local_')) {
-        await api.cart.updateItem(cart[idx].cartId, cart[idx].qty)
+        await api.cart.updateItem(cart[idx].cartId, newQty)
       } else if (cart[idx].id && !cart[idx].id.startsWith('local_')) {
-        await api.cart.updateItem(cart[idx].id, cart[idx].qty)
+        await api.cart.updateItem(cart[idx].id, newQty)
       }
+      await loadCartFromServer()
       renderCart()
     })
   })
@@ -264,13 +259,13 @@ function setupSelectAll() {
     document.getElementById(id)?.addEventListener('click', async () => {
       const allSelected = cart.every(i => i.selected)
       cart.forEach(i => i.selected = !allSelected)
-      localStorage.setItem('cart', JSON.stringify(cart))
       // Sync to server
       for (const item of cart) {
         if (item.id && !item.id.startsWith('local_')) {
           await api.cart.toggleItem(item.id)
         }
       }
+      await loadCartFromServer()
       renderCart()
     })
   })
@@ -315,8 +310,7 @@ async function deleteSelected() {
     }
   }
 
-  cart = cart.filter(i => !i.selected)
-  localStorage.setItem('cart', JSON.stringify(cart))
+  await loadCartFromServer()
   renderCart()
   updateTabBadge()
   showToast(`已删除 ${selected.length} 件商品`)
@@ -348,7 +342,7 @@ document.addEventListener('click', (e) => {
   const id = card.dataset.id
   if (!id) return
   sessionStorage.setItem('productId', id)
-  window.location.href = `product-detail.html?id=${id}`
+  window.location.href = 'product-detail.html'
 })
 
 // Initialize cart from server

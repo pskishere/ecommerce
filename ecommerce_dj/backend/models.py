@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from mediafiles.models import MediaFile
 import uuid
 from datetime import datetime
@@ -227,7 +228,7 @@ class HomePromotion(models.Model):
 # ============== 购物车表（保留）==============
 class CartItem(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     is_selected = models.BooleanField(default=True)
@@ -246,15 +247,20 @@ class Order(models.Model):
         ('cancelled', '已取消'),
     ]
     id = models.CharField(max_length=50, primary_key=True)
-    user_id = models.CharField(max_length=50, db_index=True)
-    order_number = models.CharField(max_length=100, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     store = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='实付金额')
     freight = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='运费')
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='优惠金额')
-    address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    # 地址文本副本
+    address_name = models.CharField(max_length=100, blank=True)
+    address_phone = models.CharField(max_length=50, blank=True)
+    address_province = models.CharField(max_length=100, blank=True)
+    address_city = models.CharField(max_length=100, blank=True)
+    address_district = models.CharField(max_length=100, blank=True)
+    address_detail = models.TextField(blank=True)
     pay_time = models.DateTimeField(null=True, blank=True, help_text='支付时间')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -262,7 +268,7 @@ class Order(models.Model):
         db_table = 'orders'
 
     def __str__(self):
-        return self.order_number
+        return self.id
 
 
 class OrderProduct(models.Model):
@@ -281,7 +287,7 @@ class OrderProduct(models.Model):
 # ============== 地址表（保留）==============
 class Address(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=50)
     province = models.CharField(max_length=100)
@@ -300,7 +306,7 @@ class Address(models.Model):
 # ============== 评价表（保留）==============
 class Review(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user_name = models.CharField(max_length=100)
     user_avatar = models.ForeignKey(MediaFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='review_avatars')
@@ -317,7 +323,7 @@ class Review(models.Model):
 # ============== 收藏表（保留）==============
 class Favorite(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -328,23 +334,39 @@ class Favorite(models.Model):
         db_table = 'favorites'
 
 
-# ============== 历史记录表（保留）==============
-class History(models.Model):
-    id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
-    name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ForeignKey(MediaFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='history_images')
-    time = models.CharField(max_length=100)
+
+
+# ============== 用户资料表 ==============
+class UserProfile(models.Model):
+    USER_TYPE_CHOICES = [
+        ('admin', '管理员'),
+        ('user', '普通用户'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='user')
+    phone = models.CharField(max_length=50, blank=True)
+    avatar = models.ForeignKey(MediaFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='user_avatars')
+    points = models.IntegerField(default=0)
+    follow_count = models.IntegerField(default=0)
+    fans_count = models.IntegerField(default=0)
 
     class Meta:
-        db_table = 'history'
+        db_table = 'user_profiles'
+
+
+# ============== 管理员资料表 ==============
+class AdminProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='admin_profile')
+    permissions = models.JSONField(default=dict)  # 存储权限配置
+
+    class Meta:
+        db_table = 'admin_profiles'
 
 
 # ============== 优惠券表（保留）==============
 class UserCoupon(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupons')
     name = models.CharField(max_length=100)
     value = models.IntegerField()
     threshold = models.CharField(max_length=100)
@@ -364,7 +386,7 @@ class Notification(models.Model):
         ('sys', '系统通知'),
     ]
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    user_id = models.CharField(max_length=50, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
     name = models.CharField(max_length=100)
     time = models.CharField(max_length=100)

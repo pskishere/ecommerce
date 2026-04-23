@@ -13,6 +13,5 @@ function createStorage(name) {
 export const storage = {
   cart: createStorage('cart'),
   favorites: createStorage('favorites'),
-  browseHistory: createStorage('browseHistory'),
   searchHistory: createStorage('searchHistory'),
 }

@@ -1,6 +1,6 @@
 /* ── Category Page ── */
 import { showToast } from '../components/toast.js'
-import { api, BASE_URL } from '../data/api.js'
+import { api, BASE_URL, request } from '../data/api.js'
 
 const subIcons = [
   './assets/images/icon-fashion-01.webp',
@@ -90,7 +90,7 @@ function renderRightContent(index) {
       const id = row.dataset.id
       if (id) {
         sessionStorage.setItem('productId', id)
-        location.href = 'product-detail.html?id=' + id
+        location.href = 'product-detail.html'
       }
     })
   })
@@ -142,10 +142,14 @@ function updateTabCartBadge() {
   }
 }
 
-// Load categories from API - get full category detail with subcategories and products
+// Load categories from API - get full category detail with subcategories with products
 api.category.getList().then(cs => {
   // For each category, fetch full details including subcategories with products
-  return Promise.all(cs.map(c => fetch(BASE_URL + '/api/h5/categories/' + c.id + '/').then(r => r.json())))
+  // Use request() to properly unwrap {code: 0, data: ...} response from Django
+  return Promise.all(cs.map(c => request('/api/h5/categories/' + c.id + '/').then(data => ({
+    ...c,
+    subcategories: data.subcategories || []
+  }))))
 }).then(categoriesWithProducts => {
   categories = categoriesWithProducts
   // Remove skeleton loading

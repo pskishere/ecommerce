@@ -4,6 +4,11 @@ const BASE_URL = 'http://localhost:8080'
 const getToken = () => localStorage.getItem('token') || ''
 const setToken = (token) => localStorage.setItem('token', token)
 
+const clearAuth = () => {
+  localStorage.removeItem('token')
+  location.href = 'login.html'
+}
+
 const request = (endpoint, options = {}) => {
   const url = BASE_URL + endpoint
   const token = getToken()
@@ -12,6 +17,10 @@ const request = (endpoint, options = {}) => {
 
   return fetch(url, { headers: Object.assign(headers, options.headers), ...options })
     .then(res => {
+      if (res.status === 401 || res.status === 403) {
+        clearAuth()
+        throw new Error('登录已过期，请重新登录')
+      }
       const contentType = res.headers.get('content-type') || ''
       if (!contentType.includes('application/json')) {
         throw new Error('API returned non-JSON: ' + res.status)
@@ -50,10 +59,6 @@ const cartLS = {
 const favLS = {
   _load: () => { try { return JSON.parse(localStorage.getItem('favorites')) || [] } catch { return [] } },
   _save: (v) => localStorage.setItem('favorites', JSON.stringify(v)),
-}
-const historyLS = {
-  _load: () => { try { return JSON.parse(localStorage.getItem('browseHistory')) || [] } catch { return [] } },
-  _save: (v) => localStorage.setItem('browseHistory', JSON.stringify(v)),
 }
 const searchLS = {
   _load: () => { try { return JSON.parse(localStorage.getItem('searchHistory')) || [] } catch { return [] } },
@@ -222,13 +227,6 @@ const mapFavorite = (f) => ({
   sales: f.sales || ''
 })
 
-const mapHistory = (h) => ({
-  id: h.id,
-  name: h.name,
-  price: h.price,
-  img: imgUrl(h.image),
-  time: h.time
-})
 
 const mapReview = (r) => ({
   id: r.id,
@@ -287,14 +285,11 @@ const api = {
   },
 
   cart: {
-    _load: () => cartLS._load(),
-    _total: () => cartLS._total(),
+    _load: () => [],
+    _total: () => 0,
 
     getList: () => request('/api/h5/cart/').then(data => {
       const items = Array.isArray(data) ? data : (data && data.items) || []
-      if (items.length > 0) {
-        cartLS._save(items.map(mapCartItem))
-      }
       return items.map(mapCartItem)
     }),
     getTotal: () => request('/api/h5/cart/').then(data =>
@@ -361,6 +356,7 @@ const api = {
     }).then(() => ({ success: true })),
     delete: (id) => request('/api/h5/addresses/' + id + '/', { method: 'DELETE' }).then(() => ({ success: true })),
     setDefault: (id) => request('/api/h5/addresses/' + id + '/set_default/', { method: 'PUT' }).then(() => ({ success: true })),
+    getRegion: () => request('/api/h5/addresses/region/').then(res => res || {}),
   },
 
   favorite: {
@@ -372,21 +368,7 @@ const api = {
     remove: (id) => request('/api/h5/favorites/' + id + '/', { method: 'DELETE' }).then(() => ({ success: true })),
   },
 
-  history: {
-    getList: () => request('/api/h5/history/').then(h => (h || []).map(mapHistory)),
-    add: ({ id }) => request('/api/h5/history/', {
-      method: 'POST',
-      body: JSON.stringify({ productId: id })
-    }).then(() => {
-      let h = historyLS._load().filter(x => x.id !== id)
-      h.unshift({ id })
-      if (h.length > 50) h = h.slice(0, 50)
-      historyLS._save(h)
-      return { success: true }
-    }),
-    clear: () => request('/api/h5/history/', { method: 'DELETE' }).then(() => { historyLS._save([]); return { success: true } }),
-  },
-
+  
   coupon: {
     getList: () => request('/api/h5/coupons/').then(coupons => ({
       available: (coupons || []).map(mapCoupon),
@@ -482,4 +464,4 @@ const api = {
 }
 
 window.api = api
-export { api, BASE_URL }
+export { api, BASE_URL, request, clearAuth }

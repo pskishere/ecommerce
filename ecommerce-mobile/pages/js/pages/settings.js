@@ -1,5 +1,6 @@
 /* ── Settings Page ── */
 import { showToast } from '../components/toast.js'
+window.showToast = showToast
 
 document.querySelectorAll('.settings-item').forEach(item => {
   item.addEventListener('click', () => {
@@ -10,4 +11,10 @@ document.querySelectorAll('.settings-item').forEach(item => {
       showToast('潮流好物 v1.0.0')
     }
   })
+})
+
+document.querySelector('.settings-logout').addEventListener('click', () => {
+  localStorage.removeItem('token')
+  showToast('已退出登录')
+  setTimeout(() => location.href = 'login.html', 500)
 })

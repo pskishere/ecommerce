@@ -27,7 +27,7 @@ function renderFavorites() {
   }
 
   grid.innerHTML = favorites.map(item => `
-    <div class="fav-card" onclick="window.location.href='product-detail.html?id=${item.id}'">
+    <div class="fav-card" onclick="sessionStorage.setItem('productId','${item.id}');window.location.href='product-detail.html'">
       ${item.tag ? `<span class="fav-tag">${item.tag}</span>` : ''}
       <div class="fav-img-wrap">
         <img class="fav-img" src="${item.img}" alt="${item.name}">

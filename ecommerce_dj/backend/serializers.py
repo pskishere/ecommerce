@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
-    CartItem, Order, OrderProduct, Address, Review, Favorite, History, UserCoupon, Notification,
+    CartItem, Order, OrderProduct, Address, Review, Favorite, UserCoupon, Notification,
     SpecGroup, SpecValue, SKU
 )
 
@@ -11,6 +11,10 @@ def get_image_url(image_field, context):
     if image_field and image_field.file:
         if context and 'request' in context:
             return context['request'].build_absolute_uri(image_field.file.url)
+        # 如果没有request，尝试构建绝对URL
+        from django.conf import settings
+        if hasattr(image_field, 'url'):
+            return settings.SITE_URL.rstrip('/') + '/' + image_field.url.lstrip('/')
         return image_field.file.url
     return None
 
@@ -300,14 +304,23 @@ class OrderProductSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(source='order_number')
     products = OrderProductSerializer(many=True, read_only=True)
-    address = AddressSerializer(read_only=True)
+    address = serializers.SerializerMethodField()
     statusText = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'order_number', 'store', 'status', 'statusText', 'total_amount', 'payment', 'freight', 'discount', 'address', 'pay_time', 'created_at', 'products']
+        fields = ['id', 'store', 'status', 'statusText', 'total_amount', 'payment', 'freight', 'discount', 'address', 'pay_time', 'created_at', 'products']
+
+    def get_address(self, obj):
+        return {
+            'name': obj.address_name,
+            'phone': obj.address_phone,
+            'province': obj.address_province,
+            'city': obj.address_city,
+            'district': obj.address_district,
+            'detail': obj.address_detail,
+        }
 
     def get_statusText(self, obj):
         return dict(Order.STATUS_CHOICES).get(obj.status, obj.status)
@@ -325,15 +338,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return get_image_url(obj.image, self.context)
 
 
-# ============== 历史记录序列化器 ==============
-class HistorySerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
-
-    class Meta:
-        model = History
-        fields = ['id', 'name', 'price', 'image', 'time']
-
-    def get_image(self, obj):
         return get_image_url(obj.image, self.context)
 
 

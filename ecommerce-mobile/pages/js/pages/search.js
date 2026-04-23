@@ -88,7 +88,7 @@ function doSearch(term) {
     searchResults.innerHTML = `
       <div class="result-count">找到 ${results.length} 个商品</div>
       ${results.map(p => `
-        <div class="result-card" onclick="location.href='product-detail.html?id=${p.id}'">
+        <div class="result-card" onclick="sessionStorage.setItem('productId','${p.id}');window.location.href='product-detail.html'">
           <div class="result-img"><img src="${p.img}" alt="${p.name}"></div>
           <div class="result-info">
             <div class="result-name">${p.name}</div>

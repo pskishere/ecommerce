@@ -47,7 +47,7 @@ function renderOrders(currentTab) {
   }
 
   orderList.innerHTML = orders.map(order => `
-    <div class="order-card" onclick="location.href='order-detail.html?id=${order.id}'">
+    <div class="order-card" onclick="sessionStorage.setItem('orderId','${order.id}');location.href='order-detail.html'">
       <div class="order-card-header">
         <div class="order-store">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -82,7 +82,7 @@ function renderOrders(currentTab) {
             <button class="order-btn order-btn-outline" onclick="showToast('查看物流')">查看物流</button>
             <button class="order-btn order-btn-primary" onclick="window.orderActions.confirmReceipt('${order.id}')">确认收货</button>
           ` : order.status === 'completed' ? `
-            <button class="order-btn order-btn-outline" onclick="location.href='order-detail.html?id=${order.id}'">查看详情</button>
+            <button class="order-btn order-btn-outline" onclick="sessionStorage.setItem('orderId','${order.id}');location.href='order-detail.html'">查看详情</button>
             <button class="order-btn order-btn-primary" onclick="location.href='review.html'">去评价</button>
           ` : ''}
         </div>

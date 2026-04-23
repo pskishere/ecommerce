@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
-    CartItem, Order, OrderProduct, Address, Review, Favorite, History, UserCoupon, Notification
+    CartItem, Order, OrderProduct, Address, Review, Favorite, UserCoupon, Notification
 )
 
 
@@ -89,9 +89,9 @@ class CartItemAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'order_number', 'user_id', 'store', 'status', 'total_amount', 'created_at']
+    list_display = ['id', 'user_id', 'store', 'status', 'total_amount', 'created_at']
     list_filter = ['status']
-    search_fields = ['order_number']
+    search_fields = ['id']
 
 
 @admin.register(OrderProduct)
@@ -116,9 +116,6 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_display = ['id', 'user_id', 'name', 'price']
 
 
-@admin.register(History)
-class HistoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user_id', 'name', 'price', 'time']
 
 
 @admin.register(UserCoupon)

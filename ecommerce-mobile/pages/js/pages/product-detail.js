@@ -15,13 +15,8 @@ let availabilityCache = new Map()
 let swiperCurrent = 0
 
 async function init() {
-  const params = new URLSearchParams(location.search)
-  let id = params.get('id')
-
-  if (!id) {
-    id = sessionStorage.getItem('productId')
-    sessionStorage.removeItem('productId')
-  }
+  const id = sessionStorage.getItem('productId')
+  sessionStorage.removeItem('productId')
 
   if (!id) {
     return
@@ -288,7 +283,7 @@ function renderRelated() {
   const track = document.getElementById('relatedTrack')
   if (!track) return
   track.innerHTML = relatedProducts.map(p => `
-    <a href="product-detail.html?id=${p.id}" class="related-card">
+    <a href="product-detail.html" class="related-card" onclick="sessionStorage.setItem('productId','${p.id}')">
       ${p.tag ? `<span class="related-tag">${p.tag}</span>` : ''}
       <div class="related-img"><img src="${p.img}" alt="${p.name}"></div>
       <div class="related-info">

@@ -24,7 +24,7 @@ export function initProductSheet() {
     if (!card || e.target.closest('.product-fav, button')) return
     if (!card.dataset.product) return  // Skip dynamic cards, let main.js handle them
     const productId = card.dataset.id || 1
-    window.location.href = `product-detail.html?id=${productId}`
+    sessionStorage.setItem('productId', productId); window.location.href = 'product-detail.html'
   })
 
   function closeSheet() {

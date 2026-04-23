@@ -65,8 +65,8 @@
 }
 
 .status-icon {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -101,6 +101,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  padding: 0;
 }
 
 .address-icon {

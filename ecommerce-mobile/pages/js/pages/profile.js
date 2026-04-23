@@ -119,16 +119,20 @@ function renderProfile() {
   if (couponNum) couponNum.textContent = couponCount
 }
 
-function updateTabCartBadge() {
-  const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-  const badge = document.getElementById('tabCartBadge')
-  if (!badge) return
-  const total = cart.reduce((s, item) => s + item.qty, 0)
-  if (total > 0) {
-    badge.textContent = total > 99 ? '99+' : total
-    badge.style.display = 'flex'
-  } else {
-    badge.style.display = 'none'
+async function updateTabCartBadge() {
+  try {
+    const count = await api.cart.getCount()
+    const badge = document.getElementById('tabCartBadge')
+    if (!badge) return
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count
+      badge.style.display = 'flex'
+    } else {
+      badge.style.display = 'none'
+    }
+  } catch (e) {
+    const badge = document.getElementById('tabCartBadge')
+    if (badge) badge.style.display = 'none'
   }
 }
 

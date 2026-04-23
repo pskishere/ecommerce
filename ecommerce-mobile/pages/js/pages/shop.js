@@ -43,7 +43,7 @@ function renderProducts(tab) {
     content.innerHTML = `
       <div class="shop-product-grid">
         ${products.map(p => `
-          <a href="product-detail.html?id=${p.id}" class="shop-product-card">
+          <a href="product-detail.html" class="shop-product-card" onclick="sessionStorage.setItem('productId','${p.id}')">
             ${p.tag ? `<span class="shop-product-tag">${p.tag}</span>` : ''}
             <div class="shop-product-img"><img src="${p.img}" alt="${p.name}"></div>
             <div class="shop-product-info">
