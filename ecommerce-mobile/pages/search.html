@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>搜索 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./search.css">
+</head>
+<body class="page-transition">
+  <div class="search-page">
+    <div class="search-header">
+      <div class="search-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="搜索商品、品牌" autocomplete="off" autofocus>
+          <div class="search-clear" id="searchClear">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <button class="search-btn" id="searchBtn">搜索</button>
+      </div>
+    </div>
+
+    <div class="search-body" id="searchBody">
+      <div class="search-section" id="hotSection">
+        <div class="search-section-title">热门搜索</div>
+        <div class="hot-tags">
+          <span class="hot-tag">T恤</span>
+          <span class="hot-tag">运动鞋</span>
+          <span class="hot-tag">防晒霜</span>
+          <span class="hot-tag">蓝牙耳机</span>
+          <span class="hot-tag">帆布包</span>
+          <span class="hot-tag">保湿面霜</span>
+          <span class="hot-tag">腕表</span>
+          <span class="hot-tag">咖啡杯</span>
+        </div>
+      </div>
+
+      <div class="search-section" id="historySection" style="display:none">
+        <div class="search-section-title">搜索历史</div>
+        <div class="history-list" id="historyList"></div>
+        <div class="clear-history" id="clearHistory">清空搜索历史</div>
+      </div>
+
+      <div class="search-results" id="searchResults" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="./js/pages/search.js"></script>
+</body>
+</html>

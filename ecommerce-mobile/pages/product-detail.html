@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>商品详情 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./product-detail.css">
+</head>
+<body class="page-transition">
+  <div class="detail-app" id="app">
+
+    <!-- Skeleton (shown when no product id) -->
+    <div class="product-skeleton" id="productSkeleton" style="display:none">
+      <div class="skeleton-nav"></div>
+      <div class="skeleton-swiper"></div>
+      <div class="skeleton-info">
+        <div class="skeleton-line" style="width:60%;height:20px"></div>
+        <div class="skeleton-line" style="width:40%;height:16px;margin-top:8px"></div>
+        <div class="skeleton-line" style="width:30%;height:14px;margin-top:12px"></div>
+        <div class="skeleton-line" style="width:80%;height:80px;margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- Sticky Nav -->
+    <nav class="detail-nav" id="detailNav">
+      <div class="detail-nav-back" id="navBack">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </div>
+      <span class="detail-nav-title" id="navTitle">商品详情</span>
+      <div class="detail-nav-icons">
+        <div class="nav-icon-btn" id="navShare">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+        <div class="nav-icon-btn" id="navMore">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Image Swiper -->
+    <div class="detail-swiper" id="detailSwiper">
+      <div class="detail-float-top">
+        <div class="float-circle-btn" id="backBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="float-circle-btn" id="shareBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+      </div>
+      <div class="swiper-track" id="swiperTrack"></div>
+      <div class="swiper-dots" id="swiperDots"></div>
+      <div class="swiper-counter" id="swiperCounter">1/3</div>
+    </div>
+
+    <!-- Main Info -->
+    <div class="info-card">
+      <div class="price-row">
+        <span class="price-current" id="priceCurrent">¥299</span>
+        <span class="price-original" id="priceOriginal">¥899</span>
+        <span class="price-tag">限时特惠</span>
+      </div>
+      <h1 class="product-title" id="productTitle">简约真皮腕表</h1>
+      <p class="product-desc" id="productDesc">头层牛皮表带，自动机芯，30米防水，简约设计风格，百搭款式适合各种场合</p>
+      <div class="promo-row">
+        <span class="promo-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          极速退款
+        </span>
+        <span class="promo-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          7天无理由
+        </span>
+        <span class="promo-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          运费险
+        </span>
+      </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="spec-section">
+      <div class="spec-row" id="specSelect">
+        <span class="spec-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          选择
+        </span>
+        <span class="spec-value" id="selectedSpecText">
+          黑色经典款/标准版
+          <span class="arrow">></span>
+        </span>
+      </div>
+      <div class="spec-row" id="serviceSelect">
+        <span class="spec-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          服务
+        </span>
+        <span class="spec-value">
+          <span style="font-size:12px;color:#FF6B4A">极速退款 · 7天无理由 · 运费险</span>
+          <span class="arrow">></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Shop -->
+    <div class="shop-section">
+      <div class="shop-card">
+        <div class="shop-logo">
+          <img src="./assets/images/product-01-watch.webp" alt="">
+        </div>
+        <div class="shop-info">
+          <div class="shop-name">潮流优品官方旗舰店</div>
+          <div class="shop-meta">
+            <span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              4.9
+            </span>
+            <span>在售 286 件宝贝</span>
+          </div>
+        </div>
+        <button class="shop-btn" id="shopBtn">进店逛逛</button>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="reviews-section">
+      <div class="reviews-header">
+        <div class="reviews-title">
+          商品评价
+          <span id="reviewCount">4.9</span>
+        </div>
+        <a href="reviews.html" class="reviews-more">
+          查看全部
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+      <div id="reviewsList">
+        <div class="review-item">
+          <div class="review-user">
+            <div class="review-avatar">林</div>
+            <span class="review-user-name">林小琳</span>
+            <div class="review-stars">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+          </div>
+          <p class="review-text">手表收到啦！做工非常精致，皮质表带很软很舒服，戴上很有气质。走时很准，防水效果也不错，推荐购买！</p>
+          <p class="review-spec">购买规格：黑色经典款 / 标准版</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Content -->
+    <div class="detail-content-section">
+      <div class="detail-content-header">
+        <span class="detail-content-title">商品详情</span>
+      </div>
+      <div class="detail-content-body" id="detailContentBody">
+        <img src="./assets/images/product-01-watch.webp" alt="">
+        <img src="./assets/images/product-02-earbuds.webp" alt="">
+        <img src="./assets/images/product-04-serum.webp" alt="">
+      </div>
+    </div>
+
+    <!-- Related Products -->
+    <div class="related-section">
+      <div class="related-title">猜你喜欢</div>
+      <div class="related-scroll">
+        <div class="related-track" id="relatedTrack"></div>
+      </div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="detail-bar">
+    <div class="bar-icons">
+      <div class="bar-icon-item" id="favBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.0 0 0 0 0-7.78z"/></svg>
+        <span class="bar-icon-label">收藏</span>
+      </div>
+      <div class="bar-icon-item" id="cartBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="bar-icon-label">购物车</span>
+        <span class="bar-cart-badge" id="cartBadge" style="display:none">0</span>
+      </div>
+    </div>
+    <div class="bar-btns">
+      <button class="btn-add-cart" id="addCartBtn">加入购物车</button>
+      <button class="btn-buy" id="buyBtn">立即购买</button>
+    </div>
+  </div>
+
+  <!-- Spec Sheet -->
+  <div class="spec-sheet" id="specSheet">
+    <div class="spec-backdrop" id="specBackdrop"></div>
+    <div class="spec-sheet-content">
+      <div class="spec-sheet-handle"><div class="spec-sheet-bar"></div></div>
+      <div class="spec-sheet-body">
+        <div class="spec-sheet-product">
+          <div class="spec-sheet-img">
+            <img src="./assets/images/product-01-watch.webp" id="sheetImg" alt="">
+          </div>
+          <div class="spec-sheet-info">
+            <div class="spec-sheet-price" id="sheetPrice">¥299</div>
+            <div class="spec-sheet-stock">库存 128 件</div>
+            <div class="spec-sheet-selected" id="sheetSelected">已选：黑色经典款 / 标准版</div>
+          </div>
+        </div>
+
+        <!-- Dynamic spec groups rendered by JS -->
+        <div id="specSheetBodyGroups"></div>
+
+        <div class="qty-row">
+          <span class="qty-label">数量</span>
+          <div class="qty-control">
+            <div class="qty-btn" id="qtyMinus">−</div>
+            <div class="qty-num" id="qtyNum">1</div>
+            <div class="qty-btn" id="qtyPlus">+</div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-sheet-footer">
+        <button class="spec-sheet-cart" id="sheetCartBtn">加入购物车</button>
+        <button class="spec-sheet-buy" id="sheetBuyBtn">立即购买</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="./js/pages/product-detail.js"></script>
+</body>
+</html>

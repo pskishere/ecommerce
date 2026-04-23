@@ -1,0 +1,396 @@
+/* ============================================================
+   潮流好物 — Profile Page Styles
+   ============================================================ */
+
+/* ── Profile Page ── */
+.profile-page {
+  display: none;
+  min-height: 100dvh;
+  background: var(--light);
+  padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
+}
+
+.profile-page.active {
+  display: block;
+}
+
+/* ── Profile Header ── */
+.profile-header {
+  position: relative;
+  padding: 0 0 16px;
+  overflow: hidden;
+}
+
+.profile-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(135deg, var(--accent) 0%, #FF9A7A 100%);
+}
+
+.profile-user {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px 0;
+}
+
+.profile-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.5);
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  background: white;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-edit {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 0 0 50% 50%;
+}
+
+.profile-info {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.01em;
+}
+
+.profile-vip {
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.25);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.profile-id {
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+}
+
+.profile-edit-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.profile-edit-btn:active {
+  background: rgba(255,255,255,0.35);
+}
+
+/* ── Member Card ── */
+.member-card {
+  margin: 12px 16px 0;
+  padding: 14px 16px;
+  background: white;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+
+.member-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.member-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.member-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--gray-1);
+  margin-top: 2px;
+}
+
+.member-cta {
+  padding: 7px 16px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.member-cta:active {
+  transform: scale(0.95);
+  opacity: 0.85;
+}
+
+/* ── Profile Sections ── */
+.profile-section {
+  margin: 12px 16px 0;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.profile-section:first-of-type {
+  margin-top: 16px;
+}
+
+.profile-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+}
+
+.profile-section__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.profile-section__more {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--gray-1);
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.profile-section__more:active {
+  color: var(--accent);
+}
+
+/* ── Order Status Grid ── */
+.order-status-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 4px 8px 16px;
+}
+
+.order-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s;
+  position: relative;
+}
+
+.order-status-item:active {
+  background: var(--light);
+}
+
+.order-status-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark);
+  position: relative;
+}
+
+.order-badge {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.order-status-label {
+  font-size: 11px;
+  color: var(--gray-1);
+  font-weight: 500;
+}
+
+/* ── Assets Grid ── */
+.profile-assets {
+  padding: 16px;
+}
+
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.asset-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  position: relative;
+}
+
+.asset-item + .asset-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: var(--gray-4);
+}
+
+.asset-num {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.asset-label {
+  font-size: 11px;
+  color: var(--gray-1);
+}
+
+/* ── Service Grid ── */
+.profile-services {
+  padding: 4px 0 8px;
+}
+
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.service-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 16px 8px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s;
+}
+
+.service-item:active {
+  background: var(--light);
+}
+
+.service-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gray-1);
+}
+
+/* ── Promo Banner ── */
+.promo-banner {
+  margin: 12px 16px 0;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.promo-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.promo-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+}
+
+.promo-btn {
+  padding: 8px 18px;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.promo-btn:active {
+  transform: scale(0.95);
+}

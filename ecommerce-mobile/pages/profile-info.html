@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>个人资料 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./profile-info.css">
+</head>
+<body class="page-transition">
+  <div class="profile-info-page">
+    <div class="profile-info-header">
+      <div class="profile-info-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="profile-info-title">个人资料</div>
+      </div>
+    </div>
+
+    <div class="profile-info-body">
+      <!-- Skeleton Loading -->
+      <div class="profile-info-skeleton" id="profileInfoSkeleton">
+        <div class="skeleton-avatar-row"></div>
+        <div class="skeleton-info-section"></div>
+        <div class="skeleton-info-section"></div>
+      </div>
+
+      <!-- Avatar -->
+      <div class="info-avatar-section clickable" onclick="showToast('头像修改功能开发中')">
+        <span class="info-avatar-label">头像</span>
+        <div class="info-avatar-wrap">
+          <div class="info-avatar">
+            <img src="https://picsum.photos/200/200?random=100" alt="头像">
+          </div>
+          <div class="info-avatar-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Basic Info -->
+      <div class="info-section-title">基本信息</div>
+      <div class="info-list">
+        <div class="info-item clickable" onclick="editField('昵称', '林小琳')">
+          <span class="info-item-label">昵称</span>
+          <div class="info-item-content">
+            <span class="value" id="nickname">林小琳</span>
+          </div>
+          <div class="info-item-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-item-label">性别</span>
+          <div class="info-item-content">
+            <div class="gender-select">
+              <label class="gender-option active" onclick="selectGender(this, '女')">
+                <input type="radio" name="gender" value="女" checked>
+                <span class="gender-radio"></span>
+                <span>女</span>
+              </label>
+              <label class="gender-option" onclick="selectGender(this, '男')">
+                <input type="radio" name="gender" value="男">
+                <span class="gender-radio"></span>
+                <span>男</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-item clickable" onclick="showDatePicker()">
+          <span class="info-item-label">生日</span>
+          <div class="info-item-content">
+            <span class="value" id="birthday">1998-06-15</span>
+          </div>
+          <div class="info-item-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="info-section-title">联系方式</div>
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-item-label">手机号</span>
+          <div class="info-item-content">
+            <span class="value">138****8888</span>
+          </div>
+          <div class="info-item-arrow" style="visibility: hidden;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+
+        <div class="info-item clickable" onclick="editField('邮箱', 'linxiaolin@email.com')">
+          <span class="info-item-label">邮箱</span>
+          <div class="info-item-content">
+            <span class="value" id="email">linxiaolin@email.com</span>
+          </div>
+          <div class="info-item-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Info -->
+      <div class="info-section-title">账号信息</div>
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-item-label">用户ID</span>
+          <div class="info-item-content">
+            <span class="value">88888888</span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-item-label">注册时间</span>
+          <div class="info-item-content">
+            <span class="value">2024-01-15</span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-item-label">会员等级</span>
+          <div class="info-item-content">
+            <span class="value" style="color: #FF6B4A;">黄金会员</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="info-save-btn" onclick="saveProfile()">保存修改</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="./js/pages/profile-info.js"></script>
+</body>
+</html>

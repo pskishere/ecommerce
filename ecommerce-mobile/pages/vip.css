@@ -1,0 +1,317 @@
+/* ── VIP Page ── */
+.vip-page {
+  min-height: 100dvh;
+  background: #F5F5F5;
+}
+
+.vip-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: env(safe-area-inset-top, 0) 0 0;
+}
+
+.vip-header-inner {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  width: 100%;
+}
+
+.vip-title {
+  flex: 1;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-right: 40px;
+}
+
+.vip-body {
+  padding-top: 53px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Banner */
+.vip-banner {
+  background: linear-gradient(135deg, #FFF8F0 0%, #FFF0E8 100%);
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255,107,74,0.1);
+}
+
+.vip-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vip-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #FFE0D0;
+}
+
+.vip-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vip-user-info {
+  flex: 1;
+}
+
+.vip-user-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1A1A1A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vip-badge {
+  width: 16px;
+  height: 16px;
+}
+
+.vip-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #1A1A1A;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.vip-expire {
+  font-size: 12px;
+  color: #999999;
+  margin-top: 4px;
+}
+
+.vip-points {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.vip-points-item {
+  text-align: center;
+}
+
+.vip-points-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #FF6B4A;
+}
+
+.vip-points-text {
+  font-size: 11px;
+  color: #999999;
+  margin-top: 2px;
+}
+
+.vip-points-divider {
+  width: 1px;
+  height: 30px;
+  background: #F0F0F0;
+}
+
+/* Benefits */
+.vip-benefits {
+  background: white;
+  padding: 16px;
+  margin: 10px 12px;
+  border-radius: 12px;
+}
+
+.vip-benefits-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 12px;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.benefit-item {
+  text-align: center;
+}
+
+.benefit-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 6px;
+  background: #FFF0ED;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF6B4A;
+}
+
+.benefit-name {
+  font-size: 11px;
+  color: #666666;
+}
+
+/* Privilege List */
+.privilege-section {
+  background: white;
+  margin: 0 12px 10px;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.privilege-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.privilege-item:not(:last-child) {
+  border-bottom: 1px solid #F5F5F5;
+}
+
+.privilege-icon {
+  width: 32px;
+  height: 32px;
+  background: #FFF0ED;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF6B4A;
+  flex-shrink: 0;
+}
+
+.privilege-text {
+  flex: 1;
+}
+
+.privilege-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1A1A1A;
+}
+
+.privilege-desc {
+  font-size: 11px;
+  color: #999999;
+  margin-top: 1px;
+}
+
+.privilege-value {
+  font-size: 12px;
+  color: #FF6B4A;
+  font-weight: 500;
+}
+
+/* History Section */
+.vip-history {
+  background: white;
+  margin: 0 12px 10px;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.vip-history-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 10px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-icon {
+  width: 32px;
+  height: 32px;
+  background: #FFF0ED;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF6B4A;
+  flex-shrink: 0;
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-name {
+  font-size: 13px;
+  color: #1A1A1A;
+  font-weight: 500;
+}
+
+.history-time {
+  font-size: 11px;
+  color: #BBBBBB;
+  margin-top: 1px;
+}
+
+.history-points {
+  font-size: 14px;
+  color: #FF6B4A;
+  font-weight: 600;
+}
+
+.history-points.negative {
+  color: #999999;
+}
+
+.toast {
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(26,26,26,0.9);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

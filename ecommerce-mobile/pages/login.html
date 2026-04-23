@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>登录 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <style>
+    .login-page {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #FF6B4A 0%, #FF8A6A 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .login-header {
+      padding: 60px 24px 40px;
+      text-align: center;
+      color: white;
+    }
+
+    .login-logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+
+    .login-logo svg {
+      width: 48px;
+      height: 48px;
+      color: #FF6B4A;
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .login-form {
+      flex: 1;
+      background: white;
+      border-radius: 32px 32px 0 0;
+      padding: 32px 24px;
+    }
+
+    .login-input-group {
+      margin-bottom: 20px;
+    }
+
+    .login-label {
+      display: block;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .login-input {
+      width: 100%;
+      height: 52px;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: #FF6B4A;
+    }
+
+    .login-input::placeholder {
+      color: #bbb;
+    }
+
+    .login-btn {
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6A 100%);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 12px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255, 107, 74, 0.4);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-tip {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: #999;
+    }
+
+    .login-tip a {
+      color: #FF6B4A;
+      text-decoration: none;
+    }
+
+    .quick-login {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #eee;
+    }
+
+    .quick-login-title {
+      text-align: center;
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 16px;
+    }
+
+    .quick-login-users {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .quick-user {
+      padding: 10px 20px;
+      background: #F5F5F5;
+      border-radius: 20px;
+      font-size: 14px;
+      color: #333;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-user:hover {
+      border-color: #FF6B4A;
+      background: #FFF5F3;
+    }
+
+    .quick-user.selected {
+      border-color: #FF6B4A;
+      background: #FFF5F3;
+      color: #FF6B4A;
+    }
+
+    .back-to-home {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      color: #666;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .back-to-home:hover {
+      color: #FF6B4A;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #333;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-header">
+      <div class="login-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
+      <h1 class="login-title">潮流好物</h1>
+      <p class="login-subtitle">年轻人的购物主场</p>
+    </div>
+
+    <div class="login-form">
+      <div class="login-input-group">
+        <label class="login-label">用户ID</label>
+        <input type="text" class="login-input" id="userIdInput" placeholder="请输入用户ID" value="test01">
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">登录</button>
+
+      <p class="login-tip">登录即表示同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
+
+      <a href="index.html" class="back-to-home">返回首页</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { api } from './js/data/api.js';
+
+    window.handleLogin = async function() {
+      const userId = document.getElementById('userIdInput').value.trim() || 'u1';
+      const btn = document.getElementById('loginBtn');
+
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+
+      try {
+        const data = await api.user.login(userId);
+        if (data && data.token) {
+          showToast('登录成功');
+          setTimeout(() => {
+            const redirect = new URLSearchParams(window.location.search).get('redirect') || 'profile.html';
+            window.location.href = redirect;
+          }, 1000);
+        }
+      } catch (e) {
+        showToast('登录失败: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = '登录';
+      }
+    };
+
+    window.selectQuickUser = function(userId, el) {
+      document.querySelectorAll('.quick-user').forEach(btn => btn.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('userIdInput').value = userId;
+    };
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Enter key to login
+    document.getElementById('userIdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  </script>
+</body>
+</html>

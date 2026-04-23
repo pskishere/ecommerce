@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>评价 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./review.css">
+</head>
+<body class="page-transition">
+  <div class="review-page">
+    <div class="review-header">
+      <div class="review-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="review-title">商品评价</div>
+      </div>
+    </div>
+
+    <div class="review-body">
+      <div class="review-product">
+        <div class="review-product-img">
+          <img src="./assets/images/product-01-watch.webp" alt="商品图片">
+        </div>
+        <div class="review-product-info">
+          <div class="review-product-name">简约真皮腕表 简约风格</div>
+          <div class="review-product-spec">黑色经典款</div>
+        </div>
+      </div>
+
+      <div class="review-rating">
+        <div class="review-rating-title">描述相符</div>
+        <div class="review-stars" id="reviewStars">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="review-star-desc" id="starDesc">非常满意</div>
+      </div>
+
+      <div class="review-form">
+        <div class="review-form-header">评价内容</div>
+        <div class="review-textarea-wrap">
+          <textarea class="review-textarea" id="reviewText" placeholder="分享您的购物体验，帮助更多小伙伴~" maxlength="500"></textarea>
+          <div class="review-text-count"><span id="textCount">0</span>/500</div>
+        </div>
+        <div class="review-anon-row">
+          <div>
+            <div class="review-anon-text">匿名评价</div>
+            <div class="review-anon-sub">匿名后其他用户看不到您的昵称</div>
+          </div>
+          <div class="toggle-switch" id="anonSwitch" onclick="toggleAnon()"></div>
+        </div>
+      </div>
+
+      <div class="review-images">
+        <div class="review-images-title">上传图片（选填）</div>
+        <div class="review-images-list" id="imageList">
+          <div class="review-add-image" onclick="showToast('上传图片功能')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>添加图片</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-bar">
+      <button class="review-bar-btn" onclick="submitReview()">提交评价</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="./js/pages/reviews.js"></script>
+</body>
+</html>

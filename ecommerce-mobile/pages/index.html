@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>潮流好物 - 年轻人的购物主场</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+
+  <!-- App Container -->
+  <div id="app" class="app">
+
+    <!-- Top Navigation -->
+    <nav class="top-nav" id="topNav">
+      <div class="top-nav-inner">
+        <a href="search.html" class="nav-search" id="searchBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></svg>
+          <span class="nav-search-text">搜索</span>
+        </a>
+        <a href="notifications.html" class="nav-icon-btn" id="messageBtn" aria-label="消息">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></svg>
+          <span class="nav-badge">3</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+
+      <!-- Hero Banner Carousel -->
+      <section class="hero-carousel" id="heroCarousel">
+        <div class="carousel-track" id="carouselTrack">
+          <div class="carousel-slide" data-index="0">
+            <img src="./assets/images/banner-1-summer-1710.webp" alt="夏季大促" class="carousel-img">
+            <div class="carousel-overlay"></div>
+            <div class="carousel-text">
+              <span class="carousel-tag">限时特惠</span>
+              <h2 class="carousel-title">夏季焕新<br>全场低至5折</h2>
+              <a href="category.html" class="carousel-cta">立即选购</a>
+            </div>
+          </div>
+          <div class="carousel-slide" data-index="1">
+            <img src="./assets/images/banner-2-newarrival-1710.webp" alt="新品上市" class="carousel-img">
+            <div class="carousel-overlay"></div>
+            <div class="carousel-text">
+              <span class="carousel-tag">新品首发</span>
+              <h2 class="carousel-title">当季新款<br>潮流抢先穿</h2>
+              <a href="category.html" class="carousel-cta">查看全部</a>
+            </div>
+          </div>
+          <div class="carousel-slide" data-index="2">
+            <img src="./assets/images/banner-3-discount-1710.webp" alt="限时折扣" class="carousel-img">
+            <div class="carousel-overlay"></div>
+            <div class="carousel-text">
+              <span class="carousel-tag">今日疯抢</span>
+              <h2 class="carousel-title">爆款直降<br>再享折上折</h2>
+              <a href="category.html" class="carousel-cta">马上抢</a>
+            </div>
+          </div>
+        </div>
+        <div class="carousel-dots" id="carouselDots">
+          <button class="dot active" data-index="0" aria-label="第1张"></button>
+          <button class="dot" data-index="1" aria-label="第2张"></button>
+          <button class="dot" data-index="2" aria-label="第3张"></button>
+        </div>
+      </section>
+
+      <!-- Category Grid -->
+      <section class="category-section">
+        <div class="section-inner">
+          <div class="category-grid">
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-fashion-01.webp" alt="女装" class="category-icon">
+              </div>
+              <span class="category-name">女装</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-mens-02.webp" alt="男装" class="category-icon">
+              </div>
+              <span class="category-name">男装</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-skincare-03.webp" alt="美妆" class="category-icon">
+              </div>
+              <span class="category-name">美妆护肤</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-phone-04.webp" alt="数码" class="category-icon">
+              </div>
+              <span class="category-name">数码电子</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-home-05.webp" alt="家居" class="category-icon">
+              </div>
+              <span class="category-name">家居生活</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-sport-06.webp" alt="运动" class="category-icon">
+              </div>
+              <span class="category-name">运动户外</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-food-07.webp" alt="食品" class="category-icon">
+              </div>
+              <span class="category-name">食品生鲜</span>
+            </a>
+            <a href="category.html" class="category-item" data-reveal>
+              <div class="category-icon-wrap">
+                <img src="./assets/images/icon-beauty-08.webp" alt="配饰" class="category-icon">
+              </div>
+              <span class="category-name">潮流配饰</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Flash Sale -->
+      <section class="flash-sale-section">
+        <div class="section-inner">
+          <div class="flash-header" data-reveal>
+            <div class="flash-title-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></svg>
+              <h3 class="flash-title">限时秒杀</h3>
+              <div class="flash-countdown" id="flashCountdown">
+                <span class="countdown-label">距结束</span>
+                <span class="countdown-nums" id="countdownNums">02:41:33</span>
+              </div>
+            </div>
+            <a href="category.html" class="flash-more">
+              更多
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></svg>
+            </a>
+          </div>
+          <div class="flash-scroll" id="flashScroll">
+            <div class="flash-track" id="flashTrack">
+              <div class="flash-card" data-id="101" data-product="watch" data-name="时尚简约腕表" data-price="299" data-original="¥899" data-img="assets/images/product-01-watch.webp">
+                <div class="flash-img-wrap">
+                  <img src="./assets/images/product-01-watch.webp" alt="时尚腕表" class="flash-img">
+                  <span class="flash-tag">热卖</span>
+                </div>
+                <div class="flash-info">
+                  <span class="flash-price">¥299</span>
+                  <span class="flash-original">¥899</span>
+                </div>
+              </div>
+              <div class="flash-card" data-id="102" data-product="earbuds" data-name="无线蓝牙耳机" data-price="199" data-original="¥499" data-img="assets/images/product-02-earbuds.webp">
+                <div class="flash-img-wrap">
+                  <img src="./assets/images/product-02-earbuds.webp" alt="蓝牙耳机" class="flash-img">
+                  <span class="flash-tag">新品</span>
+                </div>
+                <div class="flash-info">
+                  <span class="flash-price">¥199</span>
+                  <span class="flash-original">¥499</span>
+                </div>
+              </div>
+              <div class="flash-card" data-id="103" data-product="mug" data-name="极简陶瓷咖啡杯" data-price="39" data-original="¥79" data-img="assets/images/product-03-mug.webp">
+                <div class="flash-img-wrap">
+                  <img src="./assets/images/product-03-mug.webp" alt="陶瓷杯" class="flash-img">
+                  <span class="flash-tag">5折</span>
+                </div>
+                <div class="flash-info">
+                  <span class="flash-price">¥39</span>
+                  <span class="flash-original">¥79</span>
+                </div>
+              </div>
+              <div class="flash-card" data-id="104" data-product="serum" data-name="有机护肤精华液" data-price="129" data-original="¥399" data-img="assets/images/product-04-serum.webp">
+                <div class="flash-img-wrap">
+                  <img src="./assets/images/product-04-serum.webp" alt="精华液" class="flash-img">
+                  <span class="flash-tag">秒杀</span>
+                </div>
+                <div class="flash-info">
+                  <span class="flash-price">¥129</span>
+                  <span class="flash-original">¥399</span>
+                </div>
+              </div>
+              <div class="flash-card" data-id="105" data-product="sneakers" data-name="经典帆布硫化鞋" data-price="159" data-original="¥359" data-img="assets/images/product-05-sneakers.webp">
+                <div class="flash-img-wrap">
+                  <img src="./assets/images/product-05-sneakers.webp" alt="帆布鞋" class="flash-img">
+                  <span class="flash-tag">热卖</span>
+                </div>
+                <div class="flash-info">
+                  <span class="flash-price">¥159</span>
+                  <span class="flash-original">¥359</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Hot Rankings -->
+      <section class="hot-section">
+        <div class="section-inner">
+          <div class="hot-header" data-reveal>
+            <h3 class="hot-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 6-8 8-8 14a8 8 0 1 0 16 0c0-6-8-8-8-14zm0 20a5 5 0 0 1-5-5c0-4 4-6 5-9 1 3 5 5 5 9a5 5 0 0 1-5 5z"/></svg></svg>
+              热销榜单
+            </h3>
+            <a href="category.html" class="hot-more">
+              查看全部
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></svg>
+            </a>
+          </div>
+
+          <!-- Bento grid: 1 large card top, 3 small cards bottom -->
+          <div class="hot-bento">
+            <!-- Top row: 1 large card -->
+            <div class="hot-item hot-item--hero" data-id="201" data-product="wallet" data-name="头层牛皮钱包" data-price="189" data-img="assets/images/product-06-wallet.webp">
+              <div class="hot-item__rank">1</div>
+              <div class="hot-item__img">
+                <img src="./assets/images/product-06-wallet.webp" alt="头层牛皮钱包">
+              </div>
+              <div class="hot-item__body">
+                <p class="hot-item__name">头层牛皮钱包</p>
+                <p class="hot-item__sales">已售 2.3万</p>
+                <p class="hot-item__price">¥189</p>
+              </div>
+            </div>
+
+            <!-- Bottom row: 3 small cards -->
+            <div class="hot-item" data-id="202" data-product="sunglasses" data-name="复古飞行员太阳镜" data-price="129" data-img="assets/images/product-07-sunglasses.webp">
+              <div class="hot-item__rank">2</div>
+              <div class="hot-item__img">
+                <img src="./assets/images/product-07-sunglasses.webp" alt="复古太阳镜">
+              </div>
+              <div class="hot-item__body">
+                <p class="hot-item__name">复古太阳镜</p>
+                <p class="hot-item__sales">已售 1.8万</p>
+                <p class="hot-item__price">¥129</p>
+              </div>
+            </div>
+
+            <div class="hot-item" data-id="203" data-product="plantpot" data-name="多肉植物盆栽" data-price="49" data-img="assets/images/product-08-plantpot.webp">
+              <div class="hot-item__rank">3</div>
+              <div class="hot-item__img">
+                <img src="./assets/images/product-08-plantpot.webp" alt="多肉植物盆栽">
+              </div>
+              <div class="hot-item__body">
+                <p class="hot-item__name">多肉植物盆栽</p>
+                <p class="hot-item__sales">已售 1.5万</p>
+                <p class="hot-item__price">¥49</p>
+              </div>
+            </div>
+
+            <div class="hot-item" data-id="204" data-product="notebook" data-name="手账笔记本 A5" data-price="35" data-img="assets/images/product-09-notebook.webp">
+              <div class="hot-item__rank">4</div>
+              <div class="hot-item__img">
+                <img src="./assets/images/product-09-notebook.webp" alt="手账笔记本">
+              </div>
+              <div class="hot-item__body">
+                <p class="hot-item__name">手账笔记本</p>
+                <p class="hot-item__sales">已售 1.2万</p>
+                <p class="hot-item__price">¥35</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recommended Products -->
+      <section class="recommend-section">
+        <div class="section-inner">
+          <div class="recommend-header" data-reveal>
+            <h3 class="recommend-title">为你推荐</h3>
+            <div class="recommend-tabs" id="recommendTabs">
+              <button class="tab-btn active" data-tab="new">新品</button>
+              <button class="tab-btn" data-tab="hot">热门</button>
+              <button class="tab-btn" data-tab="selling">畅销</button>
+            </div>
+          </div>
+          <div class="recommend-grid" id="recommendGrid">
+            <div class="product-card" data-id="301" data-product="candle" data-name="天然香薰蜡烛 150g" data-price="89" data-img="assets/images/product-10-candle.webp">
+              <div class="product-img-wrap">
+                <img src="./assets/images/product-10-candle.webp" alt="香薰蜡烛" class="product-img">
+                <button class="product-fav" aria-label="收藏">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-info">
+                <span class="product-name">天然香薰蜡烛 150g</span>
+                <div class="product-bottom">
+                  <span class="product-price">¥89</span>
+                  <span class="product-sales">1.2万+</span>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" data-id="302" data-product="tote" data-name="文艺帆布托特包" data-price="59" data-img="assets/images/product-11-tote.webp">
+              <div class="product-img-wrap">
+                <img src="./assets/images/product-11-tote.webp" alt="托特包" class="product-img">
+                <button class="product-fav" aria-label="收藏">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-info">
+                <span class="product-name">文艺帆布托特包</span>
+                <div class="product-bottom">
+                  <span class="product-price">¥59</span>
+                  <span class="product-sales">9800+</span>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" data-id="303" data-product="bottle" data-name="不锈钢保温水瓶 750ml" data-price="79" data-img="assets/images/product-12-bottle.webp">
+              <div class="product-img-wrap">
+                <img src="./assets/images/product-12-bottle.webp" alt="水瓶" class="product-img">
+                <button class="product-fav" aria-label="收藏">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-info">
+                <span class="product-name">不锈钢保温水瓶 750ml</span>
+                <div class="product-bottom">
+                  <span class="product-price">¥79</span>
+                  <span class="product-sales">8600+</span>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" data-id="1" data-product="watch" data-name="简约真皮腕表" data-price="299" data-img="assets/images/product-01-watch.webp">
+              <div class="product-img-wrap">
+                <img src="./assets/images/product-01-watch.webp" alt="腕表" class="product-img">
+                <button class="product-fav" aria-label="收藏">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-info">
+                <span class="product-name">简约真皮腕表</span>
+                <div class="product-bottom">
+                  <span class="product-price">¥299</span>
+                  <span class="product-sales">2.3万+</span>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" data-id="2" data-product="earbuds" data-name="无线蓝牙耳机" data-price="199" data-img="assets/images/product-02-earbuds.webp">
+              <div class="product-img-wrap">
+                <img src="./assets/images/product-02-earbuds.webp" alt="耳机" class="product-img">
+                <button class="product-fav" aria-label="收藏">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-info">
+                <span class="product-name">无线蓝牙耳机</span>
+                <div class="product-bottom">
+                  <span class="product-price">¥199</span>
+                  <span class="product-sales">1.8万+</span>
+                </div>
+              </div>
+            </div>
+            <div class="product-card" data-id="3" data-product="wallet" data-name="头层牛皮短款钱包" data-price="189" data-img="assets/images/product-06-wallet.webp">
+              <div class="product-img-wrap">
+                <img src="./assets/images/product-06-wallet.webp" alt="钱包" class="product-img">
+                <button class="product-fav" aria-label="收藏">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-info">
+                <span class="product-name">头层牛皮短款钱包</span>
+                <div class="product-bottom">
+                  <span class="product-price">¥189</span>
+                  <span class="product-sales">1.5万+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="load-more" id="loadMore">
+            <button class="load-more-btn" id="loadMoreBtn">加载更多</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Spacing for Tab Bar -->
+      <div class="bottom-spacer"></div>
+
+    </main>
+
+    <!-- Profile Page -->
+    <div class="profile-page" id="profilePage">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-bg"></div>
+        <div class="profile-user">
+          <div class="profile-avatar">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=潮流青年&backgroundColor=b6e3f4" alt="头像" class="avatar-img">
+            <button class="avatar-edit" aria-label="修改头像">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></svg>
+            </button>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name-row">
+              <span class="profile-name">潮流青年</span>
+              <span class="profile-vip">VIP 3</span>
+            </div>
+            <p class="profile-id">ID: 889201563</p>
+          </div>
+          <button class="profile-edit-btn" aria-label="编辑资料">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></svg>
+          </button>
+        </div>
+
+        <!-- Member Benefits -->
+        <div class="member-card">
+          <div class="member-left">
+            <div class="member-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></svg>
+            </div>
+            <div class="member-text">
+              <span class="member-title">潮流会员</span>
+              <span class="member-sub">专享 8 大权益</span>
+            </div>
+          </div>
+          <a href="vip.html" class="member-cta">立即开通</a>
+        </div>
+      </div>
+
+      <!-- Order Status -->
+      <div class="profile-section profile-orders">
+        <div class="profile-section__header">
+          <h3 class="profile-section__title">我的订单</h3>
+          <a href="order.html" class="profile-section__more">
+            全部订单
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></svg>
+          </a>
+        </div>
+        <div class="order-status-grid">
+          <a href="order.html?tab=pending" class="order-status-item">
+            <div class="order-status-icon" style="background:#FFF5F3;color:#FF6B4A;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></svg>
+              <span class="order-badge">2</span>
+            </div>
+            <span class="order-status-label">待付款</span>
+          </a>
+          <a href="order.html?tab=paid" class="order-status-item">
+            <div class="order-status-icon" style="background:#FFF5F3;color:#FF6B4A;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></svg>
+              <span class="order-badge">1</span>
+            </div>
+            <span class="order-status-label">待发货</span>
+          </a>
+          <a href="order.html?tab=shipped" class="order-status-item">
+            <div class="order-status-icon" style="background:#FFF5F3;color:#FF6B4A;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></svg>
+              <span class="order-badge">3</span>
+            </div>
+            <span class="order-status-label">待收货</span>
+          </a>
+          <a href="order.html?tab=review" class="order-status-item">
+            <div class="order-status-icon" style="background:#FFF5F3;color:#FF6B4A;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></svg>
+            </div>
+            <span class="order-status-label">待评价</span>
+          </a>
+          <a href="order.html?tab=refund" class="order-status-item">
+            <div class="order-status-icon" style="background:#FFF5F3;color:#FF6B4A;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></svg>
+            </div>
+            <span class="order-status-label">退款/售后</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Assets -->
+      <div class="profile-section profile-assets">
+        <div class="asset-grid">
+          <div class="asset-item">
+            <span class="asset-num">128</span>
+            <span class="asset-label">优惠券</span>
+          </div>
+          <div class="asset-item">
+            <span class="asset-num">¥68.50</span>
+            <span class="asset-label">余额</span>
+          </div>
+          <div class="asset-item">
+            <span class="asset-num">2,850</span>
+            <span class="asset-label">积分</span>
+          </div>
+          <div class="asset-item">
+            <span class="asset-num">¥20</span>
+            <span class="asset-label">红包</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Grid -->
+      <div class="profile-section profile-services">
+        <div class="service-grid">
+          <a href="favorites.html" class="service-item">
+            <div class="service-icon" style="background:#FFF0ED;color:#FF6B4A;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <span class="service-label">我的收藏</span>
+          </a>
+          <a href="history.html" class="service-item">
+            <div class="service-icon" style="background:#FFF8F0;color:#E65100;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></svg>
+            </div>
+            <span class="service-label">浏览足迹</span>
+          </a>
+          <a href="address.html" class="service-item">
+            <div class="service-icon" style="background:#F0F5FF;color:#1565C0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></svg>
+            </div>
+            <span class="service-label">地址管理</span>
+          </a>
+          <a href="notifications.html" class="service-item">
+            <div class="service-icon" style="background:#FFF0F5;color:#E91E63;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></svg>
+            </div>
+            <span class="service-label">消息通知</span>
+          </a>
+          <a href="settings.html" class="service-item">
+            <div class="service-icon" style="background:#F5F5F5;color:#78909C;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></svg>
+            </div>
+            <span class="service-label">设置</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Promotion Banner -->
+      <div class="profile-section">
+        <div class="promo-banner">
+          <div class="promo-content">
+            <p class="promo-title">邀请好友赚佣金</p>
+            <p class="promo-sub">每成功邀请1位好友最高奖励¥50</p>
+          </div>
+          <button class="promo-btn">立即邀请</button>
+        </div>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <nav class="tab-bar" id="tabBar">
+      <a href="index.html" class="tab-item active" data-tab="home" aria-label="首页">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></svg>
+        <span>首页</span>
+      </a>
+      <a href="category.html" class="tab-item" data-tab="category" aria-label="分类">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></svg>
+        <span>分类</span>
+      </a>
+      <a href="cart.html" class="tab-item" id="cartTabBtn" aria-label="购物车">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></svg>
+        <span>购物车</span>
+        <span class="tab-badge" id="cartBadge">2</span>
+      </a>
+      <a href="profile.html" class="tab-item" id="profileTabBtn" data-tab="profile" aria-label="我的">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></svg>
+        <span>我的</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast" aria-live="polite">
+    <span class="toast-text" id="toastText">已加入购物车</span>
+  </div>
+
+  <!-- Product Detail Sheet -->
+  <div class="product-sheet" id="productSheet" aria-modal="true" role="dialog">
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="sheet-content">
+      <div class="sheet-handle">
+        <div class="sheet-bar"></div>
+      </div>
+      <div class="sheet-body" id="sheetBody">
+        <div class="sheet-img-wrap">
+          <img src="" alt="" class="sheet-img" id="sheetImg">
+        </div>
+        <div class="sheet-info">
+          <div class="sheet-price-row">
+            <span class="sheet-price" id="sheetPrice">¥299</span>
+            <span class="sheet-original" id="sheetOriginal">¥899</span>
+          </div>
+          <h2 class="sheet-title" id="sheetTitle">时尚简约腕表</h2>
+          <p class="sheet-desc" id="sheetDesc">头层牛皮表带，自动机芯，30米防水，简约设计风格</p>
+        </div>
+        <div class="sheet-specs">
+          <p class="sheet-spec-title">商品详情</p>
+          <div class="sheet-specs-grid">
+            <span class="spec-tag">材质: 真皮</span>
+            <span class="spec-tag">机芯: 自动机械</span>
+            <span class="spec-tag">防水: 30米</span>
+            <span class="spec-tag">风格: 简约</span>
+          </div>
+        </div>
+        <div class="sheet-sku">
+          <p class="sheet-spec-title">选择数量</p>
+          <div class="qty-control">
+            <button class="qty-btn" id="qtyMinus" aria-label="减少">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></svg>
+            </button>
+            <span class="qty-num" id="qtyNum">1</span>
+            <button class="qty-btn" id="qtyPlus" aria-label="增加">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="sheet-fav-btn" id="sheetFavBtn" aria-label="收藏">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <button class="sheet-cart-btn" id="sheetCartBtn">
+          加入购物车
+        </button>
+        <button class="sheet-buy-btn" id="sheetBuyBtn">
+          立即购买
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/main.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>我的 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./profile.css">
+</head>
+<body class="page-transition">
+
+  <div class="profile-page active">
+    <!-- User Header -->
+    <div class="user-header" id="userHeader">
+      <!-- Logged in state -->
+      <a href="profile-info.html" class="user-card" id="userCard" style="display:none">
+        <div class="user-avatar" id="userAvatar">
+          <img src="https://picsum.photos/200/200?random=100" alt="头像">
+        </div>
+        <div class="user-info">
+          <div class="user-name-row">
+            <span class="user-name" id="userName">林小琳</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></svg>
+          </div>
+          <div class="user-id" id="userId">ID: 88888888</div>
+          <div class="user-stats">
+            <div class="user-stat">
+              <span class="user-stat-num" id="followCount">128</span>
+              <span class="user-stat-label">关注</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-num" id="fansCount">356</span>
+              <span class="user-stat-label">粉丝</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-num" id="pointsCount">2,860</span>
+              <span class="user-stat-label">积分</span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Logged out state -->
+      <div class="user-card" id="loginCard">
+        <div class="user-avatar">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=guest&backgroundColor=b6e3f4" alt="头像">
+        </div>
+        <div class="user-info">
+          <div class="user-name-row">
+            <span class="user-name">未登录</span>
+          </div>
+          <div class="user-id">登录后享受更多服务</div>
+        </div>
+        <a href="login.html" class="login-btn-small">登录</a>
+      </div>
+    </div>
+
+    <!-- Member Banner -->
+    <a href="vip.html" class="member-banner">
+      <div class="member-banner-inner">
+        <div class="member-banner-left">
+          <div class="member-crown">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></svg>
+          </div>
+          <div class="member-banner-text">
+            <span class="member-banner-title" id="memberTitle">黄金会员 · 有效期至 2027.03</span>
+            <span class="member-banner-sub">每月领取专属优惠券包 · 专享价商品 · 生日礼包</span>
+          </div>
+        </div>
+        <button class="member-banner-cta" onclick="event.preventDefault();location.href='vip.html'">续费</button>
+      </div>
+    </a>
+
+    <!-- Body -->
+    <div class="profile-body">
+      <!-- Orders -->
+      <div class="profile-card">
+        <div class="card-header">
+          <span class="card-title">我的订单</span>
+          <a href="order.html" class="card-more">全部订单 ></a>
+        </div>
+        <div class="order-grid">
+          <a href="order.html?tab=pending" class="order-item">
+            <div class="order-icon-wrap" style="color:#FF6B4A;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></svg>
+            </div>
+            <span class="order-label">待付款</span>
+          </a>
+          <a href="order.html?tab=paid" class="order-item">
+            <div class="order-icon-wrap" style="color:#FF6B4A;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></svg>
+              <span class="order-badge" id="pendingBadge" style="display:none">1</span>
+            </div>
+            <span class="order-label">待发货</span>
+          </a>
+          <a href="order.html?tab=shipped" class="order-item">
+            <div class="order-icon-wrap" style="color:#FF6B4A;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></svg>
+              <span class="order-badge" id="shippedBadge" style="display:none">1</span>
+            </div>
+            <span class="order-label">待收货</span>
+          </a>
+          <a href="order.html?tab=review" class="order-item">
+            <div class="order-icon-wrap" style="color:#FF6B4A;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></svg>
+            </div>
+            <span class="order-label">待评价</span>
+          </a>
+          <a href="order.html?tab=refund" class="order-item">
+            <div class="order-icon-wrap" style="color:#FF6B4A;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></svg>
+            </div>
+            <span class="order-label">退款/售后</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Assets -->
+      <div class="asset-grid">
+        <a href="coupon.html" class="asset-item">
+          <span class="asset-num" id="couponNum">4</span>
+          <span class="asset-label">优惠券</span>
+        </a>
+        <div class="asset-item">
+          <span class="asset-num">0</span>
+          <span class="asset-label">积分</span>
+        </div>
+        <div class="asset-item">
+          <span class="asset-num">0</span>
+          <span class="asset-label">红包</span>
+        </div>
+        <div class="asset-item">
+          <span class="asset-num">0</span>
+          <span class="asset-label">礼品卡</span>
+        </div>
+      </div>
+
+      <!-- Service Links -->
+      <div class="profile-card">
+        <div class="card-header">
+          <span class="card-title">常用服务</span>
+        </div>
+        <div class="service-grid">
+          <a href="favorites.html" class="service-item">
+            <div class="service-icon" style="background:#FFF3E0;color:#E65100;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.0 0 0 0 0-7.78z"/></svg></svg>
+            </div>
+            <span class="service-label">我的收藏</span>
+          </a>
+          <a href="history.html" class="service-item">
+            <div class="service-icon" style="background:#E3F2FD;color:#1565C0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></svg>
+            </div>
+            <span class="service-label">浏览足迹</span>
+          </a>
+          <a href="address.html" class="service-item">
+            <div class="service-icon" style="background:#F3E5F5;color:#7C4DFF;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></svg>
+            </div>
+            <span class="service-label">地址管理</span>
+          </a>
+          <a href="notifications.html" class="service-item">
+            <div class="service-icon" style="background:#FFEBEE;color:#E91E63;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></svg>
+            </div>
+            <span class="service-label">消息通知</span>
+          </a>
+          <a href="settings.html" class="service-item">
+            <div class="service-icon" style="background:#E0F2F1;color:#00897B;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></svg>
+            </div>
+            <span class="service-label">设置</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Invite Banner -->
+      <div class="invite-banner">
+        <div>
+          <div class="invite-title">邀请好友赚佣金</div>
+          <div class="invite-sub">每成功邀请1位好友获得20元优惠券</div>
+        </div>
+        <button class="invite-btn">立即邀请</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <nav class="tab-bar" id="tabBar">
+    <a href="index.html" class="tab-item" aria-label="首页">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></svg>
+      <span>首页</span>
+    </a>
+    <a href="category.html" class="tab-item" aria-label="分类">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></svg>
+      <span>分类</span>
+    </a>
+    <a href="cart.html" class="tab-item" aria-label="购物车">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></svg>
+      <span>购物车</span>
+      <span class="tab-badge" id="tabCartBadge"></span>
+    </a>
+    <a href="profile.html" class="tab-item active" aria-label="我的">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></svg>
+      <span>我的</span>
+    </a>
+  </nav>
+
+  <script type="module" src="./js/pages/profile.js"></script>
+</body>
+</html>

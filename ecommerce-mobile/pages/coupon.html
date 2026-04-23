@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>优惠券 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./coupon.css">
+</head>
+<body class="page-transition">
+  <div class="coupon-page">
+    <div class="coupon-header">
+      <div class="coupon-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="coupon-title">优惠券</div>
+      </div>
+      <div class="content-tabs" id="couponTabs">
+        <div class="content-tab active" data-tab="available">可用优惠券</div>
+        <div class="content-tab" data-tab="used">已使用</div>
+        <div class="content-tab" data-tab="expired">已失效</div>
+      </div>
+    </div>
+
+    <div class="coupon-body">
+      <div class="coupon-list" id="couponList">
+        <!-- Skeleton Loading -->
+        <div class="coupon-skeleton" id="couponSkeleton">
+          <div class="skeleton-coupon"></div>
+          <div class="skeleton-coupon"></div>
+          <div class="skeleton-coupon"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="./js/pages/coupon.js"></script>
+</body>
+</html>

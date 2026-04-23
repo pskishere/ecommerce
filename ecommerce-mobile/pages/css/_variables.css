@@ -1,0 +1,29 @@
+/* ============================================================
+   潮流好物 — CSS Variables
+   ============================================================ */
+
+:root {
+  --accent: #FF6B4A;
+  --accent-dark: #E85A3A;
+  --accent-light: #FF8A6A;
+  --dark: #1A1A1A;
+  --dark-2: #2D2D2D;
+  --gray-1: #666666;
+  --gray-2: #999999;
+  --gray-3: #CCCCCC;
+  --gray-4: #E5E5E5;
+  --light: #F8F8F8;
+  --white: #FFFFFF;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+  --nav-height: 56px;
+  --tab-height: 64px;
+  --easing-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

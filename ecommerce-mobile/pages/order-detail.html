@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>订单详情 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./order-detail.css">
+</head>
+<body class="page-transition">
+  <div class="detail-page">
+    <div class="detail-header">
+      <div class="detail-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="detail-title">订单详情</div>
+      </div>
+    </div>
+
+    <div class="detail-body" id="detailBody">
+      <!-- Skeleton Loading -->
+      <div class="order-detail-skeleton" id="detailSkeleton">
+        <div class="skeleton-status"></div>
+        <div class="skeleton-address"></div>
+        <div class="skeleton-store"></div>
+        <div class="skeleton-products">
+          <div class="skeleton-product-item"></div>
+          <div class="skeleton-product-item"></div>
+        </div>
+        <div class="skeleton-info"></div>
+      </div>
+    </div>
+
+    <div class="detail-bar" id="detailBar"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="./js/pages/order-detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+/* ── Reviews Page ── */
+.reviews-page {
+  min-height: 100dvh;
+  background: #F5F5F5;
+}
+
+.reviews-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: env(safe-area-inset-top, 0) 0 0;
+}
+
+.reviews-header-inner {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  width: 100%;
+}
+
+.reviews-title {
+  flex: 1;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-right: 40px;
+}
+
+.reviews-summary {
+  background: white;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.summary-score {
+  text-align: center;
+}
+
+.summary-score-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: #FF6B4A;
+}
+
+.summary-score-text {
+  font-size: 12px;
+  color: #999999;
+  margin-top: 2px;
+}
+
+.summary-tags {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.summary-tag {
+  padding: 4px 10px;
+  background: #FFF0ED;
+  color: #FF6B4A;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.summary-tag.active {
+  background: #FF6B4A;
+  color: white;
+}
+
+.reviews-body {
+  padding-top: 186px;
+}
+
+.reviews-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.review-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.review-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F0F0F0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.review-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.review-user-info {
+  flex: 1;
+}
+
+.review-user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1A1A1A;
+}
+
+.review-user-stars {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.review-star {
+  width: 12px;
+  height: 12px;
+  color: #FFB800;
+}
+
+.review-star.empty {
+  color: #E5E5E5;
+}
+
+.review-date {
+  font-size: 12px;
+  color: #999999;
+}
+
+.review-spec {
+  font-size: 12px;
+  color: #999999;
+  margin-bottom: 8px;
+}
+
+.review-content {
+  font-size: 14px;
+  color: #1A1A1A;
+  line-height: 1.6;
+}
+
+.review-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.review-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  background: #F8F8F8;
+  overflow: hidden;
+}
+
+.review-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.review-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #F5F5F5;
+}
+
+.review-like {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #999999;
+  cursor: pointer;
+}
+
+.review-like.active {
+  color: #FF6B4A;
+}
+
+.review-like svg {
+  width: 16px;
+  height: 16px;
+}
+
+.review-reply {
+  font-size: 12px;
+  color: #FF6B4A;
+}
+
+.toast {
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(26,26,26,0.9);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Skeleton Loading ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.reviews-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-review {
+  height: 120px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+
+.skeleton-review:nth-child(2) { animation-delay: 0.2s; }
+.skeleton-review:nth-child(3) { animation-delay: 0.4s; }
+
+/* Hide skeleton when loaded */
+.reviews-skeleton.loaded {
+  display: none;
+}
