@@ -390,10 +390,20 @@ class HomePromotionViewSet(viewsets.ModelViewSet):
 class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
     def get_queryset(self):
         return CartItem.objects.filter(user=get_user(self.request)).select_related('product')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = CartItemSerializer(queryset, many=True, context={'request': request})
+        items = serializer.data
+        total = sum(
+            float(item['product']['price']) * item['quantity']
+            for item in items if item['is_selected']
+        )
+        return Response({'code': 0, 'msg': 'success', 'data': {'items': items, 'total': total}})
 
     def create(self, request):
         user = get_user(request)
@@ -673,18 +683,48 @@ class UserViewSet(viewsets.ViewSet):
 
 
 # Function-based views for direct URL mapping
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def login(request):
-    user_id = request.data.get('user_id')
-    if not user_id:
+def _do_login(request, allowed_types):
+    """通用登录逻辑，allowed_types 为允许的用户类型列表"""
+    username = request.data.get('username')
+    password = request.data.get('password')
+    if not username:
         return Response({'code': 400, 'msg': '请输入用户名'})
+    if not password:
+        return Response({'code': 400, 'msg': '请输入密码'})
     try:
-        user = User.objects.get(username=user_id)
+        user = User.objects.get(username=username)
     except User.DoesNotExist:
         return Response({'code': 401, 'msg': '用户不存在'})
+    if not user.check_password(password):
+        return Response({'code': 401, 'msg': '密码错误'})
+    # 角色校验
+    profile = getattr(user, 'profile', None)
+    user_type = profile.user_type if profile else 'user'
+    if allowed_types and user_type not in allowed_types:
+        return Response({'code': 403, 'msg': '无权限访问'})
     token, _ = Token.objects.get_or_create(user=user)
-    return Response({'code': 0, 'msg': 'success', 'data': {'token': token.key}})
+    return Response({'code': 0, 'msg': 'success', 'data': {'token': token.key, 'user_type': user_type}})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def h5_login(request):
+    """H5移动端登录 - 仅限普通用户"""
+    return _do_login(request, ['user'])
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def ios_login(request):
+    """iOS端登录 - 仅限普通用户"""
+    return _do_login(request, ['user'])
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def admin_login(request):
+    """管理端登录 - 仅限管理员"""
+    return _do_login(request, ['admin'])
 
 
 @api_view(['GET'])

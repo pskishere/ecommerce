@@ -9,6 +9,7 @@ if (!token) {
 }
 
 let orderPreview = null
+let selectedItems = []
 let selectedCoupon = null
 let selectedAddress = null
 let remark = ''
@@ -16,10 +17,45 @@ let paymentMethod = 'wxpay'
 let availableCoupons = []
 
 async function loadOrderItems() {
-  // 1. 同步购物车
+  // 1. 从服务器获取购物车数据
+  let cartItems = []
   try {
-    await api.cart.getList()
-  } catch (e) { console.error('cart sync failed', e) }
+    const result = await api.cart.getList()
+    cartItems = result.items || []
+    // 同步到本地存储
+    localStorage.setItem('cart', JSON.stringify(cartItems.map(item => ({
+      cartId: item.cartId,
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      original: item.original,
+      qty: item.qty,
+      selected: item.selected,
+      img: item.img
+    }))))
+  } catch (e) {
+    console.error('cart sync failed', e)
+    // fallback to localStorage
+    cartItems = JSON.parse(localStorage.getItem('cart') || '[]').map(item => ({
+      cartId: item.cartId || item.id,
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      original: item.original || item.price,
+      qty: item.qty,
+      selected: item.selected !== false,
+      img: item.img
+    }))
+  }
+
+  // 过滤已选中的商品（存到模块级变量）
+  selectedItems = cartItems.filter(item => item.selected)
+  if (selectedItems.length === 0) {
+    const body = document.getElementById('checkoutBody')
+    if (body) body.innerHTML = `<div class="checkout-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><div class="checkout-empty-text">请先选择商品</div><button class="checkout-empty-btn" onclick="window.location.href='cart.html'">去购物车</button></div>`
+    document.getElementById('checkoutBar')?.remove()
+    return
+  }
 
   // 2. 并行加载地址和优惠券
   let addresses = [], coupons = []
@@ -52,19 +88,9 @@ async function renderCheckout() {
   const body = document.getElementById('checkoutBody')
   if (!body) return
 
-  // 加载本地购物车
-  const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-  const selectedItems = cart.filter(item => item.selected)
-
-  if (selectedItems.length === 0) {
-    body.innerHTML = `<div class="checkout-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><div class="checkout-empty-text">请先选择商品</div><button class="checkout-empty-btn" onclick="window.location.href='cart.html'">去购物车</button></div>`
-    document.getElementById('checkoutBar')?.remove()
-    return
-  }
-
   // 预订单
   if (!orderPreview) {
-    const cartItemIds = selectedItems.map(item => item.cartId || item.id).filter(Boolean)
+    const cartItemIds = selectedItems.map(item => item.cartId).filter(Boolean)
     try {
       orderPreview = await api.order.preview({
         cartItemIds,
@@ -75,15 +101,7 @@ async function renderCheckout() {
     } catch (e) {
       console.error('preview failed, using local', e)
       orderPreview = {
-        items: selectedItems.map(item => ({
-          cartId: item.cartId || item.id,
-          productId: item.id,
-          name: item.name,
-          price: item.price,
-          originalPrice: item.original || item.price,
-          quantity: item.qty,
-          image: item.img
-        })),
+        items: selectedItems,
         subtotal: selectedItems.reduce((s, i) => s + i.price * i.qty, 0),
         freight: 0,
         total: selectedItems.reduce((s, i) => s + i.price * i.qty, 0),

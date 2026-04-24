@@ -3,17 +3,21 @@ import { api } from '../data/api.js'
 import { showToast } from '../components/toast.js'
 
 let cart = []
+let cartTotal = 0
 let recommendProducts = []
 let isEditMode = false
 let cartLoaded = false
 
 async function loadCartFromServer() {
   try {
-    cart = await api.cart.getList()
+    const result = await api.cart.getList()
+    cart = result.items
+    cartTotal = result.total
     cartLoaded = true
   } catch (e) {
     console.error('Failed to load cart from server:', e)
     cart = []
+    cartTotal = 0
     cartLoaded = true
   }
 }
@@ -202,12 +206,25 @@ function bindCartEvents() {
 
   document.getElementById('storeCheck')?.addEventListener('click', async () => {
     const allSelected = cart.every(i => i.selected)
-    cart.forEach(i => i.selected = !allSelected)
-    // Sync to server
-    for (const item of cart) {
-      if (item.id && !item.id.startsWith('local_')) {
-        await api.cart.toggleItem(item.id)
+    if (allSelected) {
+      // All selected → deselect all: toggle all (inverts to off)
+      cart.forEach(i => i.selected = false)
+      for (const item of cart) {
+        if (item.cartId && !item.cartId.startsWith('local_')) {
+          await api.cart.toggleItem(item.cartId)
+        }
       }
+    } else {
+      // Not all selected → select all: only toggle those that are currently unselected
+      for (const item of cart) {
+        if (item.cartId && !item.cartId.startsWith('local_')) {
+          if (!item.selected) {
+            item.selected = true
+            await api.cart.toggleItem(item.cartId)
+          }
+        }
+      }
+      cart.forEach(i => { if (!i.cartId || i.cartId.startsWith('local_')) i.selected = true })
     }
     await loadCartFromServer()
     renderCart()
@@ -223,8 +240,8 @@ function bindCartEvents() {
       if (!cart[idx]) return
       cart[idx].selected = !cart[idx].selected
       // Sync to server
-      if (cart[idx].id && !cart[idx].id.startsWith('local_')) {
-        await api.cart.toggleItem(cart[idx].id)
+      if (cart[idx].cartId && !cart[idx].cartId.startsWith('local_')) {
+        await api.cart.toggleItem(cart[idx].cartId)
       }
       await loadCartFromServer()
       renderCart()
@@ -251,19 +268,31 @@ function bindCartEvents() {
       renderCart()
     })
   })
-
-  }
+}
 
 function setupSelectAll() {
   ['selectAll', 'selectAllEdit'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', async () => {
       const allSelected = cart.every(i => i.selected)
-      cart.forEach(i => i.selected = !allSelected)
-      // Sync to server
-      for (const item of cart) {
-        if (item.id && !item.id.startsWith('local_')) {
-          await api.cart.toggleItem(item.id)
+      if (allSelected) {
+        // All selected → deselect all: toggle all (inverts to off)
+        cart.forEach(i => i.selected = false)
+        for (const item of cart) {
+          if (item.cartId && !item.cartId.startsWith('local_')) {
+            await api.cart.toggleItem(item.cartId)
+          }
         }
+      } else {
+        // Not all selected → select all: only toggle those currently unselected
+        for (const item of cart) {
+          if (item.cartId && !item.cartId.startsWith('local_')) {
+            if (!item.selected) {
+              item.selected = true
+              await api.cart.toggleItem(item.cartId)
+            }
+          }
+        }
+        cart.forEach(i => { if (!i.cartId || i.cartId.startsWith('local_')) i.selected = true })
       }
       await loadCartFromServer()
       renderCart()
@@ -272,11 +301,8 @@ function setupSelectAll() {
 }
 
 function updateTotals() {
-  const selected = cart.filter(i => i.selected)
-  const total = selected.reduce((s, i) => s + i.price * i.qty, 0)
-  const count = selected.reduce((s, i) => s + i.qty, 0)
-
-  document.getElementById('totalPrice').textContent = `¥${total}`
+  const count = cart.filter(i => i.selected).reduce((s, i) => s + i.qty, 0)
+  document.getElementById('totalPrice').textContent = `¥${cartTotal}`
   document.getElementById('checkoutCount').textContent = count
 
   const allSelected = cart.length > 0 && cart.every(i => i.selected)

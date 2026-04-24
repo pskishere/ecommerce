@@ -82,14 +82,22 @@ class Command(BaseCommand):
 
     def _create_users(self):
         self.stdout.write('\nCreating users...')
-        testuser, _ = User.objects.get_or_create(username='testuser')
-        UserProfile.objects.get_or_create(user=testuser, defaults={'user_type': 'user', 'phone': '13800138000'})
-        self.stdout.write(f'  testuser: {testuser.username}')
-
-        admin, created = User.objects.get_or_create(username='admin')
+        testuser, created = User.objects.get_or_create(username='testuser')
         if created:
+            testuser.set_password('testuser')
+            testuser.email = 'test@example.com'
+            testuser.save()
+        UserProfile.objects.get_or_create(user=testuser, defaults={'user_type': 'user', 'phone': '13800138000'})
+        self.stdout.write(f'  testuser: {testuser.username} (password: testuser)')
+
+        admin, admin_created = User.objects.get_or_create(username='admin')
+        if admin_created:
             admin.set_password('admin123')
             admin.email = 'admin@example.com'
+            admin.save()
+        else:
+            # 确保已有 admin 用户的密码正确
+            admin.set_password('admin123')
             admin.save()
         UserProfile.objects.get_or_create(user=admin, defaults={'user_type': 'admin', 'phone': '13900139000'})
         AdminProfile.objects.get_or_create(user=admin, defaults={'permissions': {'can_manage_orders': True, 'can_manage_products': True}})
@@ -309,8 +317,8 @@ class Command(BaseCommand):
         self.stdout.write('\nCreating home banners...')
         banners_data = [
             ('banner-1-summer-1710.webp', '夏装新品', '清凉一夏', '立即选购', 0),
-            ('banner-new-1710.webp', '美妆节', '焕新美妆', '查看详情', 1),
-            ('banner-flash-1710.webp', '限时特惠', '折扣专区', '马上抢', 2),
+            ('banner-2-newarrival-1710.webp', '美妆节', '焕新美妆', '查看详情', 1),
+            ('banner-3-discount-1710.webp', '限时特惠', '折扣专区', '马上抢', 2),
         ]
         for img, tag, title, action, gradient in banners_data:
             banner_media = self._get_media(img)

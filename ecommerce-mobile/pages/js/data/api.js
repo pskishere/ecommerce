@@ -290,7 +290,8 @@ const api = {
 
     getList: () => request('/api/h5/cart/').then(data => {
       const items = Array.isArray(data) ? data : (data && data.items) || []
-      return items.map(mapCartItem)
+      const total = (data && data.total) || 0
+      return { items: items.map(mapCartItem), total }
     }),
     getTotal: () => request('/api/h5/cart/').then(data =>
       (Array.isArray(data) ? data : (data && data.items) || []).reduce((s, i) => s + ((i.product && (i.product.price || 0)) || 0) * (i.quantity || 0), 0)
@@ -311,7 +312,7 @@ const api = {
 
     removeItem: (itemId) => request('/api/h5/cart/' + itemId + '/', { method: 'DELETE' }),
 
-    toggleItem: (itemId) => request('/api/h5/cart/' + itemId + '/toggle/', { method: 'PUT' }),
+    toggleItem: (itemId) => request('/api/h5/cart/' + itemId + '/toggle/', { method: 'PATCH' }),
 
     selectAll: (selected) => request('/api/h5/cart/select-all/?selected=' + selected, { method: 'PUT' }),
 
@@ -452,9 +453,16 @@ const api = {
   },
 
   user: {
-    login: (userId) => request('/api/h5/login/', {
+    loginH5: (username, password) => request('/api/h5/login/', {
       method: 'POST',
-      body: JSON.stringify({ user_id: userId || 'u1' })
+      body: JSON.stringify({ username, password })
+    }).then(data => {
+      if (data && data.token) setToken(data.token)
+      return data
+    }),
+    loginIOS: (username, password) => request('/api/ios/login/', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
     }).then(data => {
       if (data && data.token) setToken(data.token)
       return data

@@ -22,9 +22,10 @@ router.register(r'user', views.UserViewSet, basename='user')
 
 urlpatterns = [
     path('h5/', include(router.urls)),
-    path('h5/login/', views.login, name='login'),
-    path('h5/user/', views.user_profile, name='user_profile'),
+    path('h5/login/', views.h5_login, name='h5_login'),
+    path('h5/user/', views.user_profile, name='h5_user_profile'),
     path('ios/', include(router.urls)),
-    path('ios/login/', views.login, name='login'),
-    path('ios/user/', views.user_profile, name='user_profile'),
+    path('ios/login/', views.ios_login, name='ios_login'),
+    path('ios/user/', views.user_profile, name='ios_user_profile'),
+    path('admin/login/', views.admin_login, name='admin_login'),
 ]

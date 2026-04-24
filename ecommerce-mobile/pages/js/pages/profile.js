@@ -91,16 +91,6 @@ function renderProfile() {
     }
   }
 
-  // Update stats
-  const followCount = document.getElementById('followCount')
-  if (followCount) followCount.textContent = userData.followCount || '0'
-
-  const fansCount = document.getElementById('fansCount')
-  if (fansCount) fansCount.textContent = userData.fansCount || '0'
-
-  const pointsCount = document.getElementById('pointsCount')
-  if (pointsCount) pointsCount.textContent = userData.points || '0'
-
   // Update order badges
   const pendingBadge = document.getElementById('pendingBadge')
   if (pendingBadge) {

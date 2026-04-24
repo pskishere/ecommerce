@@ -48,7 +48,7 @@
 .cart-content {
   flex: 1;
   padding-top: 56px;
-  padding-bottom: calc(140px + 64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 64px;
 }
 
 /* ── Cart Store Section ── */

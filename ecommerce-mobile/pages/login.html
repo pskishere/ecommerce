@@ -225,8 +225,13 @@
 
     <div class="login-form">
       <div class="login-input-group">
-        <label class="login-label">用户ID</label>
-        <input type="text" class="login-input" id="userIdInput" placeholder="请输入用户ID" value="test01">
+        <label class="login-label">用户名</label>
+        <input type="text" class="login-input" id="usernameInput" placeholder="请输入用户名" value="testuser">
+      </div>
+
+      <div class="login-input-group">
+        <label class="login-label">密码</label>
+        <input type="password" class="login-input" id="passwordInput" placeholder="请输入密码" value="testuser">
       </div>
 
       <button class="login-btn" id="loginBtn" onclick="handleLogin()">登录</button>
@@ -243,14 +248,15 @@
     import { api } from './js/data/api.js';
 
     window.handleLogin = async function() {
-      const userId = document.getElementById('userIdInput').value.trim() || 'u1';
+      const username = document.getElementById('usernameInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
       const btn = document.getElementById('loginBtn');
 
       btn.disabled = true;
       btn.textContent = '登录中...';
 
       try {
-        const data = await api.user.login(userId);
+        const data = await api.user.loginH5(username, password);
         if (data && data.token) {
           showToast('登录成功');
           setTimeout(() => {
@@ -265,10 +271,11 @@
       }
     };
 
-    window.selectQuickUser = function(userId, el) {
+    window.selectQuickUser = function(username, password, el) {
       document.querySelectorAll('.quick-user').forEach(btn => btn.classList.remove('selected'));
       el.classList.add('selected');
-      document.getElementById('userIdInput').value = userId;
+      document.getElementById('usernameInput').value = username;
+      document.getElementById('passwordInput').value = password;
     };
 
     function showToast(msg) {
@@ -279,7 +286,7 @@
     }
 
     // Enter key to login
-    document.getElementById('userIdInput').addEventListener('keypress', (e) => {
+    document.getElementById('passwordInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleLogin();
     });
   </script>
