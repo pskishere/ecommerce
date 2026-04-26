@@ -97,7 +97,7 @@ final class APIClient {
     private let encoder: JSONEncoder
 
     private init() {
-        self.baseURL = "https://upbeat-beauty-production.up.railway.app/api/h5"
+        self.baseURL = "https://handsome-youth-production-98c5.up.railway.app/api/h5"
 
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30

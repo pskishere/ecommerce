@@ -267,6 +267,11 @@ class ProductViewSet(viewsets.ModelViewSet):
             return ProductDetailSerializer
         return ProductListSerializer
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -318,6 +323,11 @@ class SubcategoryViewSet(viewsets.ModelViewSet):
     serializer_class = SubcategorySerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
     @action(detail=True, methods=['get'])
     def products(self, request, pk=None):
         subcategory = self.get_object()
@@ -334,6 +344,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return CategoryWithSubcategoriesSerializer
         return CategorySerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
     @action(detail=True, methods=['get'])
     def subcategories(self, request, pk=None):
@@ -361,11 +376,21 @@ class HomeBannerViewSet(viewsets.ModelViewSet):
     serializer_class = HomeBannerSerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
 
 class HomeFlashSaleViewSet(viewsets.ModelViewSet):
     queryset = HomeFlashSale.objects.filter(is_enabled=True)
     serializer_class = HomeFlashSaleSerializer
     permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
 class HomeHotRankViewSet(viewsets.ModelViewSet):
@@ -373,11 +398,21 @@ class HomeHotRankViewSet(viewsets.ModelViewSet):
     serializer_class = HomeHotRankSerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
 
 class HomeRecommendViewSet(viewsets.ModelViewSet):
     queryset = HomeRecommend.objects.filter(is_enabled=True)
     serializer_class = HomeRecommendSerializer
     permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
 class HomeNewArrivalViewSet(viewsets.ModelViewSet):
@@ -385,11 +420,21 @@ class HomeNewArrivalViewSet(viewsets.ModelViewSet):
     serializer_class = HomeNewArrivalSerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
 
 class HomePromotionViewSet(viewsets.ModelViewSet):
     queryset = HomePromotion.objects.filter(is_enabled=True)
     serializer_class = HomePromotionSerializer
     permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
 class CartViewSet(viewsets.ModelViewSet):
