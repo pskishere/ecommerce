@@ -219,6 +219,8 @@ async function renderHomePage() {
         </div>
         <span class="category-name">${c.name}</span>
       </a>`).join('')
+    // Trigger reveal for newly added elements
+    window.dispatchEvent(new Event('scroll'))
   }
 
   // 限时抢购
