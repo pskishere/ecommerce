@@ -8,11 +8,15 @@ from .models import (
 
 
 def get_image_url(image_field, context):
+    from django.conf import settings
     if image_field and image_field.file:
+        if getattr(settings, 'GITHUB_RAW_URL', ''):
+            # Use GitHub Raw URL for images
+            filename = image_field.file.name  # e.g., "uploads/xxx.webp"
+            return f"{settings.GITHUB_RAW_URL}/{filename}"
         if context and 'request' in context:
             return context['request'].build_absolute_uri(image_field.file.url)
         # 如果没有request，尝试构建绝对URL
-        from django.conf import settings
         if hasattr(image_field, 'url'):
             return settings.SITE_URL.rstrip('/') + '/' + image_field.url.lstrip('/')
         return image_field.file.url
