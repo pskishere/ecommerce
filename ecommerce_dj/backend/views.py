@@ -165,70 +165,149 @@ def get_image_url(image_field, context=None):
 
 
 # ============ SKU Algorithm ============
+# Reference: https://github.com/xieyezi/sku-algorithm
+# 权值说明: 0=互不相连, 1=同级(同规格组), >=2=可组合成有效SKU
+
 class SKUService:
+    WEIGHT_DISCONNECTED = 0
+    WEIGHT_SAME_LEVEL = 1
+    WEIGHT_COMBINABLE = 2
+
     def __init__(self, spec_groups, skus):
         self.spec_groups = spec_groups
         self.skus = skus
+        self.vertex = []  # 所有规格值的code列表
         self.code_to_index = {}
-        self.adj_matrix = []
-        self._build_graph()
+        self.group_map = {}  # code -> group_id
+        self.quantity = 0
+        self.matrix = []  # 权值矩阵
+        self._build_matrix()
 
-    def _build_graph(self):
-        idx = 0
+    def _build_matrix(self):
+        # 1. 收集所有顶点
         for group in self.spec_groups:
             for value in group.values.all():
-                code = f"{group.id}:{value.id}"
-                self.code_to_index[code] = idx
-                idx += 1
+                code = self._make_code(group.id, value.id)
+                self.vertex.append(code)
+                self.code_to_index[code] = self.quantity
+                self.group_map[code] = group.id
+                self.quantity += 1
 
-        n = idx
-        self.adj_matrix = [[False] * n for _ in range(n)]
+        # 2. 初始化矩阵为0
+        self.matrix = [0] * (self.quantity * self.quantity)
 
+        # 3. 首先填写有效SKU组合 (weight >= 2) - 这会覆盖同组值的初始连接
         for sku in self.skus:
-            spec_value_ids = list(sku.spec_values.values_list('id', flat=True))
-            if len(spec_value_ids) < 1:
-                continue
-            for i in range(len(spec_value_ids)):
-                for j in range(i + 1, len(spec_value_ids)):
-                    code_i = f"*:{spec_value_ids[i]}"
-                    code_j = f"*:{spec_value_ids[j]}"
-                    for group in self.spec_groups:
-                        for value in group.values.all():
-                            if value.id == spec_value_ids[i]:
-                                code_i = f"{group.id}:{value.id}"
-                            if value.id == spec_value_ids[j]:
-                                code_j = f"{group.id}:{spec_value_ids[j]}"
-                    if code_i in self.code_to_index and code_j in self.code_to_index:
-                        ii, jj = self.code_to_index[code_i], self.code_to_index[code_j]
-                        self.adj_matrix[ii][jj] = True
-                        self.adj_matrix[jj][ii] = True
+            spec_codes = []
+            for sv in sku.spec_values.all():
+                for group in self.spec_groups:
+                    for value in group.values.all():
+                        if value.id == sv.id:
+                            code = self._make_code(group.id, value.id)
+                            spec_codes.append(code)
+                            break
+            for i in range(len(spec_codes)):
+                for j in range(len(spec_codes)):
+                    if i != j:
+                        self._set_weight(spec_codes[i], spec_codes[j], self.WEIGHT_COMBINABLE)
+
+        # 4. 然后填写同组点 (weight = 1) - 只对还没有>=2权重的连接设置
+        for group in self.spec_groups:
+            group_codes = []
+            for value in group.values.all():
+                code = self._make_code(group.id, value.id)
+                group_codes.append(code)
+            for i in range(len(group_codes)):
+                for j in range(len(group_codes)):
+                    if i != j:
+                        # 只设置weight=1如果当前是0（没有被SKU组合覆盖）
+                        idx = self.code_to_index[group_codes[i]] * self.quantity + self.code_to_index[group_codes[j]]
+                        if self.matrix[idx] == 0:
+                            self.matrix[idx] = self.WEIGHT_SAME_LEVEL
+
+    def _make_code(self, group_id, value_id):
+        return f"{group_id}:{value_id}"
+
+    def _set_weight(self, code1, code2, weight):
+        if code1 not in self.code_to_index or code2 not in self.code_to_index:
+            return
+        i = self.code_to_index[code1]
+        j = self.code_to_index[code2]
+        idx = i * self.quantity + j
+        current = self.matrix[idx]
+        if current < weight:
+            self.matrix[idx] = weight
 
     def get_available_spec_values(self, selected_ids):
         if not selected_ids:
             return self._all_available()
 
-        matching_skus = []
-        for sku in self.skus:
-            sku_spec_ids = set(sku.spec_values.values_list('id', flat=True))
-            if all(sid in sku_spec_ids for sid in selected_ids):
-                matching_skus.append(sku)
+        # Build selected_codes
+        selected_codes = []
+        for group in self.spec_groups:
+            for value in group.values.all():
+                if value.id in selected_ids:
+                    code = self._make_code(group.id, value.id)
+                    selected_codes.append(code)
 
-        if not matching_skus:
-            return [{'groupId': g.id, 'availableValues': []} for g in self.spec_groups]
+        if not selected_codes:
+            return self._all_available()
 
-        available_in_skus = set()
-        for sku in matching_skus:
-            for sv in sku.spec_values.all():
-                available_in_skus.add(sv.id)
+        # Determine which groups have selections
+        groups_with_selection = set()
+        for code in selected_codes:
+            for group in self.spec_groups:
+                if code.startswith(f'{group.id}:'):
+                    groups_with_selection.add(group.id)
+                    break
 
+        # For each group, determine available values
         results = []
         for group in self.spec_groups:
             avail_ids = []
-            for value in group.values.all():
-                if value.id in available_in_skus:
-                    avail_ids.append(value.id)
+            if group.id not in groups_with_selection:
+                # This group has no selection - return values that can combine with ALL selected
+                for value in group.values.all():
+                    code = self._make_code(group.id, value.id)
+                    if self._can_combine_with_all(code, selected_codes):
+                        avail_ids.append(value.id)
+            else:
+                # This group has selection - only return selected values that can combine with ALL selected
+                for value in group.values.all():
+                    code = self._make_code(group.id, value.id)
+                    is_selected = code in selected_codes
+                    can_combine = self._can_combine_with_all(code, selected_codes)
+                    if is_selected and can_combine:
+                        avail_ids.append(value.id)
+
             results.append({'groupId': group.id, 'availableValues': avail_ids})
+
         return results
+
+    def _can_combine_with_all(self, code, selected_codes):
+        """Check if code can combine with ALL selected codes.
+        If only one selected (code itself), allow same-level (weight=1).
+        If multiple selected, require weight >= 2 for all connections.
+        """
+        if code not in self.code_to_index:
+            return False
+
+        # If only one selected and it's this code, allow same-level
+        if len(selected_codes) == 1 and selected_codes[0] == code:
+            return True
+
+        idx = self.code_to_index[code]
+
+        for sel_code in selected_codes:
+            if sel_code == code:
+                continue
+            if sel_code not in self.code_to_index:
+                return False
+            sel_idx = self.code_to_index[sel_code]
+            weight = self.matrix[sel_idx * self.quantity + idx]
+            if weight < 2:  # Not combinable (must be >= 2 for multi-selection)
+                return False
+        return True
 
     def _all_available(self):
         results = []
@@ -261,6 +340,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return ProductDetailSerializer
         return ProductListSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -313,6 +397,11 @@ class SubcategoryViewSet(viewsets.ModelViewSet):
     serializer_class = SubcategorySerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
     @action(detail=True, methods=['get'])
     def products(self, request, pk=None):
         subcategory = self.get_object()
@@ -329,6 +418,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return CategoryWithSubcategoriesSerializer
         return CategorySerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
     @action(detail=True, methods=['get'])
     def subcategories(self, request, pk=None):
@@ -356,11 +450,21 @@ class HomeBannerViewSet(viewsets.ModelViewSet):
     serializer_class = HomeBannerSerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
 
 class HomeFlashSaleViewSet(viewsets.ModelViewSet):
     queryset = HomeFlashSale.objects.filter(is_enabled=True)
     serializer_class = HomeFlashSaleSerializer
     permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
 class HomeHotRankViewSet(viewsets.ModelViewSet):
@@ -368,17 +472,42 @@ class HomeHotRankViewSet(viewsets.ModelViewSet):
     serializer_class = HomeHotRankSerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
 
 class HomeRecommendViewSet(viewsets.ModelViewSet):
     queryset = HomeRecommend.objects.filter(is_enabled=True)
     serializer_class = HomeRecommendSerializer
     permission_classes = [AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
 
 class HomeNewArrivalViewSet(viewsets.ModelViewSet):
     queryset = HomeNewArrival.objects.filter(is_enabled=True)
     serializer_class = HomeNewArrivalSerializer
     permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
+class HomePromotionViewSet(viewsets.ModelViewSet):
+    queryset = HomePromotion.objects.filter(is_enabled=True)
+    serializer_class = HomePromotionSerializer
+    permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
 class HomePromotionViewSet(viewsets.ModelViewSet):
@@ -450,6 +579,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         if status:
             qs = qs.filter(status=status)
         return qs.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
     def create(self, request):
         user = get_user(request)

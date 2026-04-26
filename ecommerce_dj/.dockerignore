@@ -1,0 +1,9 @@
+*.pyc
+__pycache__
+*.sqlite3
+db.sqlite3
+.env
+.git
+.gitignore
+mediafiles/db.sqlite3
+seed_data.json
