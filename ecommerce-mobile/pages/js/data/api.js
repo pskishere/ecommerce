@@ -1,5 +1,5 @@
 // API Configuration
-const BASE_URL = 'https://upbeat-beauty-production.up.railway.app'
+const BASE_URL = 'https://handsome-youth-production-98c5.up.railway.app'
 
 const getToken = () => localStorage.getItem('token') || ''
 const setToken = (token) => localStorage.setItem('token', token)
