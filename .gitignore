@@ -79,10 +79,6 @@ Icon?
 *.db
 *.sqlite3
 
-# Media/Static
-/media/
-/static/
-
 # Environment
 .env
 .env.local
@@ -94,9 +90,6 @@ Icon?
 *.log
 npm-debug.log*
 logs/
-
-# Uploads
-uploads/
 
 # Testing
 .pytest_cache/
