@@ -102,8 +102,11 @@ REST_FRAMEWORK = {
 # Media files (user uploads)
 MEDIA_URL = '/media/'
 
+# GitHub Raw URL for media files (for production)
+GITHUB_RAW_URL = os.environ.get('GITHUB_RAW_URL', '')
+
 # Cloudflare R2 Storage (for production)
-if os.environ.get('R2_ACCOUNT_ID'):
+if os.environ.get('R2_ACCOUNT_ID') and os.environ.get('R2_ACCESS_KEY_ID'):
     AWS_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
@@ -118,5 +121,8 @@ if os.environ.get('R2_ACCOUNT_ID'):
     # Media files stored in R2
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{os.environ.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com/media/"
+elif GITHUB_RAW_URL:
+    # Use GitHub Raw URLs
+    MEDIA_URL = GITHUB_RAW_URL
 else:
     MEDIA_ROOT = BASE_DIR / 'media'

@@ -157,7 +157,12 @@ REGION_DATA = {
 
 
 def get_image_url(image_field, context=None):
+    from django.conf import settings
     if image_field and image_field.file:
+        if getattr(settings, 'GITHUB_RAW_URL', ''):
+            # Use GitHub Raw URL for images
+            filename = image_field.file.name  # e.g., "uploads/xxx.webp"
+            return f"{settings.GITHUB_RAW_URL}/{filename}"
         if context and 'request' in context:
             return context['request'].build_absolute_uri(image_field.file.url)
         return image_field.file.url
