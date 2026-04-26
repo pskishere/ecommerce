@@ -1,5 +1,5 @@
 // API Configuration
-const BASE_URL = 'http://127.0.0.1:8080'
+const BASE_URL = 'https://upbeat-beauty-production.up.railway.app'
 
 const getToken = () => localStorage.getItem('token') || ''
 const setToken = (token) => localStorage.setItem('token', token)
