@@ -9,9 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy project
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "ecommerce_dj.wsgi:application"]
+# Use Railway's PORT env var
+ENV PORT=8000
+
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:$PORT --workers 2 ecommerce_dj.wsgi:application"]
