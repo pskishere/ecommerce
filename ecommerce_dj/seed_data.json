@@ -1,0 +1,6252 @@
+[
+{
+  "model": "auth.user",
+  "pk": 26,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$xueVtzGEiBlw113jGhhl8x$XSz83Nz/fUpIECwIOsGBO73aHyJaWYVO6lIhV5v+BdA=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "testuser",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-04-24T02:13:05.571Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 27,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$Sb1sJ18Oqozg9Ear8MsoXT$7J+T+m1zS6aRREzM6po2UE/ZZat6TCyas0zIG8wySBE=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@example.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-04-24T02:13:05.573Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authtoken.token",
+  "pk": "5396b614d5839e20dd6a4294987e79684daa00d2",
+  "fields": {
+    "user": 26,
+    "created": "2026-04-24T02:13:15.235Z"
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "0bf0c846-e766-42be-a",
+  "fields": {
+    "name": "女装",
+    "icon": "caa684f5-6692-4d2a-a",
+    "banner": "050aa71a-0e52-49a1-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "1a585d22-99f7-4283-9",
+  "fields": {
+    "name": "男装",
+    "icon": "fdfccb3d-359a-471d-b",
+    "banner": "11f57a51-05af-4661-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "2bafcded-1444-4ec3-a",
+  "fields": {
+    "name": "美妆护肤",
+    "icon": "1fa608f6-9b38-4ea5-a",
+    "banner": "84f9ac80-f820-43d7-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "36fb0810-5a6b-42ba-a",
+  "fields": {
+    "name": "运动户外",
+    "icon": "e78d071b-4653-4922-b",
+    "banner": "84f9ac80-f820-43d7-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "8342dc2c-68fb-40a9-9",
+  "fields": {
+    "name": "数码电子",
+    "icon": "2c098ec6-3a26-4ec7-a",
+    "banner": "050aa71a-0e52-49a1-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "a0a063de-a4e3-498e-9",
+  "fields": {
+    "name": "食品生鲜",
+    "icon": "f858865a-b344-4a19-a",
+    "banner": "050aa71a-0e52-49a1-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "bdb9e8c1-5ed1-4995-a",
+  "fields": {
+    "name": "家居生活",
+    "icon": "38b8df81-01c8-481e-b",
+    "banner": "11f57a51-05af-4661-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.category",
+  "pk": "cf634869-4ded-4030-8",
+  "fields": {
+    "name": "潮流配饰",
+    "icon": "757f09e0-78c1-4ed6-a",
+    "banner": "11f57a51-05af-4661-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "0d235c6b-6385-4cf6-b",
+  "fields": {
+    "name": "首饰",
+    "icon": null,
+    "category": "cf634869-4ded-4030-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "196d8873-d753-4e3b-b",
+  "fields": {
+    "name": "收纳",
+    "icon": null,
+    "category": "bdb9e8c1-5ed1-4995-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "19b58acd-fa8d-4f21-b",
+  "fields": {
+    "name": "彩妆",
+    "icon": null,
+    "category": "2bafcded-1444-4ec3-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "1c2270d7-70b2-49aa-9",
+  "fields": {
+    "name": "个护",
+    "icon": null,
+    "category": "2bafcded-1444-4ec3-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "22ae557d-b1da-4166-a",
+  "fields": {
+    "name": "香水",
+    "icon": null,
+    "category": "2bafcded-1444-4ec3-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "23b7b5fe-e36a-4e2e-a",
+  "fields": {
+    "name": "帽子",
+    "icon": null,
+    "category": "cf634869-4ded-4030-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "2a2c63b2-4ac8-4bcd-b",
+  "fields": {
+    "name": "衬衫",
+    "icon": null,
+    "category": "1a585d22-99f7-4283-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "2b143b45-c1c8-4a4c-9",
+  "fields": {
+    "name": "健身",
+    "icon": null,
+    "category": "36fb0810-5a6b-42ba-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "33e7e114-c77f-4031-a",
+  "fields": {
+    "name": "智能穿戴",
+    "icon": null,
+    "category": "8342dc2c-68fb-40a9-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "36ca7bfd-3f6d-4849-8",
+  "fields": {
+    "name": "运动服饰",
+    "icon": null,
+    "category": "36fb0810-5a6b-42ba-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "44808196-2eea-4379-9",
+  "fields": {
+    "name": "粮油",
+    "icon": null,
+    "category": "a0a063de-a4e3-498e-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "507f592c-3c1c-4fde-8",
+  "fields": {
+    "name": "外套",
+    "icon": null,
+    "category": "1a585d22-99f7-4283-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "5091ef27-9678-47a1-8",
+  "fields": {
+    "name": "家装",
+    "icon": null,
+    "category": "bdb9e8c1-5ed1-4995-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "54851870-0862-4e25-a",
+  "fields": {
+    "name": "水果",
+    "icon": null,
+    "category": "a0a063de-a4e3-498e-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "5a68f7f9-3b8e-4bbf-9",
+  "fields": {
+    "name": "手机",
+    "icon": null,
+    "category": "8342dc2c-68fb-40a9-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "65f5d1b6-c93b-4809-9",
+  "fields": {
+    "name": "T恤",
+    "icon": null,
+    "category": "1a585d22-99f7-4283-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "6c44261e-e553-4df2-9",
+  "fields": {
+    "name": "面膜",
+    "icon": null,
+    "category": "2bafcded-1444-4ec3-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "7082498f-fac6-4444-8",
+  "fields": {
+    "name": "衬衫",
+    "icon": null,
+    "category": "0bf0c846-e766-42be-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "8106988f-01f7-475a-8",
+  "fields": {
+    "name": "茶叶",
+    "icon": null,
+    "category": "a0a063de-a4e3-498e-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "840d47bf-e97e-4b03-b",
+  "fields": {
+    "name": "零食",
+    "icon": null,
+    "category": "a0a063de-a4e3-498e-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "875b60a1-e58a-433f-a",
+  "fields": {
+    "name": "箱包",
+    "icon": null,
+    "category": "36fb0810-5a6b-42ba-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "8a365001-b4c9-4e7f-a",
+  "fields": {
+    "name": "牛仔裤",
+    "icon": null,
+    "category": "0bf0c846-e766-42be-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "94a0b897-d04f-4f65-a",
+  "fields": {
+    "name": "T恤",
+    "icon": null,
+    "category": "0bf0c846-e766-42be-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "a53e74bb-f0fb-485a-b",
+  "fields": {
+    "name": "运动鞋",
+    "icon": null,
+    "category": "36fb0810-5a6b-42ba-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "a63a0aa2-7d04-42c3-9",
+  "fields": {
+    "name": "音箱",
+    "icon": null,
+    "category": "8342dc2c-68fb-40a9-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "ab55e049-78ca-4700-8",
+  "fields": {
+    "name": "清洁",
+    "icon": null,
+    "category": "bdb9e8c1-5ed1-4995-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "ae59f1ea-e260-474f-a",
+  "fields": {
+    "name": "护肤",
+    "icon": null,
+    "category": "2bafcded-1444-4ec3-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "af00f4d0-a62a-48f4-9",
+  "fields": {
+    "name": "连衣裙",
+    "icon": null,
+    "category": "0bf0c846-e766-42be-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "b046628c-2d74-4e9e-b",
+  "fields": {
+    "name": "生鲜",
+    "icon": null,
+    "category": "a0a063de-a4e3-498e-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "b1759b8c-d8bc-40fd-a",
+  "fields": {
+    "name": "厨具",
+    "icon": null,
+    "category": "bdb9e8c1-5ed1-4995-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "bcdb6ec2-d662-42e4-a",
+  "fields": {
+    "name": "裤装",
+    "icon": null,
+    "category": "1a585d22-99f7-4283-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "c388a49d-627a-46e9-b",
+  "fields": {
+    "name": "耳机",
+    "icon": null,
+    "category": "8342dc2c-68fb-40a9-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "d95d97ec-6f45-425c-8",
+  "fields": {
+    "name": "配件",
+    "icon": null,
+    "category": "8342dc2c-68fb-40a9-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "dc463d8d-4d48-47c7-9",
+  "fields": {
+    "name": "眼镜",
+    "icon": null,
+    "category": "cf634869-4ded-4030-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "df6d1668-1cbc-4569-a",
+  "fields": {
+    "name": "家纺",
+    "icon": null,
+    "category": "bdb9e8c1-5ed1-4995-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "e2677ab6-7c26-4d53-b",
+  "fields": {
+    "name": "户外",
+    "icon": null,
+    "category": "36fb0810-5a6b-42ba-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "e8976294-e8cf-4637-b",
+  "fields": {
+    "name": "包包",
+    "icon": null,
+    "category": "cf634869-4ded-4030-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "f3e443bf-0da6-439a-9",
+  "fields": {
+    "name": "卫衣",
+    "icon": null,
+    "category": "1a585d22-99f7-4283-9",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "f6bbd67f-27c2-4033-a",
+  "fields": {
+    "name": "腕表",
+    "icon": null,
+    "category": "cf634869-4ded-4030-8",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.subcategory",
+  "pk": "fddc226f-719f-496c-a",
+  "fields": {
+    "name": "半身裙",
+    "icon": null,
+    "category": "0bf0c846-e766-42be-a",
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "12943ebd-1bdd-4cbf-b",
+  "fields": {
+    "name": "休闲牛仔短裤",
+    "description": "柔软丹宁面料，直筒版型，夏季必备",
+    "price": "99.00",
+    "original_price": "169.00",
+    "image": "b2f01ce3-7081-4cde-9",
+    "subcategory": "bcdb6ec2-d662-42e4-a",
+    "rating": "4.5",
+    "review_count": 0,
+    "sales_count": 13500,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "206f0cea-2dae-4ef9-a",
+  "fields": {
+    "name": "无线充电器",
+    "description": "快充技术，智能识别，多设备兼容",
+    "price": "79.00",
+    "original_price": "129.00",
+    "image": "4730657f-cb55-4b9e-8",
+    "subcategory": "d95d97ec-6f45-425c-8",
+    "rating": "4.7",
+    "review_count": 0,
+    "sales_count": 25000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "37e4e724-fd75-4ab5-a",
+  "fields": {
+    "name": "复古飞行员太阳镜",
+    "description": "UV400防护，金属框，复古时尚",
+    "price": "159.00",
+    "original_price": "299.00",
+    "image": "a28e8c4f-3998-455a-9",
+    "subcategory": "dc463d8d-4d48-47c7-9",
+    "rating": "4.6",
+    "review_count": 0,
+    "sales_count": 18000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "3b615bf4-9c37-4240-8",
+  "fields": {
+    "name": "高腰直筒牛仔裤",
+    "description": "高腰设计，显瘦直筒版型，经典靛蓝色",
+    "price": "159.00",
+    "original_price": "259.00",
+    "image": "b2f01ce3-7081-4cde-9",
+    "subcategory": "8a365001-b4c9-4e7f-a",
+    "rating": "4.7",
+    "review_count": 0,
+    "sales_count": 15000,
+    "is_in_stock": true,
+    "tag": "推荐"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "40d45eb3-3eaf-4e3b-9",
+  "fields": {
+    "name": "简约真皮腕表",
+    "description": "头层牛皮表带，自动机芯，30米防水，百搭款式",
+    "price": "299.00",
+    "original_price": "899.00",
+    "image": "bf32e293-30e2-4696-b",
+    "subcategory": "f6bbd67f-27c2-4033-a",
+    "rating": "5.0",
+    "review_count": 1,
+    "sales_count": 23000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "4f93090d-2590-4c36-a",
+  "fields": {
+    "name": "氨基酸洁面乳",
+    "description": "温和清洁，不刺激，适合敏感肌",
+    "price": "89.00",
+    "original_price": "139.00",
+    "image": "78867165-4bc9-4d4f-b",
+    "subcategory": null,
+    "rating": "4.8",
+    "review_count": 0,
+    "sales_count": 22000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "70c20478-5c16-4688-a",
+  "fields": {
+    "name": "玻尿酸保湿面膜",
+    "description": "深层补水，焕亮肌肤，医美级玻尿酸",
+    "price": "99.00",
+    "original_price": "169.00",
+    "image": "0546a80f-eccb-4173-9",
+    "subcategory": "6c44261e-e553-4df2-9",
+    "rating": "4.9",
+    "review_count": 0,
+    "sales_count": 28000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "8af78ac2-7bd5-4d50-9",
+  "fields": {
+    "name": "法式碎花连衣裙",
+    "description": "优雅碎花图案，轻薄透气面料，适合夏季穿着",
+    "price": "189.00",
+    "original_price": "299.00",
+    "image": "5dd5c65c-ba0b-4ea2-9",
+    "subcategory": "af00f4d0-a62a-48f4-9",
+    "rating": "5.0",
+    "review_count": 1,
+    "sales_count": 8600,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "93c5d40f-7478-4c3a-9",
+  "fields": {
+    "name": "水果礼盒",
+    "description": "当季精选，产地直发，新鲜配送",
+    "price": "99.00",
+    "original_price": "169.00",
+    "image": "4730657f-cb55-4b9e-8",
+    "subcategory": "54851870-0862-4e25-a",
+    "rating": "4.6",
+    "review_count": 0,
+    "sales_count": 21000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "964e0ee3-288a-4d8e-8",
+  "fields": {
+    "name": "商务Polo衫",
+    "description": "珠地棉面料，透气舒适，经典商务款式",
+    "price": "129.00",
+    "original_price": "199.00",
+    "image": "b7f6a1aa-761d-4156-b",
+    "subcategory": null,
+    "rating": "4.6",
+    "review_count": 0,
+    "sales_count": 11000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "96acf927-d979-46aa-9",
+  "fields": {
+    "name": "瑜伽垫",
+    "description": "TPE材质，抗菌防滑，舒适当道",
+    "price": "89.00",
+    "original_price": "149.00",
+    "image": "0546a80f-eccb-4173-9",
+    "subcategory": "2b143b45-c1c8-4a4c-9",
+    "rating": "4.7",
+    "review_count": 0,
+    "sales_count": 24000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "9df3fd29-226f-46db-a",
+  "fields": {
+    "name": "iPhone保护壳",
+    "description": "液态硅胶材质，精准孔位，防摔保护",
+    "price": "59.00",
+    "original_price": "99.00",
+    "image": "4730657f-cb55-4b9e-8",
+    "subcategory": "d95d97ec-6f45-425c-8",
+    "rating": "4.8",
+    "review_count": 0,
+    "sales_count": 35000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "9f78d9d1-fe1a-44e6-b",
+  "fields": {
+    "name": "每日坚果礼盒",
+    "description": "科学配比，独立包装，健康零食",
+    "price": "79.00",
+    "original_price": "129.00",
+    "image": "4730657f-cb55-4b9e-8",
+    "subcategory": "840d47bf-e97e-4b03-b",
+    "rating": "4.8",
+    "review_count": 0,
+    "sales_count": 32000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "a029d39b-dacb-4a10-b",
+  "fields": {
+    "name": "无线蓝牙耳机",
+    "description": "主动降噪，单次续航8小时，轻盈舒适",
+    "price": "199.00",
+    "original_price": "499.00",
+    "image": "78867165-4bc9-4d4f-b",
+    "subcategory": "c388a49d-627a-46e9-b",
+    "rating": "5.0",
+    "review_count": 1,
+    "sales_count": 18000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "a14251fa-7427-4020-9",
+  "fields": {
+    "name": "跑步鞋",
+    "description": "轻量透气，缓震科技，防滑耐磨",
+    "price": "299.00",
+    "original_price": "499.00",
+    "image": "b2f01ce3-7081-4cde-9",
+    "subcategory": "a53e74bb-f0fb-485a-b",
+    "rating": "5.0",
+    "review_count": 1,
+    "sales_count": 18000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "c596eb4e-f536-43d2-9",
+  "fields": {
+    "name": "极简陶瓷咖啡杯",
+    "description": "高温烧制，大理石纹理，容量350ml",
+    "price": "68.00",
+    "original_price": "128.00",
+    "image": "b7f6a1aa-761d-4156-b",
+    "subcategory": "b1759b8c-d8bc-40fd-a",
+    "rating": "4.0",
+    "review_count": 1,
+    "sales_count": 12000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "d0a3d484-d03e-44be-a",
+  "fields": {
+    "name": "骨瓷餐具套装",
+    "description": "精美骨瓷，釉下彩工艺，环保健康",
+    "price": "199.00",
+    "original_price": "329.00",
+    "image": "b7f6a1aa-761d-4156-b",
+    "subcategory": "b1759b8c-d8bc-40fd-a",
+    "rating": "4.8",
+    "review_count": 0,
+    "sales_count": 9800,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "ef888496-adb3-431a-8",
+  "fields": {
+    "name": "日式收纳盒",
+    "description": "优质PP材质，分类收纳，美观实用",
+    "price": "69.00",
+    "original_price": "109.00",
+    "image": "5dd5c65c-ba0b-4ea2-9",
+    "subcategory": "196d8873-d753-4e3b-b",
+    "rating": "4.7",
+    "review_count": 0,
+    "sales_count": 22000,
+    "is_in_stock": true,
+    "tag": "热卖"
+  }
+},
+{
+  "model": "backend.product",
+  "pk": "f6d6cb9c-0ec8-4880-a",
+  "fields": {
+    "name": "纯棉宽松T恤",
+    "description": "100%纯棉，宽松版型，百搭款式",
+    "price": "79.00",
+    "original_price": "129.00",
+    "image": "b7f6a1aa-761d-4156-b",
+    "subcategory": "94a0b897-d04f-4f65-a",
+    "rating": "4.5",
+    "review_count": 0,
+    "sales_count": 12000,
+    "is_in_stock": true,
+    "tag": "爆款"
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "12943ebd-1bdd-4cbf-b",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b2f01ce3-7081-4cde-9",
+    "images": [
+      "b2f01ce3-7081-4cde-9"
+    ],
+    "detail_images": [
+      "b2f01ce3-7081-4cde-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "206f0cea-2dae-4ef9-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "4730657f-cb55-4b9e-8",
+    "images": [
+      "4730657f-cb55-4b9e-8"
+    ],
+    "detail_images": [
+      "4730657f-cb55-4b9e-8"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "37e4e724-fd75-4ab5-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "a28e8c4f-3998-455a-9",
+    "images": [
+      "a28e8c4f-3998-455a-9"
+    ],
+    "detail_images": [
+      "a28e8c4f-3998-455a-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "3b615bf4-9c37-4240-8",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b2f01ce3-7081-4cde-9",
+    "images": [
+      "b2f01ce3-7081-4cde-9"
+    ],
+    "detail_images": [
+      "b2f01ce3-7081-4cde-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "40d45eb3-3eaf-4e3b-9",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "bf32e293-30e2-4696-b",
+    "images": [
+      "bf32e293-30e2-4696-b"
+    ],
+    "detail_images": [
+      "bf32e293-30e2-4696-b"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "4f93090d-2590-4c36-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "78867165-4bc9-4d4f-b",
+    "images": [
+      "78867165-4bc9-4d4f-b"
+    ],
+    "detail_images": [
+      "78867165-4bc9-4d4f-b"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "70c20478-5c16-4688-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "0546a80f-eccb-4173-9",
+    "images": [
+      "0546a80f-eccb-4173-9"
+    ],
+    "detail_images": [
+      "0546a80f-eccb-4173-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "8af78ac2-7bd5-4d50-9",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "5dd5c65c-ba0b-4ea2-9",
+    "images": [
+      "5dd5c65c-ba0b-4ea2-9"
+    ],
+    "detail_images": [
+      "5dd5c65c-ba0b-4ea2-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "93c5d40f-7478-4c3a-9",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "4730657f-cb55-4b9e-8",
+    "images": [
+      "4730657f-cb55-4b9e-8"
+    ],
+    "detail_images": [
+      "4730657f-cb55-4b9e-8"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "964e0ee3-288a-4d8e-8",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b7f6a1aa-761d-4156-b",
+    "images": [
+      "b7f6a1aa-761d-4156-b"
+    ],
+    "detail_images": [
+      "b7f6a1aa-761d-4156-b"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "96acf927-d979-46aa-9",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "0546a80f-eccb-4173-9",
+    "images": [
+      "0546a80f-eccb-4173-9"
+    ],
+    "detail_images": [
+      "0546a80f-eccb-4173-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "9df3fd29-226f-46db-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "4730657f-cb55-4b9e-8",
+    "images": [
+      "4730657f-cb55-4b9e-8"
+    ],
+    "detail_images": [
+      "4730657f-cb55-4b9e-8"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "9f78d9d1-fe1a-44e6-b",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "4730657f-cb55-4b9e-8",
+    "images": [
+      "4730657f-cb55-4b9e-8"
+    ],
+    "detail_images": [
+      "4730657f-cb55-4b9e-8"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "a029d39b-dacb-4a10-b",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "78867165-4bc9-4d4f-b",
+    "images": [
+      "78867165-4bc9-4d4f-b"
+    ],
+    "detail_images": [
+      "78867165-4bc9-4d4f-b"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "a14251fa-7427-4020-9",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b2f01ce3-7081-4cde-9",
+    "images": [
+      "b2f01ce3-7081-4cde-9"
+    ],
+    "detail_images": [
+      "b2f01ce3-7081-4cde-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "c596eb4e-f536-43d2-9",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b7f6a1aa-761d-4156-b",
+    "images": [
+      "b7f6a1aa-761d-4156-b"
+    ],
+    "detail_images": [
+      "b7f6a1aa-761d-4156-b"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "d0a3d484-d03e-44be-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b7f6a1aa-761d-4156-b",
+    "images": [
+      "b7f6a1aa-761d-4156-b"
+    ],
+    "detail_images": [
+      "b7f6a1aa-761d-4156-b"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "ef888496-adb3-431a-8",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "5dd5c65c-ba0b-4ea2-9",
+    "images": [
+      "5dd5c65c-ba0b-4ea2-9"
+    ],
+    "detail_images": [
+      "5dd5c65c-ba0b-4ea2-9"
+    ]
+  }
+},
+{
+  "model": "backend.productdetail",
+  "pk": "f6d6cb9c-0ec8-4880-a",
+  "fields": {
+    "shop_name": "潮流优品官方旗舰店",
+    "shop_logo": "b7f6a1aa-761d-4156-b",
+    "images": [
+      "b7f6a1aa-761d-4156-b"
+    ],
+    "detail_images": [
+      "b7f6a1aa-761d-4156-b"
+    ]
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "005a76be-91a2-4060-a",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "name": "包装",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "08814434-747a-4824-8",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "name": "功效",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "11aac533-2661-4f61-b",
+  "fields": {
+    "product": "a029d39b-dacb-4a10-b",
+    "name": "型号",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "1989accc-9044-437f-b",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "1ea180fb-e66f-42ec-a",
+  "fields": {
+    "product": "9f78d9d1-fe1a-44e6-b",
+    "name": "净含量",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "1f54020f-96d9-470c-b",
+  "fields": {
+    "product": "a029d39b-dacb-4a10-b",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "23098abd-7ddd-41f8-8",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "2836be1e-e653-4f85-b",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "293e754d-ab22-4a5b-9",
+  "fields": {
+    "product": "d0a3d484-d03e-44be-a",
+    "name": "风格",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "2c3e3bd6-363c-4482-8",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "3aa63d02-85c7-4ca6-8",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "3d9668f3-9923-4ebe-b",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "name": "厚度",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "415d91ba-6094-4039-a",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "4b99a933-5b41-4d5b-b",
+  "fields": {
+    "product": "93c5d40f-7478-4c3a-9",
+    "name": "水果",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "502e96f4-b3a7-4d97-a",
+  "fields": {
+    "product": "93c5d40f-7478-4c3a-9",
+    "name": "规格",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "5242c4ee-847c-40ac-9",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "name": "尺码",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "551aee6b-f2af-4e26-a",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "5c052c66-42df-4e05-8",
+  "fields": {
+    "product": "4f93090d-2590-4c36-a",
+    "name": "规格",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "7206e7b9-6153-40a5-a",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "name": "尺码",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "75a4cff9-b250-4506-8",
+  "fields": {
+    "product": "d0a3d484-d03e-44be-a",
+    "name": "件数",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "7607438d-4322-4752-9",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "name": "尺码",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "7afd7aba-e77c-4e99-8",
+  "fields": {
+    "product": "9f78d9d1-fe1a-44e6-b",
+    "name": "口味",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "7b410c8a-59a1-407b-a",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "7bf44c0b-9237-4ef7-8",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "name": "功率",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "7d14fba1-5206-47d0-a",
+  "fields": {
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "name": "颜色",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "8246af81-d5cd-44c9-b",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "name": "型号",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "97bdc533-152a-4172-a",
+  "fields": {
+    "product": "37e4e724-fd75-4ab5-a",
+    "name": "框型",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "acbcb2c5-2029-4393-a",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "name": "容量",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "b69d6fcb-b731-4efc-8",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "name": "尺码",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "b7f48411-657a-4a01-b",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "name": "尺寸",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "d23fb6cb-50ac-424b-b",
+  "fields": {
+    "product": "37e4e724-fd75-4ab5-a",
+    "name": "镜片",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "d5285e79-ef6b-4357-b",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "name": "材质",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "da88827f-2094-4301-b",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "name": "尺码",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "dbc0cdf4-9783-4a4b-9",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "e6351e64-8f5e-435f-b",
+  "fields": {
+    "product": "4f93090d-2590-4c36-a",
+    "name": "功效",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "e67ffe05-9b5f-4d95-a",
+  "fields": {
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "name": "表带",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "efa6878f-40c2-41e2-8",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "name": "尺码",
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specgroup",
+  "pk": "fb92c1e5-c7c6-4cd5-9",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "name": "颜色",
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "014ad964-366b-465b-a",
+  "fields": {
+    "group": "b7f48411-657a-4a01-b",
+    "value": "小",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "07e4f86d-d134-4042-a",
+  "fields": {
+    "group": "b69d6fcb-b731-4efc-8",
+    "value": "S",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "08b229b7-2e2f-4bfa-b",
+  "fields": {
+    "group": "3aa63d02-85c7-4ca6-8",
+    "value": "蓝色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "113cd9c7-b645-46ad-a",
+  "fields": {
+    "group": "3d9668f3-9923-4ebe-b",
+    "value": "6mm",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "132dd50c-128d-48f1-a",
+  "fields": {
+    "group": "7b410c8a-59a1-407b-a",
+    "value": "白色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "1430daf0-79e8-4865-a",
+  "fields": {
+    "group": "7b410c8a-59a1-407b-a",
+    "value": "灰色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "19734fec-4f03-4e29-8",
+  "fields": {
+    "group": "acbcb2c5-2029-4393-a",
+    "value": "200ml",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "1aca5fef-8ad1-4ee7-9",
+  "fields": {
+    "group": "1f54020f-96d9-470c-b",
+    "value": "白色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "230e4ac0-826d-4a31-b",
+  "fields": {
+    "group": "1989accc-9044-437f-b",
+    "value": "银色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "2886f1b7-b92a-4b8e-8",
+  "fields": {
+    "group": "415d91ba-6094-4039-a",
+    "value": "灰色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "2a096bae-652b-4735-9",
+  "fields": {
+    "group": "da88827f-2094-4301-b",
+    "value": "26",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "2b2054b8-793c-4474-a",
+  "fields": {
+    "group": "551aee6b-f2af-4e26-a",
+    "value": "黑白",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "2c4dc63b-e59e-48ee-b",
+  "fields": {
+    "group": "3aa63d02-85c7-4ca6-8",
+    "value": "红色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "30983c46-a9f8-488b-8",
+  "fields": {
+    "group": "08814434-747a-4824-8",
+    "value": "补水",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "30d62019-0c4c-4033-8",
+  "fields": {
+    "group": "b7f48411-657a-4a01-b",
+    "value": "大",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "345c54bf-b393-41be-b",
+  "fields": {
+    "group": "3d9668f3-9923-4ebe-b",
+    "value": "10mm",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "359bce82-f7ba-44ba-9",
+  "fields": {
+    "group": "7d14fba1-5206-47d0-a",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "36838c6b-ad86-40e3-b",
+  "fields": {
+    "group": "dbc0cdf4-9783-4a4b-9",
+    "value": "浅蓝",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "3c05a1be-fe2b-4bde-8",
+  "fields": {
+    "group": "005a76be-91a2-4060-a",
+    "value": "5片装",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "3f38a237-f65b-440f-8",
+  "fields": {
+    "group": "502e96f4-b3a7-4d97-a",
+    "value": "小盒",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "40526e84-8d5d-4f00-9",
+  "fields": {
+    "group": "11aac533-2661-4f61-b",
+    "value": "AirPods2",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "4300cb6e-d9c8-4df9-a",
+  "fields": {
+    "group": "7d14fba1-5206-47d0-a",
+    "value": "棕色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "4347b703-e417-4c82-b",
+  "fields": {
+    "group": "7206e7b9-6153-40a5-a",
+    "value": "XL",
+    "image": null,
+    "sort_order": 4
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "45dfb25a-a95e-4119-b",
+  "fields": {
+    "group": "2c3e3bd6-363c-4482-8",
+    "value": "白色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "48d35a27-8d27-42ca-9",
+  "fields": {
+    "group": "08814434-747a-4824-8",
+    "value": "美白",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "51441792-a71b-42f9-8",
+  "fields": {
+    "group": "1f54020f-96d9-470c-b",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "551845a5-4dd3-45eb-a",
+  "fields": {
+    "group": "7206e7b9-6153-40a5-a",
+    "value": "M",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "5b634bf0-3990-4d67-8",
+  "fields": {
+    "group": "da88827f-2094-4301-b",
+    "value": "30",
+    "image": null,
+    "sort_order": 4
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "5cebdbfc-2529-4255-8",
+  "fields": {
+    "group": "acbcb2c5-2029-4393-a",
+    "value": "300ml",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "5cfa248e-bfb3-4c84-a",
+  "fields": {
+    "group": "08814434-747a-4824-8",
+    "value": "修护",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "5daf6c7e-d00b-4c34-8",
+  "fields": {
+    "group": "e67ffe05-9b5f-4d95-a",
+    "value": "米兰尼斯",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "6054bec4-8f72-4429-8",
+  "fields": {
+    "group": "7b410c8a-59a1-407b-a",
+    "value": "藏青色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "62cd9798-1adb-469a-b",
+  "fields": {
+    "group": "4b99a933-5b41-4d5b-b",
+    "value": "苹果礼盒",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "65112810-3b23-48a6-b",
+  "fields": {
+    "group": "1989accc-9044-437f-b",
+    "value": "白色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "653895f3-9126-4b2b-8",
+  "fields": {
+    "group": "97bdc533-152a-4172-a",
+    "value": "全框",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "661b0b20-d912-45dc-a",
+  "fields": {
+    "group": "d5285e79-ef6b-4357-b",
+    "value": "皮革",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "66233168-a06f-4dc9-b",
+  "fields": {
+    "group": "1989accc-9044-437f-b",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "6846f995-9c9e-4bbd-9",
+  "fields": {
+    "group": "7607438d-4322-4752-9",
+    "value": "M",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "6ebc1dcd-24ac-4a3c-a",
+  "fields": {
+    "group": "dbc0cdf4-9783-4a4b-9",
+    "value": "深蓝",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "70875824-c967-4f97-9",
+  "fields": {
+    "group": "7607438d-4322-4752-9",
+    "value": "S",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "72501ddb-d03e-45f0-9",
+  "fields": {
+    "group": "d23fb6cb-50ac-424b-b",
+    "value": "反光片",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "733f0a63-b6d4-489d-9",
+  "fields": {
+    "group": "d5285e79-ef6b-4357-b",
+    "value": "硅胶",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "74e9939b-6d08-42cb-a",
+  "fields": {
+    "group": "7607438d-4322-4752-9",
+    "value": "L",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "7704ba26-3f2a-456d-8",
+  "fields": {
+    "group": "2836be1e-e653-4f85-b",
+    "value": "灰色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "77130b0a-7f17-45e7-a",
+  "fields": {
+    "group": "75a4cff9-b250-4506-8",
+    "value": "60件套",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "78ec7dce-b38f-49aa-b",
+  "fields": {
+    "group": "7bf44c0b-9237-4ef7-8",
+    "value": "30W",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "78ffb2a5-5d8c-4dee-9",
+  "fields": {
+    "group": "23098abd-7ddd-41f8-8",
+    "value": "深蓝",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "792793d7-a2ad-4002-8",
+  "fields": {
+    "group": "2c3e3bd6-363c-4482-8",
+    "value": "绿色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "79c88604-6957-4b86-9",
+  "fields": {
+    "group": "efa6878f-40c2-41e2-8",
+    "value": "L",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "7b79b815-5d12-47cc-a",
+  "fields": {
+    "group": "efa6878f-40c2-41e2-8",
+    "value": "XL",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "7cbf7e3e-1366-418a-8",
+  "fields": {
+    "group": "5242c4ee-847c-40ac-9",
+    "value": "38",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "7d41eea7-ce0a-40d9-a",
+  "fields": {
+    "group": "3d9668f3-9923-4ebe-b",
+    "value": "8mm",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "82e1cc41-3aa4-4ddf-b",
+  "fields": {
+    "group": "005a76be-91a2-4060-a",
+    "value": "10片装",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "839f0a3c-7c2f-48d1-9",
+  "fields": {
+    "group": "293e754d-ab22-4a5b-9",
+    "value": "复古花纹",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "847f3b7c-dc59-45fe-a",
+  "fields": {
+    "group": "fb92c1e5-c7c6-4cd5-9",
+    "value": "紫色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "8568790f-09d1-4692-a",
+  "fields": {
+    "group": "23098abd-7ddd-41f8-8",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "898d6758-8c82-4f59-b",
+  "fields": {
+    "group": "97bdc533-152a-4172-a",
+    "value": "半框",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "8acb9394-ab7e-446b-8",
+  "fields": {
+    "group": "e6351e64-8f5e-435f-b",
+    "value": "温和清洁",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "92cc8495-77c0-4206-8",
+  "fields": {
+    "group": "7afd7aba-e77c-4e99-8",
+    "value": "混合口味",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "9644c24a-ee9f-45a8-b",
+  "fields": {
+    "group": "d23fb6cb-50ac-424b-b",
+    "value": "透明片",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "96a2fc23-626e-4a47-b",
+  "fields": {
+    "group": "8246af81-d5cd-44c9-b",
+    "value": "iPhone15",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "9b68c58b-5505-4842-a",
+  "fields": {
+    "group": "7afd7aba-e77c-4e99-8",
+    "value": "盐焗",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "9b6e682f-aceb-4068-a",
+  "fields": {
+    "group": "8246af81-d5cd-44c9-b",
+    "value": "iPhone16",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "9dd28d62-7194-4f07-b",
+  "fields": {
+    "group": "b69d6fcb-b731-4efc-8",
+    "value": "M",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "a81270e2-27c8-4508-9",
+  "fields": {
+    "group": "7206e7b9-6153-40a5-a",
+    "value": "S",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "a850b508-7552-4d32-a",
+  "fields": {
+    "group": "4b99a933-5b41-4d5b-b",
+    "value": "混合礼盒",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "aaf626bc-ba1a-4c52-a",
+  "fields": {
+    "group": "efa6878f-40c2-41e2-8",
+    "value": "XXL",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ab69dc33-6c31-45f6-b",
+  "fields": {
+    "group": "5242c4ee-847c-40ac-9",
+    "value": "39",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ac24b07d-aa41-483f-8",
+  "fields": {
+    "group": "1ea180fb-e66f-42ec-a",
+    "value": "30包",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "acbc7eb2-5c09-4025-9",
+  "fields": {
+    "group": "415d91ba-6094-4039-a",
+    "value": "白色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ad4987ae-3f89-4f26-a",
+  "fields": {
+    "group": "acbcb2c5-2029-4393-a",
+    "value": "450ml",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ad4b3d7e-99f9-44cf-8",
+  "fields": {
+    "group": "75a4cff9-b250-4506-8",
+    "value": "40件套",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "b1439f72-3a70-465c-a",
+  "fields": {
+    "group": "005a76be-91a2-4060-a",
+    "value": "20片装",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "b26c33a6-d87e-48d5-9",
+  "fields": {
+    "group": "efa6878f-40c2-41e2-8",
+    "value": "M",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "b280901a-97eb-48e0-9",
+  "fields": {
+    "group": "5c052c66-42df-4e05-8",
+    "value": "200ml",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "b3c4c306-5c7c-445c-b",
+  "fields": {
+    "group": "fb92c1e5-c7c6-4cd5-9",
+    "value": "粉色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "b4975f25-ece9-4064-a",
+  "fields": {
+    "group": "7607438d-4322-4752-9",
+    "value": "XL",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "b7480a96-0633-4522-b",
+  "fields": {
+    "group": "551aee6b-f2af-4e26-a",
+    "value": "纯白",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ba272035-c9a3-48df-a",
+  "fields": {
+    "group": "d23fb6cb-50ac-424b-b",
+    "value": "偏光片",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "bd0c61ab-8b15-4e4e-b",
+  "fields": {
+    "group": "2c3e3bd6-363c-4482-8",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "bdb52071-ff0f-47db-9",
+  "fields": {
+    "group": "7afd7aba-e77c-4e99-8",
+    "value": "原味",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "bf7b47d6-9476-4aad-9",
+  "fields": {
+    "group": "293e754d-ab22-4a5b-9",
+    "value": "简约白",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "c33f62c8-55e9-4e3c-9",
+  "fields": {
+    "group": "415d91ba-6094-4039-a",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "c8f60f17-0795-4b15-8",
+  "fields": {
+    "group": "551aee6b-f2af-4e26-a",
+    "value": "红色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "c964b779-bcb3-4163-b",
+  "fields": {
+    "group": "da88827f-2094-4301-b",
+    "value": "28",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "c9b4d035-ddc7-41b6-8",
+  "fields": {
+    "group": "b69d6fcb-b731-4efc-8",
+    "value": "L",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "cb91cfa5-bd26-41bb-8",
+  "fields": {
+    "group": "11aac533-2661-4f61-b",
+    "value": "AirPods3",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "cc98356a-7b14-4ac2-a",
+  "fields": {
+    "group": "4b99a933-5b41-4d5b-b",
+    "value": "车厘子礼盒",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "cebfe886-2210-4a79-b",
+  "fields": {
+    "group": "da88827f-2094-4301-b",
+    "value": "29",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "d1e36608-740d-47ac-8",
+  "fields": {
+    "group": "75a4cff9-b250-4506-8",
+    "value": "20件套",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "d466db4f-419d-476e-b",
+  "fields": {
+    "group": "fb92c1e5-c7c6-4cd5-9",
+    "value": "绿色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "d6cfd85a-f266-484b-8",
+  "fields": {
+    "group": "2836be1e-e653-4f85-b",
+    "value": "原木色",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "d7f6ee3e-635a-4493-b",
+  "fields": {
+    "group": "da88827f-2094-4301-b",
+    "value": "27",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "d80d79f7-338e-4244-9",
+  "fields": {
+    "group": "e6351e64-8f5e-435f-b",
+    "value": "控油祛痘",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "da184aa3-3187-4e8f-8",
+  "fields": {
+    "group": "b69d6fcb-b731-4efc-8",
+    "value": "XL",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "db3e8b6d-8016-480f-a",
+  "fields": {
+    "group": "5242c4ee-847c-40ac-9",
+    "value": "42",
+    "image": null,
+    "sort_order": 4
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "df02d988-6773-4fd5-9",
+  "fields": {
+    "group": "502e96f4-b3a7-4d97-a",
+    "value": "大盒",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "dfe98871-09fc-47f6-b",
+  "fields": {
+    "group": "11aac533-2661-4f61-b",
+    "value": "AirPods Pro",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "e0f78d0c-5502-4b95-b",
+  "fields": {
+    "group": "23098abd-7ddd-41f8-8",
+    "value": "浅蓝",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "e574f02c-292c-469a-b",
+  "fields": {
+    "group": "7bf44c0b-9237-4ef7-8",
+    "value": "20W",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "e57b3e6f-ebb8-46ad-9",
+  "fields": {
+    "group": "2836be1e-e653-4f85-b",
+    "value": "白色",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "e731ee2e-ed9f-409c-b",
+  "fields": {
+    "group": "8246af81-d5cd-44c9-b",
+    "value": "iPhone14",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ecd1042d-af76-4c19-9",
+  "fields": {
+    "group": "7206e7b9-6153-40a5-a",
+    "value": "XS",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "ef66234d-2665-4213-a",
+  "fields": {
+    "group": "dbc0cdf4-9783-4a4b-9",
+    "value": "黑色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "efce1a76-af37-4c8b-9",
+  "fields": {
+    "group": "5242c4ee-847c-40ac-9",
+    "value": "41",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "f36a9cd1-eb7c-4929-8",
+  "fields": {
+    "group": "7206e7b9-6153-40a5-a",
+    "value": "L",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "f3f5c25d-c285-4ae0-b",
+  "fields": {
+    "group": "d5285e79-ef6b-4357-b",
+    "value": "硬壳",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "f4435b6e-52a3-4f3c-9",
+  "fields": {
+    "group": "7bf44c0b-9237-4ef7-8",
+    "value": "15W",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "f6fce2a2-7b4a-4d7b-9",
+  "fields": {
+    "group": "7d14fba1-5206-47d0-a",
+    "value": "银色",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "f7b44be9-3ba0-4634-8",
+  "fields": {
+    "group": "b7f48411-657a-4a01-b",
+    "value": "中",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "f8facfdc-5254-49d0-8",
+  "fields": {
+    "group": "1ea180fb-e66f-42ec-a",
+    "value": "60包",
+    "image": null,
+    "sort_order": 1
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "fa08ea46-5b27-4901-9",
+  "fields": {
+    "group": "e67ffe05-9b5f-4d95-a",
+    "value": "真皮表带",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "fb2c336c-04c0-4cab-a",
+  "fields": {
+    "group": "5242c4ee-847c-40ac-9",
+    "value": "40",
+    "image": null,
+    "sort_order": 2
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "fcb02c09-a03f-4f57-9",
+  "fields": {
+    "group": "fb92c1e5-c7c6-4cd5-9",
+    "value": "蓝色",
+    "image": null,
+    "sort_order": 3
+  }
+},
+{
+  "model": "backend.specvalue",
+  "pk": "fd1289cb-aa13-471a-a",
+  "fields": {
+    "group": "5c052c66-42df-4e05-8",
+    "value": "100ml",
+    "image": null,
+    "sort_order": 0
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "02c27103-9045-4f4b-b",
+  "fields": {
+    "product": "93c5d40f-7478-4c3a-9",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "055467ca-d00e-4182-8",
+  "fields": {
+    "product": "d0a3d484-d03e-44be-a",
+    "price": "199.00",
+    "original_price": "329.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "087492a0-ce28-4654-8",
+  "fields": {
+    "product": "93c5d40f-7478-4c3a-9",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "0a609754-3dfc-4213-9",
+  "fields": {
+    "product": "9f78d9d1-fe1a-44e6-b",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "0b5d6b44-24d8-468b-8",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "0e4edfc9-e063-4d43-8",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "price": "69.00",
+    "original_price": "109.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "12acf031-cb2a-49b0-a",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "13114fef-76f1-4aae-9",
+  "fields": {
+    "product": "a029d39b-dacb-4a10-b",
+    "price": "199.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "154093c2-cc7c-448e-8",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "2422b502-4c2f-4e6e-b",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "246beb75-fcc6-4275-a",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "2678da78-c50d-4b43-8",
+  "fields": {
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "price": "299.00",
+    "original_price": "899.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "2ab22b0d-7192-44fd-b",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "2ba5fa87-ed4a-4af7-b",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "2d41a78e-d0a4-4280-a",
+  "fields": {
+    "product": "4f93090d-2590-4c36-a",
+    "price": "89.00",
+    "original_price": "139.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "3189da84-4209-4637-9",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "price": "69.00",
+    "original_price": "109.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "32fbb2de-4e63-4b23-a",
+  "fields": {
+    "product": "d0a3d484-d03e-44be-a",
+    "price": "199.00",
+    "original_price": "329.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "3494dec0-e990-4713-a",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "price": "89.00",
+    "original_price": "149.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "36c2e228-889e-4c87-9",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "price": "59.00",
+    "original_price": "99.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "38cf331b-eccd-4576-9",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "3a3b46c9-cc9c-4842-a",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "3b26dbc8-76d2-4298-8",
+  "fields": {
+    "product": "93c5d40f-7478-4c3a-9",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "40409259-79fe-463c-a",
+  "fields": {
+    "product": "9f78d9d1-fe1a-44e6-b",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "435e8cd6-e447-4f87-a",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "price": "69.00",
+    "original_price": "109.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "43f89f2c-b351-483c-b",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "price": "89.00",
+    "original_price": "149.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "45c8a79e-2395-4d3a-9",
+  "fields": {
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "price": "299.00",
+    "original_price": "899.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "47ddd995-fedb-4454-a",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "486e0df0-6856-4a34-9",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "49052bb5-1f60-4d86-b",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "4abbafba-b5ee-402f-9",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "4e2a082f-726c-4679-8",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "4ee1c311-f7b7-4f67-a",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "price": "68.00",
+    "original_price": "128.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "58e75102-7c48-4b4e-8",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "price": "59.00",
+    "original_price": "99.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "5ba70e7d-7a4c-441e-a",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "price": "69.00",
+    "original_price": "109.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "5bad947a-db1e-4449-8",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "price": "189.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "5dbcb35c-2d53-465b-8",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "price": "69.00",
+    "original_price": "109.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "6334eddd-17fe-4e89-9",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "6356da84-9a52-4753-b",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "price": "59.00",
+    "original_price": "99.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "6e3a0f7d-a14a-44a7-a",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "7098236e-c169-4dcf-b",
+  "fields": {
+    "product": "9f78d9d1-fe1a-44e6-b",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "7149888f-530a-4979-8",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "price": "89.00",
+    "original_price": "149.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "793dfed0-aa61-46c5-a",
+  "fields": {
+    "product": "a029d39b-dacb-4a10-b",
+    "price": "199.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "79b2c3eb-c0eb-49ed-8",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "price": "59.00",
+    "original_price": "99.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "7e9247ec-a063-4856-9",
+  "fields": {
+    "product": "93c5d40f-7478-4c3a-9",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "7f4c270e-c642-4f2b-8",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "7f86e4ff-7738-47ff-9",
+  "fields": {
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "price": "299.00",
+    "original_price": "899.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8192efa9-ed4c-41ee-9",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8306393e-c7ba-420c-a",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "price": "68.00",
+    "original_price": "128.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "853dae57-641f-4e86-9",
+  "fields": {
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "price": "299.00",
+    "original_price": "899.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8549f802-a9a6-4fb2-9",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "877bbbd6-afa6-4db0-9",
+  "fields": {
+    "product": "37e4e724-fd75-4ab5-a",
+    "price": "159.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8994608c-e879-4524-a",
+  "fields": {
+    "product": "ef888496-adb3-431a-8",
+    "price": "69.00",
+    "original_price": "109.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8beda12b-a27b-4927-9",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "price": "68.00",
+    "original_price": "128.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8c049f6e-5c10-4c74-8",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "price": "189.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8d46269c-2f64-423f-a",
+  "fields": {
+    "product": "a029d39b-dacb-4a10-b",
+    "price": "199.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "8db6772a-a069-453a-8",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "92017102-364a-446a-b",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "920ef12b-8aa3-47f6-9",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "9c5c8fa0-8803-49bd-b",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "9e9cad9c-1c42-4d2e-9",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "a0815628-2683-4b5b-b",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "a4538d30-8648-480b-8",
+  "fields": {
+    "product": "37e4e724-fd75-4ab5-a",
+    "price": "159.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "a7260000-7bcc-485f-8",
+  "fields": {
+    "product": "d0a3d484-d03e-44be-a",
+    "price": "199.00",
+    "original_price": "329.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "aa545777-3728-4924-8",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "ad6d044d-bbb2-4947-b",
+  "fields": {
+    "product": "d0a3d484-d03e-44be-a",
+    "price": "199.00",
+    "original_price": "329.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "afcada9a-6965-4097-b",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "aff8ced1-3a6f-4ee3-b",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "price": "68.00",
+    "original_price": "128.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b34739b8-f8af-4cd9-a",
+  "fields": {
+    "product": "4f93090d-2590-4c36-a",
+    "price": "89.00",
+    "original_price": "139.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b40bfbfb-61b9-4bca-8",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b5192d87-ea2b-4860-a",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "price": "189.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b5cbcb6b-2062-46ff-8",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b6689b05-d9cf-435a-8",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "price": "89.00",
+    "original_price": "149.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b6f90a2e-803b-4a3f-a",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b71ac8a8-1502-4992-b",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b7a7e267-3a93-4029-b",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "b87fbab2-720a-4093-a",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "price": "68.00",
+    "original_price": "128.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "bdbb729c-9e13-43d3-b",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "price": "89.00",
+    "original_price": "149.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "c3376584-5223-4751-8",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "c3c5be90-251d-48c2-8",
+  "fields": {
+    "product": "c596eb4e-f536-43d2-9",
+    "price": "68.00",
+    "original_price": "128.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "c6e0163e-b657-4796-8",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "c8a72a55-2475-4ee5-a",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "cb0394a9-b0b1-413d-9",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "ce017ac6-bb3b-4f3b-9",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "ce22e31d-fdd2-4051-9",
+  "fields": {
+    "product": "a029d39b-dacb-4a10-b",
+    "price": "199.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "d268e773-38fc-4c17-a",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "d7810212-0960-4ee6-a",
+  "fields": {
+    "product": "964e0ee3-288a-4d8e-8",
+    "price": "129.00",
+    "original_price": "199.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "db6c9528-911d-41ad-9",
+  "fields": {
+    "product": "4f93090d-2590-4c36-a",
+    "price": "89.00",
+    "original_price": "139.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "dcaf3d86-edb9-470c-8",
+  "fields": {
+    "product": "37e4e724-fd75-4ab5-a",
+    "price": "159.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "dcb71c72-d7c5-499c-b",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "deb218f5-ec28-42ec-8",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "e1d561a0-aac3-471e-9",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "e42192ee-395f-403f-9",
+  "fields": {
+    "product": "a14251fa-7427-4020-9",
+    "price": "299.00",
+    "original_price": "499.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "e6bfc1e7-cc46-47b8-9",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "price": "59.00",
+    "original_price": "99.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "e6d7db37-c797-46b0-8",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "price": "189.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "e7a8d921-ea31-48b9-9",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "e8e6ab4c-7efd-47ed-a",
+  "fields": {
+    "product": "9df3fd29-226f-46db-a",
+    "price": "59.00",
+    "original_price": "99.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "ec9f575d-5060-44b0-b",
+  "fields": {
+    "product": "206f0cea-2dae-4ef9-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "ee3057d4-505e-4e84-9",
+  "fields": {
+    "product": "8af78ac2-7bd5-4d50-9",
+    "price": "189.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "eee43e43-8281-4294-8",
+  "fields": {
+    "product": "37e4e724-fd75-4ab5-a",
+    "price": "159.00",
+    "original_price": "299.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "efeb424f-f8c6-4c26-9",
+  "fields": {
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "f08ac2fd-b974-4722-8",
+  "fields": {
+    "product": "9f78d9d1-fe1a-44e6-b",
+    "price": "79.00",
+    "original_price": "129.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "f09624cc-4cfb-4c68-9",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "f108adc7-0499-4459-b",
+  "fields": {
+    "product": "3b615bf4-9c37-4240-8",
+    "price": "159.00",
+    "original_price": "259.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "f118c6da-4d03-4f05-b",
+  "fields": {
+    "product": "70c20478-5c16-4688-a",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "fdec3af4-1452-4b30-8",
+  "fields": {
+    "product": "12943ebd-1bdd-4cbf-b",
+    "price": "99.00",
+    "original_price": "169.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.sku",
+  "pk": "fe944dde-173a-4ffc-b",
+  "fields": {
+    "product": "96acf927-d979-46aa-9",
+    "price": "89.00",
+    "original_price": "149.00",
+    "stock": 50,
+    "image": null
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1187,
+  "fields": {
+    "sku": "b5192d87-ea2b-4860-a",
+    "spec_value": "70875824-c967-4f97-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1188,
+  "fields": {
+    "sku": "b5192d87-ea2b-4860-a",
+    "spec_value": "2c4dc63b-e59e-48ee-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1189,
+  "fields": {
+    "sku": "ee3057d4-505e-4e84-9",
+    "spec_value": "70875824-c967-4f97-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1190,
+  "fields": {
+    "sku": "ee3057d4-505e-4e84-9",
+    "spec_value": "08b229b7-2e2f-4bfa-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1191,
+  "fields": {
+    "sku": "5bad947a-db1e-4449-8",
+    "spec_value": "2c4dc63b-e59e-48ee-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1192,
+  "fields": {
+    "sku": "5bad947a-db1e-4449-8",
+    "spec_value": "6846f995-9c9e-4bbd-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1193,
+  "fields": {
+    "sku": "8c049f6e-5c10-4c74-8",
+    "spec_value": "08b229b7-2e2f-4bfa-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1194,
+  "fields": {
+    "sku": "8c049f6e-5c10-4c74-8",
+    "spec_value": "74e9939b-6d08-42cb-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1195,
+  "fields": {
+    "sku": "e6d7db37-c797-46b0-8",
+    "spec_value": "b4975f25-ece9-4064-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1196,
+  "fields": {
+    "sku": "e6d7db37-c797-46b0-8",
+    "spec_value": "2c4dc63b-e59e-48ee-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1197,
+  "fields": {
+    "sku": "deb218f5-ec28-42ec-8",
+    "spec_value": "acbc7eb2-5c09-4025-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1198,
+  "fields": {
+    "sku": "deb218f5-ec28-42ec-8",
+    "spec_value": "ecd1042d-af76-4c19-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1199,
+  "fields": {
+    "sku": "6e3a0f7d-a14a-44a7-a",
+    "spec_value": "ecd1042d-af76-4c19-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1200,
+  "fields": {
+    "sku": "6e3a0f7d-a14a-44a7-a",
+    "spec_value": "c33f62c8-55e9-4e3c-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1201,
+  "fields": {
+    "sku": "2ab22b0d-7192-44fd-b",
+    "spec_value": "acbc7eb2-5c09-4025-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1202,
+  "fields": {
+    "sku": "2ab22b0d-7192-44fd-b",
+    "spec_value": "a81270e2-27c8-4508-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1203,
+  "fields": {
+    "sku": "efeb424f-f8c6-4c26-9",
+    "spec_value": "a81270e2-27c8-4508-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1204,
+  "fields": {
+    "sku": "efeb424f-f8c6-4c26-9",
+    "spec_value": "c33f62c8-55e9-4e3c-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1205,
+  "fields": {
+    "sku": "9e9cad9c-1c42-4d2e-9",
+    "spec_value": "a81270e2-27c8-4508-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1206,
+  "fields": {
+    "sku": "9e9cad9c-1c42-4d2e-9",
+    "spec_value": "2886f1b7-b92a-4b8e-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1207,
+  "fields": {
+    "sku": "ce017ac6-bb3b-4f3b-9",
+    "spec_value": "acbc7eb2-5c09-4025-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1208,
+  "fields": {
+    "sku": "ce017ac6-bb3b-4f3b-9",
+    "spec_value": "551845a5-4dd3-45eb-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1209,
+  "fields": {
+    "sku": "cb0394a9-b0b1-413d-9",
+    "spec_value": "f36a9cd1-eb7c-4929-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1210,
+  "fields": {
+    "sku": "cb0394a9-b0b1-413d-9",
+    "spec_value": "c33f62c8-55e9-4e3c-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1211,
+  "fields": {
+    "sku": "12acf031-cb2a-49b0-a",
+    "spec_value": "4347b703-e417-4c82-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1212,
+  "fields": {
+    "sku": "12acf031-cb2a-49b0-a",
+    "spec_value": "2886f1b7-b92a-4b8e-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1213,
+  "fields": {
+    "sku": "2ba5fa87-ed4a-4af7-b",
+    "spec_value": "6ebc1dcd-24ac-4a3c-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1214,
+  "fields": {
+    "sku": "2ba5fa87-ed4a-4af7-b",
+    "spec_value": "2a096bae-652b-4735-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1215,
+  "fields": {
+    "sku": "f09624cc-4cfb-4c68-9",
+    "spec_value": "36838c6b-ad86-40e3-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1216,
+  "fields": {
+    "sku": "f09624cc-4cfb-4c68-9",
+    "spec_value": "2a096bae-652b-4735-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1217,
+  "fields": {
+    "sku": "f108adc7-0499-4459-b",
+    "spec_value": "6ebc1dcd-24ac-4a3c-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1218,
+  "fields": {
+    "sku": "f108adc7-0499-4459-b",
+    "spec_value": "d7f6ee3e-635a-4493-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1219,
+  "fields": {
+    "sku": "c3376584-5223-4751-8",
+    "spec_value": "ef66234d-2665-4213-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1220,
+  "fields": {
+    "sku": "c3376584-5223-4751-8",
+    "spec_value": "d7f6ee3e-635a-4493-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1221,
+  "fields": {
+    "sku": "7f4c270e-c642-4f2b-8",
+    "spec_value": "c964b779-bcb3-4163-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1222,
+  "fields": {
+    "sku": "7f4c270e-c642-4f2b-8",
+    "spec_value": "6ebc1dcd-24ac-4a3c-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1223,
+  "fields": {
+    "sku": "d268e773-38fc-4c17-a",
+    "spec_value": "c964b779-bcb3-4163-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1224,
+  "fields": {
+    "sku": "d268e773-38fc-4c17-a",
+    "spec_value": "36838c6b-ad86-40e3-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1225,
+  "fields": {
+    "sku": "0b5d6b44-24d8-468b-8",
+    "spec_value": "ef66234d-2665-4213-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1226,
+  "fields": {
+    "sku": "0b5d6b44-24d8-468b-8",
+    "spec_value": "cebfe886-2210-4a79-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1227,
+  "fields": {
+    "sku": "47ddd995-fedb-4454-a",
+    "spec_value": "6ebc1dcd-24ac-4a3c-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1228,
+  "fields": {
+    "sku": "47ddd995-fedb-4454-a",
+    "spec_value": "5b634bf0-3990-4d67-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1229,
+  "fields": {
+    "sku": "2422b502-4c2f-4e6e-b",
+    "spec_value": "ef66234d-2665-4213-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1230,
+  "fields": {
+    "sku": "2422b502-4c2f-4e6e-b",
+    "spec_value": "5b634bf0-3990-4d67-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1231,
+  "fields": {
+    "sku": "8192efa9-ed4c-41ee-9",
+    "spec_value": "07e4f86d-d134-4042-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1232,
+  "fields": {
+    "sku": "8192efa9-ed4c-41ee-9",
+    "spec_value": "6054bec4-8f72-4429-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1233,
+  "fields": {
+    "sku": "920ef12b-8aa3-47f6-9",
+    "spec_value": "07e4f86d-d134-4042-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1234,
+  "fields": {
+    "sku": "920ef12b-8aa3-47f6-9",
+    "spec_value": "132dd50c-128d-48f1-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1235,
+  "fields": {
+    "sku": "a0815628-2683-4b5b-b",
+    "spec_value": "9dd28d62-7194-4f07-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1236,
+  "fields": {
+    "sku": "a0815628-2683-4b5b-b",
+    "spec_value": "6054bec4-8f72-4429-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1237,
+  "fields": {
+    "sku": "aa545777-3728-4924-8",
+    "spec_value": "9dd28d62-7194-4f07-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1238,
+  "fields": {
+    "sku": "aa545777-3728-4924-8",
+    "spec_value": "1430daf0-79e8-4865-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1239,
+  "fields": {
+    "sku": "b5cbcb6b-2062-46ff-8",
+    "spec_value": "c9b4d035-ddc7-41b6-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1240,
+  "fields": {
+    "sku": "b5cbcb6b-2062-46ff-8",
+    "spec_value": "132dd50c-128d-48f1-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1241,
+  "fields": {
+    "sku": "8549f802-a9a6-4fb2-9",
+    "spec_value": "6054bec4-8f72-4429-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1242,
+  "fields": {
+    "sku": "8549f802-a9a6-4fb2-9",
+    "spec_value": "da184aa3-3187-4e8f-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1243,
+  "fields": {
+    "sku": "d7810212-0960-4ee6-a",
+    "spec_value": "1430daf0-79e8-4865-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1244,
+  "fields": {
+    "sku": "d7810212-0960-4ee6-a",
+    "spec_value": "da184aa3-3187-4e8f-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1245,
+  "fields": {
+    "sku": "fdec3af4-1452-4b30-8",
+    "spec_value": "e0f78d0c-5502-4b95-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1246,
+  "fields": {
+    "sku": "fdec3af4-1452-4b30-8",
+    "spec_value": "b26c33a6-d87e-48d5-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1247,
+  "fields": {
+    "sku": "c8a72a55-2475-4ee5-a",
+    "spec_value": "78ffb2a5-5d8c-4dee-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1248,
+  "fields": {
+    "sku": "c8a72a55-2475-4ee5-a",
+    "spec_value": "b26c33a6-d87e-48d5-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1249,
+  "fields": {
+    "sku": "4abbafba-b5ee-402f-9",
+    "spec_value": "78ffb2a5-5d8c-4dee-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1250,
+  "fields": {
+    "sku": "4abbafba-b5ee-402f-9",
+    "spec_value": "79c88604-6957-4b86-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1251,
+  "fields": {
+    "sku": "246beb75-fcc6-4275-a",
+    "spec_value": "79c88604-6957-4b86-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1252,
+  "fields": {
+    "sku": "246beb75-fcc6-4275-a",
+    "spec_value": "8568790f-09d1-4692-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1253,
+  "fields": {
+    "sku": "154093c2-cc7c-448e-8",
+    "spec_value": "e0f78d0c-5502-4b95-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1254,
+  "fields": {
+    "sku": "154093c2-cc7c-448e-8",
+    "spec_value": "7b79b815-5d12-47cc-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1255,
+  "fields": {
+    "sku": "afcada9a-6965-4097-b",
+    "spec_value": "aaf626bc-ba1a-4c52-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1256,
+  "fields": {
+    "sku": "afcada9a-6965-4097-b",
+    "spec_value": "8568790f-09d1-4692-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1257,
+  "fields": {
+    "sku": "e7a8d921-ea31-48b9-9",
+    "spec_value": "30983c46-a9f8-488b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1258,
+  "fields": {
+    "sku": "e7a8d921-ea31-48b9-9",
+    "spec_value": "3c05a1be-fe2b-4bde-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1259,
+  "fields": {
+    "sku": "f118c6da-4d03-4f05-b",
+    "spec_value": "48d35a27-8d27-42ca-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1260,
+  "fields": {
+    "sku": "f118c6da-4d03-4f05-b",
+    "spec_value": "3c05a1be-fe2b-4bde-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1261,
+  "fields": {
+    "sku": "e1d561a0-aac3-471e-9",
+    "spec_value": "82e1cc41-3aa4-4ddf-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1262,
+  "fields": {
+    "sku": "e1d561a0-aac3-471e-9",
+    "spec_value": "48d35a27-8d27-42ca-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1263,
+  "fields": {
+    "sku": "8db6772a-a069-453a-8",
+    "spec_value": "5cfa248e-bfb3-4c84-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1264,
+  "fields": {
+    "sku": "8db6772a-a069-453a-8",
+    "spec_value": "82e1cc41-3aa4-4ddf-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1265,
+  "fields": {
+    "sku": "dcb71c72-d7c5-499c-b",
+    "spec_value": "30983c46-a9f8-488b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1266,
+  "fields": {
+    "sku": "dcb71c72-d7c5-499c-b",
+    "spec_value": "b1439f72-3a70-465c-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1267,
+  "fields": {
+    "sku": "4e2a082f-726c-4679-8",
+    "spec_value": "5cfa248e-bfb3-4c84-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1268,
+  "fields": {
+    "sku": "4e2a082f-726c-4679-8",
+    "spec_value": "b1439f72-3a70-465c-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1269,
+  "fields": {
+    "sku": "2d41a78e-d0a4-4280-a",
+    "spec_value": "8acb9394-ab7e-446b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1270,
+  "fields": {
+    "sku": "2d41a78e-d0a4-4280-a",
+    "spec_value": "fd1289cb-aa13-471a-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1271,
+  "fields": {
+    "sku": "db6c9528-911d-41ad-9",
+    "spec_value": "d80d79f7-338e-4244-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1272,
+  "fields": {
+    "sku": "db6c9528-911d-41ad-9",
+    "spec_value": "fd1289cb-aa13-471a-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1273,
+  "fields": {
+    "sku": "b34739b8-f8af-4cd9-a",
+    "spec_value": "8acb9394-ab7e-446b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1274,
+  "fields": {
+    "sku": "b34739b8-f8af-4cd9-a",
+    "spec_value": "b280901a-97eb-48e0-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1275,
+  "fields": {
+    "sku": "79b2c3eb-c0eb-49ed-8",
+    "spec_value": "733f0a63-b6d4-489d-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1276,
+  "fields": {
+    "sku": "79b2c3eb-c0eb-49ed-8",
+    "spec_value": "e731ee2e-ed9f-409c-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1277,
+  "fields": {
+    "sku": "e8e6ab4c-7efd-47ed-a",
+    "spec_value": "e731ee2e-ed9f-409c-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1278,
+  "fields": {
+    "sku": "e8e6ab4c-7efd-47ed-a",
+    "spec_value": "f3f5c25d-c285-4ae0-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1279,
+  "fields": {
+    "sku": "e6bfc1e7-cc46-47b8-9",
+    "spec_value": "96a2fc23-626e-4a47-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1280,
+  "fields": {
+    "sku": "e6bfc1e7-cc46-47b8-9",
+    "spec_value": "f3f5c25d-c285-4ae0-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1281,
+  "fields": {
+    "sku": "6356da84-9a52-4753-b",
+    "spec_value": "96a2fc23-626e-4a47-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1282,
+  "fields": {
+    "sku": "6356da84-9a52-4753-b",
+    "spec_value": "661b0b20-d912-45dc-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1283,
+  "fields": {
+    "sku": "58e75102-7c48-4b4e-8",
+    "spec_value": "9b6e682f-aceb-4068-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1284,
+  "fields": {
+    "sku": "58e75102-7c48-4b4e-8",
+    "spec_value": "733f0a63-b6d4-489d-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1285,
+  "fields": {
+    "sku": "36c2e228-889e-4c87-9",
+    "spec_value": "9b6e682f-aceb-4068-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1286,
+  "fields": {
+    "sku": "36c2e228-889e-4c87-9",
+    "spec_value": "661b0b20-d912-45dc-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1287,
+  "fields": {
+    "sku": "3a3b46c9-cc9c-4842-a",
+    "spec_value": "f4435b6e-52a3-4f3c-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1288,
+  "fields": {
+    "sku": "3a3b46c9-cc9c-4842-a",
+    "spec_value": "66233168-a06f-4dc9-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1289,
+  "fields": {
+    "sku": "c6e0163e-b657-4796-8",
+    "spec_value": "f4435b6e-52a3-4f3c-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1290,
+  "fields": {
+    "sku": "c6e0163e-b657-4796-8",
+    "spec_value": "65112810-3b23-48a6-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1291,
+  "fields": {
+    "sku": "9c5c8fa0-8803-49bd-b",
+    "spec_value": "e574f02c-292c-469a-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1292,
+  "fields": {
+    "sku": "9c5c8fa0-8803-49bd-b",
+    "spec_value": "65112810-3b23-48a6-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1293,
+  "fields": {
+    "sku": "ec9f575d-5060-44b0-b",
+    "spec_value": "e574f02c-292c-469a-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1294,
+  "fields": {
+    "sku": "ec9f575d-5060-44b0-b",
+    "spec_value": "230e4ac0-826d-4a31-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1295,
+  "fields": {
+    "sku": "49052bb5-1f60-4d86-b",
+    "spec_value": "78ec7dce-b38f-49aa-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1296,
+  "fields": {
+    "sku": "49052bb5-1f60-4d86-b",
+    "spec_value": "66233168-a06f-4dc9-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1297,
+  "fields": {
+    "sku": "6334eddd-17fe-4e89-9",
+    "spec_value": "230e4ac0-826d-4a31-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1298,
+  "fields": {
+    "sku": "6334eddd-17fe-4e89-9",
+    "spec_value": "78ec7dce-b38f-49aa-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1299,
+  "fields": {
+    "sku": "435e8cd6-e447-4f87-a",
+    "spec_value": "e57b3e6f-ebb8-46ad-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1300,
+  "fields": {
+    "sku": "435e8cd6-e447-4f87-a",
+    "spec_value": "014ad964-366b-465b-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1301,
+  "fields": {
+    "sku": "3189da84-4209-4637-9",
+    "spec_value": "d6cfd85a-f266-484b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1302,
+  "fields": {
+    "sku": "3189da84-4209-4637-9",
+    "spec_value": "014ad964-366b-465b-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1303,
+  "fields": {
+    "sku": "5ba70e7d-7a4c-441e-a",
+    "spec_value": "f7b44be9-3ba0-4634-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1304,
+  "fields": {
+    "sku": "5ba70e7d-7a4c-441e-a",
+    "spec_value": "d6cfd85a-f266-484b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1305,
+  "fields": {
+    "sku": "8994608c-e879-4524-a",
+    "spec_value": "f7b44be9-3ba0-4634-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1306,
+  "fields": {
+    "sku": "8994608c-e879-4524-a",
+    "spec_value": "7704ba26-3f2a-456d-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1307,
+  "fields": {
+    "sku": "0e4edfc9-e063-4d43-8",
+    "spec_value": "e57b3e6f-ebb8-46ad-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1308,
+  "fields": {
+    "sku": "0e4edfc9-e063-4d43-8",
+    "spec_value": "30d62019-0c4c-4033-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1309,
+  "fields": {
+    "sku": "5dbcb35c-2d53-465b-8",
+    "spec_value": "7704ba26-3f2a-456d-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1310,
+  "fields": {
+    "sku": "5dbcb35c-2d53-465b-8",
+    "spec_value": "30d62019-0c4c-4033-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1311,
+  "fields": {
+    "sku": "055467ca-d00e-4182-8",
+    "spec_value": "d1e36608-740d-47ac-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1312,
+  "fields": {
+    "sku": "055467ca-d00e-4182-8",
+    "spec_value": "bf7b47d6-9476-4aad-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1313,
+  "fields": {
+    "sku": "a7260000-7bcc-485f-8",
+    "spec_value": "d1e36608-740d-47ac-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1314,
+  "fields": {
+    "sku": "a7260000-7bcc-485f-8",
+    "spec_value": "839f0a3c-7c2f-48d1-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1315,
+  "fields": {
+    "sku": "32fbb2de-4e63-4b23-a",
+    "spec_value": "ad4b3d7e-99f9-44cf-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1316,
+  "fields": {
+    "sku": "32fbb2de-4e63-4b23-a",
+    "spec_value": "bf7b47d6-9476-4aad-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1317,
+  "fields": {
+    "sku": "ad6d044d-bbb2-4947-b",
+    "spec_value": "839f0a3c-7c2f-48d1-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1318,
+  "fields": {
+    "sku": "ad6d044d-bbb2-4947-b",
+    "spec_value": "77130b0a-7f17-45e7-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1319,
+  "fields": {
+    "sku": "486e0df0-6856-4a34-9",
+    "spec_value": "7cbf7e3e-1366-418a-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1320,
+  "fields": {
+    "sku": "486e0df0-6856-4a34-9",
+    "spec_value": "2b2054b8-793c-4474-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1321,
+  "fields": {
+    "sku": "e42192ee-395f-403f-9",
+    "spec_value": "7cbf7e3e-1366-418a-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1322,
+  "fields": {
+    "sku": "e42192ee-395f-403f-9",
+    "spec_value": "b7480a96-0633-4522-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1323,
+  "fields": {
+    "sku": "b6f90a2e-803b-4a3f-a",
+    "spec_value": "ab69dc33-6c31-45f6-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1324,
+  "fields": {
+    "sku": "b6f90a2e-803b-4a3f-a",
+    "spec_value": "b7480a96-0633-4522-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1325,
+  "fields": {
+    "sku": "b7a7e267-3a93-4029-b",
+    "spec_value": "c8f60f17-0795-4b15-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1326,
+  "fields": {
+    "sku": "b7a7e267-3a93-4029-b",
+    "spec_value": "ab69dc33-6c31-45f6-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1327,
+  "fields": {
+    "sku": "38cf331b-eccd-4576-9",
+    "spec_value": "fb2c336c-04c0-4cab-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1328,
+  "fields": {
+    "sku": "38cf331b-eccd-4576-9",
+    "spec_value": "2b2054b8-793c-4474-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1329,
+  "fields": {
+    "sku": "92017102-364a-446a-b",
+    "spec_value": "c8f60f17-0795-4b15-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1330,
+  "fields": {
+    "sku": "92017102-364a-446a-b",
+    "spec_value": "fb2c336c-04c0-4cab-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1331,
+  "fields": {
+    "sku": "b40bfbfb-61b9-4bca-8",
+    "spec_value": "efce1a76-af37-4c8b-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1332,
+  "fields": {
+    "sku": "b40bfbfb-61b9-4bca-8",
+    "spec_value": "b7480a96-0633-4522-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1333,
+  "fields": {
+    "sku": "b71ac8a8-1502-4992-b",
+    "spec_value": "db3e8b6d-8016-480f-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1334,
+  "fields": {
+    "sku": "b71ac8a8-1502-4992-b",
+    "spec_value": "2b2054b8-793c-4474-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1335,
+  "fields": {
+    "sku": "fe944dde-173a-4ffc-b",
+    "spec_value": "b3c4c306-5c7c-445c-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1336,
+  "fields": {
+    "sku": "fe944dde-173a-4ffc-b",
+    "spec_value": "113cd9c7-b645-46ad-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1337,
+  "fields": {
+    "sku": "3494dec0-e990-4713-a",
+    "spec_value": "847f3b7c-dc59-45fe-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1338,
+  "fields": {
+    "sku": "3494dec0-e990-4713-a",
+    "spec_value": "113cd9c7-b645-46ad-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1339,
+  "fields": {
+    "sku": "b6689b05-d9cf-435a-8",
+    "spec_value": "7d41eea7-ce0a-40d9-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1340,
+  "fields": {
+    "sku": "b6689b05-d9cf-435a-8",
+    "spec_value": "d466db4f-419d-476e-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1341,
+  "fields": {
+    "sku": "7149888f-530a-4979-8",
+    "spec_value": "fcb02c09-a03f-4f57-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1342,
+  "fields": {
+    "sku": "7149888f-530a-4979-8",
+    "spec_value": "7d41eea7-ce0a-40d9-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1343,
+  "fields": {
+    "sku": "bdbb729c-9e13-43d3-b",
+    "spec_value": "b3c4c306-5c7c-445c-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1344,
+  "fields": {
+    "sku": "bdbb729c-9e13-43d3-b",
+    "spec_value": "345c54bf-b393-41be-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1345,
+  "fields": {
+    "sku": "43f89f2c-b351-483c-b",
+    "spec_value": "fcb02c09-a03f-4f57-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1346,
+  "fields": {
+    "sku": "43f89f2c-b351-483c-b",
+    "spec_value": "345c54bf-b393-41be-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1347,
+  "fields": {
+    "sku": "3b26dbc8-76d2-4298-8",
+    "spec_value": "3f38a237-f65b-440f-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1348,
+  "fields": {
+    "sku": "3b26dbc8-76d2-4298-8",
+    "spec_value": "62cd9798-1adb-469a-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1349,
+  "fields": {
+    "sku": "087492a0-ce28-4654-8",
+    "spec_value": "a850b508-7552-4d32-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1350,
+  "fields": {
+    "sku": "087492a0-ce28-4654-8",
+    "spec_value": "3f38a237-f65b-440f-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1351,
+  "fields": {
+    "sku": "7e9247ec-a063-4856-9",
+    "spec_value": "cc98356a-7b14-4ac2-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1352,
+  "fields": {
+    "sku": "7e9247ec-a063-4856-9",
+    "spec_value": "df02d988-6773-4fd5-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1353,
+  "fields": {
+    "sku": "02c27103-9045-4f4b-b",
+    "spec_value": "a850b508-7552-4d32-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1354,
+  "fields": {
+    "sku": "02c27103-9045-4f4b-b",
+    "spec_value": "df02d988-6773-4fd5-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1355,
+  "fields": {
+    "sku": "40409259-79fe-463c-a",
+    "spec_value": "ac24b07d-aa41-483f-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1356,
+  "fields": {
+    "sku": "40409259-79fe-463c-a",
+    "spec_value": "bdb52071-ff0f-47db-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1357,
+  "fields": {
+    "sku": "7098236e-c169-4dcf-b",
+    "spec_value": "ac24b07d-aa41-483f-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1358,
+  "fields": {
+    "sku": "7098236e-c169-4dcf-b",
+    "spec_value": "9b68c58b-5505-4842-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1359,
+  "fields": {
+    "sku": "0a609754-3dfc-4213-9",
+    "spec_value": "9b68c58b-5505-4842-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1360,
+  "fields": {
+    "sku": "0a609754-3dfc-4213-9",
+    "spec_value": "f8facfdc-5254-49d0-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1361,
+  "fields": {
+    "sku": "f08ac2fd-b974-4722-8",
+    "spec_value": "92cc8495-77c0-4206-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1362,
+  "fields": {
+    "sku": "f08ac2fd-b974-4722-8",
+    "spec_value": "f8facfdc-5254-49d0-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1363,
+  "fields": {
+    "sku": "853dae57-641f-4e86-9",
+    "spec_value": "359bce82-f7ba-44ba-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1364,
+  "fields": {
+    "sku": "853dae57-641f-4e86-9",
+    "spec_value": "fa08ea46-5b27-4901-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1365,
+  "fields": {
+    "sku": "45c8a79e-2395-4d3a-9",
+    "spec_value": "359bce82-f7ba-44ba-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1366,
+  "fields": {
+    "sku": "45c8a79e-2395-4d3a-9",
+    "spec_value": "5daf6c7e-d00b-4c34-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1367,
+  "fields": {
+    "sku": "2678da78-c50d-4b43-8",
+    "spec_value": "4300cb6e-d9c8-4df9-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1368,
+  "fields": {
+    "sku": "2678da78-c50d-4b43-8",
+    "spec_value": "fa08ea46-5b27-4901-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1369,
+  "fields": {
+    "sku": "7f86e4ff-7738-47ff-9",
+    "spec_value": "f6fce2a2-7b4a-4d7b-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1370,
+  "fields": {
+    "sku": "7f86e4ff-7738-47ff-9",
+    "spec_value": "5daf6c7e-d00b-4c34-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1371,
+  "fields": {
+    "sku": "877bbbd6-afa6-4db0-9",
+    "spec_value": "653895f3-9126-4b2b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1372,
+  "fields": {
+    "sku": "877bbbd6-afa6-4db0-9",
+    "spec_value": "9644c24a-ee9f-45a8-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1373,
+  "fields": {
+    "sku": "dcaf3d86-edb9-470c-8",
+    "spec_value": "898d6758-8c82-4f59-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1374,
+  "fields": {
+    "sku": "dcaf3d86-edb9-470c-8",
+    "spec_value": "9644c24a-ee9f-45a8-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1375,
+  "fields": {
+    "sku": "a4538d30-8648-480b-8",
+    "spec_value": "ba272035-c9a3-48df-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1376,
+  "fields": {
+    "sku": "a4538d30-8648-480b-8",
+    "spec_value": "653895f3-9126-4b2b-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1377,
+  "fields": {
+    "sku": "eee43e43-8281-4294-8",
+    "spec_value": "72501ddb-d03e-45f0-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1378,
+  "fields": {
+    "sku": "eee43e43-8281-4294-8",
+    "spec_value": "898d6758-8c82-4f59-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1379,
+  "fields": {
+    "sku": "8d46269c-2f64-423f-a",
+    "spec_value": "40526e84-8d5d-4f00-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1380,
+  "fields": {
+    "sku": "8d46269c-2f64-423f-a",
+    "spec_value": "1aca5fef-8ad1-4ee7-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1381,
+  "fields": {
+    "sku": "ce22e31d-fdd2-4051-9",
+    "spec_value": "cb91cfa5-bd26-41bb-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1382,
+  "fields": {
+    "sku": "ce22e31d-fdd2-4051-9",
+    "spec_value": "1aca5fef-8ad1-4ee7-9"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1383,
+  "fields": {
+    "sku": "793dfed0-aa61-46c5-a",
+    "spec_value": "cb91cfa5-bd26-41bb-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1384,
+  "fields": {
+    "sku": "793dfed0-aa61-46c5-a",
+    "spec_value": "51441792-a71b-42f9-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1385,
+  "fields": {
+    "sku": "13114fef-76f1-4aae-9",
+    "spec_value": "dfe98871-09fc-47f6-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1386,
+  "fields": {
+    "sku": "13114fef-76f1-4aae-9",
+    "spec_value": "51441792-a71b-42f9-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1387,
+  "fields": {
+    "sku": "aff8ced1-3a6f-4ee3-b",
+    "spec_value": "45dfb25a-a95e-4119-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1388,
+  "fields": {
+    "sku": "aff8ced1-3a6f-4ee3-b",
+    "spec_value": "19734fec-4f03-4e29-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1389,
+  "fields": {
+    "sku": "c3c5be90-251d-48c2-8",
+    "spec_value": "bd0c61ab-8b15-4e4e-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1390,
+  "fields": {
+    "sku": "c3c5be90-251d-48c2-8",
+    "spec_value": "19734fec-4f03-4e29-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1391,
+  "fields": {
+    "sku": "8beda12b-a27b-4927-9",
+    "spec_value": "5cebdbfc-2529-4255-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1392,
+  "fields": {
+    "sku": "8beda12b-a27b-4927-9",
+    "spec_value": "bd0c61ab-8b15-4e4e-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1393,
+  "fields": {
+    "sku": "b87fbab2-720a-4093-a",
+    "spec_value": "5cebdbfc-2529-4255-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1394,
+  "fields": {
+    "sku": "b87fbab2-720a-4093-a",
+    "spec_value": "792793d7-a2ad-4002-8"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1395,
+  "fields": {
+    "sku": "8306393e-c7ba-420c-a",
+    "spec_value": "45dfb25a-a95e-4119-b"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1396,
+  "fields": {
+    "sku": "8306393e-c7ba-420c-a",
+    "spec_value": "ad4987ae-3f89-4f26-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1397,
+  "fields": {
+    "sku": "4ee1c311-f7b7-4f67-a",
+    "spec_value": "ad4987ae-3f89-4f26-a"
+  }
+},
+{
+  "model": "backend.skuspec",
+  "pk": 1398,
+  "fields": {
+    "sku": "4ee1c311-f7b7-4f67-a",
+    "spec_value": "792793d7-a2ad-4002-8"
+  }
+},
+{
+  "model": "backend.homebanner",
+  "pk": "49459e11-c3e4-4188-9",
+  "fields": {
+    "image": "050aa71a-0e52-49a1-8",
+    "tag": "夏装新品",
+    "title": "清凉一夏",
+    "action_title": "立即选购",
+    "gradient_type": 0,
+    "sort_order": 0,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.homebanner",
+  "pk": "b189a343-8307-4bb8-a",
+  "fields": {
+    "image": "84f9ac80-f820-43d7-8",
+    "tag": "限时特惠",
+    "title": "折扣专区",
+    "action_title": "马上抢",
+    "gradient_type": 2,
+    "sort_order": 2,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.homebanner",
+  "pk": "e7751bc5-b90a-4a6c-8",
+  "fields": {
+    "image": "11f57a51-05af-4661-9",
+    "tag": "美妆节",
+    "title": "焕新美妆",
+    "action_title": "查看详情",
+    "gradient_type": 1,
+    "sort_order": 1,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.homeflashsale",
+  "pk": "55365ce2-1ca1-40b8-a",
+  "fields": {
+    "title": "限时秒杀",
+    "subtitle": "爆款限时抢",
+    "start_time": null,
+    "end_time": null,
+    "sort_order": 1,
+    "is_enabled": true,
+    "products": [
+      "70c20478-5c16-4688-a",
+      "8af78ac2-7bd5-4d50-9",
+      "964e0ee3-288a-4d8e-8",
+      "9df3fd29-226f-46db-a",
+      "a14251fa-7427-4020-9",
+      "ef888496-adb3-431a-8"
+    ]
+  }
+},
+{
+  "model": "backend.homehotrank",
+  "pk": "603008f8-d6a8-4ca0-b",
+  "fields": {
+    "title": "热销榜单",
+    "sort_order": 2,
+    "is_enabled": true,
+    "products": [
+      "12943ebd-1bdd-4cbf-b",
+      "206f0cea-2dae-4ef9-a",
+      "4f93090d-2590-4c36-a",
+      "f6d6cb9c-0ec8-4880-a"
+    ]
+  }
+},
+{
+  "model": "backend.homerecommend",
+  "pk": "1fda0865-0f50-467d-9",
+  "fields": {
+    "title": "为你推荐",
+    "sort_order": 3,
+    "is_enabled": true,
+    "products": [
+      "12943ebd-1bdd-4cbf-b",
+      "3b615bf4-9c37-4240-8",
+      "70c20478-5c16-4688-a",
+      "8af78ac2-7bd5-4d50-9",
+      "964e0ee3-288a-4d8e-8",
+      "f6d6cb9c-0ec8-4880-a"
+    ]
+  }
+},
+{
+  "model": "backend.homenewarrival",
+  "pk": "780d0fc7-61a3-443f-b",
+  "fields": {
+    "title": "新品上市",
+    "sort_order": 4,
+    "is_enabled": true,
+    "products": [
+      "a029d39b-dacb-4a10-b",
+      "a14251fa-7427-4020-9",
+      "c596eb4e-f536-43d2-9",
+      "d0a3d484-d03e-44be-a",
+      "ef888496-adb3-431a-8",
+      "f6d6cb9c-0ec8-4880-a"
+    ]
+  }
+},
+{
+  "model": "backend.homepromotion",
+  "pk": "e5023a4b-b3a8-4eb0-a",
+  "fields": {
+    "title": "优惠活动",
+    "subtitle": "满减优惠",
+    "image": null,
+    "link": "",
+    "sort_order": 5,
+    "is_enabled": true
+  }
+},
+{
+  "model": "backend.cartitem",
+  "pk": "7d1e7fa8-d47d-49f9-a",
+  "fields": {
+    "user": 26,
+    "product": "8af78ac2-7bd5-4d50-9",
+    "quantity": 2,
+    "is_selected": true
+  }
+},
+{
+  "model": "backend.cartitem",
+  "pk": "8bcc4993-b2d4-4647-a",
+  "fields": {
+    "user": 26,
+    "product": "3b615bf4-9c37-4240-8",
+    "quantity": 3,
+    "is_selected": true
+  }
+},
+{
+  "model": "backend.cartitem",
+  "pk": "8bd7846d-f5c4-44df-9",
+  "fields": {
+    "user": 26,
+    "product": "f6d6cb9c-0ec8-4880-a",
+    "quantity": 3,
+    "is_selected": true
+  }
+},
+{
+  "model": "backend.order",
+  "pk": "ORH520260424101655001",
+  "fields": {
+    "user": 26,
+    "store": "潮流优品官方旗舰店",
+    "status": "pending",
+    "total_amount": "268.00",
+    "payment": "268.00",
+    "freight": "0.00",
+    "discount": "0.00",
+    "address_name": "张三",
+    "address_phone": "13800138000",
+    "address_province": "北京市",
+    "address_city": "北京市",
+    "address_district": "朝阳区",
+    "address_detail": "建国路88号SOHO现代城A座1201室",
+    "pay_time": null,
+    "created_at": "2026-04-24T02:16:55.860Z"
+  }
+},
+{
+  "model": "backend.order",
+  "pk": "ORH520260424101655002",
+  "fields": {
+    "user": 26,
+    "store": "潮流优品官方旗舰店",
+    "status": "paid",
+    "total_amount": "159.00",
+    "payment": "159.00",
+    "freight": "0.00",
+    "discount": "0.00",
+    "address_name": "张三",
+    "address_phone": "13800138000",
+    "address_province": "北京市",
+    "address_city": "北京市",
+    "address_district": "朝阳区",
+    "address_detail": "建国路88号SOHO现代城A座1201室",
+    "pay_time": null,
+    "created_at": "2026-04-24T02:16:55.862Z"
+  }
+},
+{
+  "model": "backend.order",
+  "pk": "ORH520260424101655003",
+  "fields": {
+    "user": 26,
+    "store": "潮流优品官方旗舰店",
+    "status": "shipped",
+    "total_amount": "298.00",
+    "payment": "298.00",
+    "freight": "10.00",
+    "discount": "0.00",
+    "address_name": "李四",
+    "address_phone": "13900139000",
+    "address_province": "上海市",
+    "address_city": "上海市",
+    "address_district": "浦东新区",
+    "address_detail": "世纪大道100号环球金融中心18楼",
+    "pay_time": null,
+    "created_at": "2026-04-24T02:16:55.863Z"
+  }
+},
+{
+  "model": "backend.order",
+  "pk": "ORH520260424101655004",
+  "fields": {
+    "user": 26,
+    "store": "潮流优品官方旗舰店",
+    "status": "completed",
+    "total_amount": "198.00",
+    "payment": "198.00",
+    "freight": "0.00",
+    "discount": "0.00",
+    "address_name": "张三",
+    "address_phone": "13800138000",
+    "address_province": "北京市",
+    "address_city": "北京市",
+    "address_district": "朝阳区",
+    "address_detail": "建国路88号SOHO现代城A座1201室",
+    "pay_time": "2026-04-24T02:16:55.863Z",
+    "created_at": "2026-04-24T02:16:55.864Z"
+  }
+},
+{
+  "model": "backend.orderproduct",
+  "pk": "33e7c76d-cb2f-4831-a",
+  "fields": {
+    "order": "ORH520260424101655001",
+    "name": "法式碎花连衣裙",
+    "spec": "白色, M",
+    "price": "189.00",
+    "quantity": 1,
+    "image": "5dd5c65c-ba0b-4ea2-9"
+  }
+},
+{
+  "model": "backend.orderproduct",
+  "pk": "6c44ac41-c9f6-487b-b",
+  "fields": {
+    "order": "ORH520260424101655004",
+    "name": "极简陶瓷咖啡杯",
+    "spec": "",
+    "price": "68.00",
+    "quantity": 2,
+    "image": "b7f6a1aa-761d-4156-b"
+  }
+},
+{
+  "model": "backend.orderproduct",
+  "pk": "993219f5-5a73-40ef-b",
+  "fields": {
+    "order": "ORH520260424101655004",
+    "name": "无线蓝牙耳机",
+    "spec": "",
+    "price": "199.00",
+    "quantity": 1,
+    "image": "78867165-4bc9-4d4f-b"
+  }
+},
+{
+  "model": "backend.orderproduct",
+  "pk": "9a35fd1a-0aa0-4e52-b",
+  "fields": {
+    "order": "ORH520260424101655003",
+    "name": "简约真皮腕表",
+    "spec": "",
+    "price": "299.00",
+    "quantity": 1,
+    "image": "bf32e293-30e2-4696-b"
+  }
+},
+{
+  "model": "backend.orderproduct",
+  "pk": "cc136b21-7a84-4330-b",
+  "fields": {
+    "order": "ORH520260424101655001",
+    "name": "纯棉宽松T恤",
+    "spec": "黑色, L",
+    "price": "79.00",
+    "quantity": 1,
+    "image": "b7f6a1aa-761d-4156-b"
+  }
+},
+{
+  "model": "backend.orderproduct",
+  "pk": "f915a2f6-4148-401c-b",
+  "fields": {
+    "order": "ORH520260424101655002",
+    "name": "高腰直筒牛仔裤",
+    "spec": "浅蓝, 27",
+    "price": "159.00",
+    "quantity": 1,
+    "image": "b2f01ce3-7081-4cde-9"
+  }
+},
+{
+  "model": "backend.address",
+  "pk": "442a1f1e-4c63-4809-b",
+  "fields": {
+    "user": 26,
+    "name": "张三",
+    "phone": "13800138000",
+    "province": "北京市",
+    "city": "北京市",
+    "district": "朝阳区",
+    "detail": "建国路88号SOHO现代城A座1201室",
+    "is_default": true
+  }
+},
+{
+  "model": "backend.address",
+  "pk": "ffe65b78-5289-4232-a",
+  "fields": {
+    "user": 26,
+    "name": "李四",
+    "phone": "13900139000",
+    "province": "上海市",
+    "city": "上海市",
+    "district": "浦东新区",
+    "detail": "世纪大道100号环球金融中心18楼",
+    "is_default": false
+  }
+},
+{
+  "model": "backend.review",
+  "pk": "1df6708b-cebe-4b5f-9",
+  "fields": {
+    "user": 26,
+    "product": "40d45eb3-3eaf-4e3b-9",
+    "user_name": "张**",
+    "user_avatar": null,
+    "rating": 5,
+    "content": "款式非常好看，佩戴舒适，很满意！",
+    "spec": "",
+    "created_at": "2026-04-24T02:13:05.843Z",
+    "images": []
+  }
+},
+{
+  "model": "backend.review",
+  "pk": "9b27603e-93d2-44ae-b",
+  "fields": {
+    "user": 26,
+    "product": "a14251fa-7427-4020-9",
+    "user_name": "郑**",
+    "user_avatar": null,
+    "rating": 5,
+    "content": "穿起来很舒服，透气性好，样式好看。",
+    "spec": "",
+    "created_at": "2026-04-24T02:13:05.845Z",
+    "images": []
+  }
+},
+{
+  "model": "backend.review",
+  "pk": "c2a11147-9a1a-4072-a",
+  "fields": {
+    "user": 26,
+    "product": "8af78ac2-7bd5-4d50-9",
+    "user_name": "林**",
+    "user_avatar": null,
+    "rating": 5,
+    "content": "碎花图案很漂亮，面料很舒服！",
+    "spec": "",
+    "created_at": "2026-04-24T02:13:05.845Z",
+    "images": []
+  }
+},
+{
+  "model": "backend.review",
+  "pk": "c57ce10c-af30-48a3-a",
+  "fields": {
+    "user": 26,
+    "product": "c596eb4e-f536-43d2-9",
+    "user_name": "孙**",
+    "user_avatar": null,
+    "rating": 4,
+    "content": "做工精细，容量刚好，适合喝茶。",
+    "spec": "",
+    "created_at": "2026-04-24T02:13:05.844Z",
+    "images": []
+  }
+},
+{
+  "model": "backend.review",
+  "pk": "f7409f41-f997-4bf3-9",
+  "fields": {
+    "user": 26,
+    "product": "a029d39b-dacb-4a10-b",
+    "user_name": "王**",
+    "user_avatar": null,
+    "rating": 5,
+    "content": "降噪效果超赞，音质清晰，续航给力！",
+    "spec": "",
+    "created_at": "2026-04-24T02:13:05.844Z",
+    "images": []
+  }
+},
+{
+  "model": "backend.userprofile",
+  "pk": 23,
+  "fields": {
+    "user": 26,
+    "user_type": "user",
+    "phone": "13800138000",
+    "avatar": null,
+    "points": 0,
+    "follow_count": 0,
+    "fans_count": 0
+  }
+},
+{
+  "model": "backend.userprofile",
+  "pk": 24,
+  "fields": {
+    "user": 27,
+    "user_type": "admin",
+    "phone": "13900139000",
+    "avatar": null,
+    "points": 0,
+    "follow_count": 0,
+    "fans_count": 0
+  }
+},
+{
+  "model": "backend.adminprofile",
+  "pk": 12,
+  "fields": {
+    "user": 27,
+    "permissions": {
+      "can_manage_orders": true,
+      "can_manage_products": true
+    }
+  }
+},
+{
+  "model": "backend.usercoupon",
+  "pk": "66625272-51bf-45ed-9",
+  "fields": {
+    "user": 26,
+    "name": "无门槛券",
+    "value": 5,
+    "threshold": "无门槛",
+    "description": "无门槛使用",
+    "time": "2026-12-31"
+  }
+},
+{
+  "model": "backend.usercoupon",
+  "pk": "8624fac2-4e4e-4d5c-8",
+  "fields": {
+    "user": 26,
+    "name": "满50减10",
+    "value": 10,
+    "threshold": "满50元减10元",
+    "description": "满50元减10元",
+    "time": "2026-12-31"
+  }
+},
+{
+  "model": "backend.usercoupon",
+  "pk": "9591aaa6-68e6-4cdc-a",
+  "fields": {
+    "user": 26,
+    "name": "新人专享券",
+    "value": 20,
+    "threshold": "满100元减20元",
+    "description": "满100元减20元",
+    "time": "2026-12-31"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "050aa71a-0e52-49a1-8",
+  "fields": {
+    "file": "uploads/banner-1-summer-1710.webp",
+    "original_name": "banner-1-summer-1710.webp",
+    "size": 186432,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:02:39.789Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "0546a80f-eccb-4173-9",
+  "fields": {
+    "file": "uploads/product-04-serum.webp",
+    "original_name": "product-04-serum.webp",
+    "size": 97451,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.088Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "11f57a51-05af-4661-9",
+  "fields": {
+    "file": "uploads/banner-2-newarrival-1710.webp",
+    "original_name": "banner-2-newarrival-1710.webp",
+    "size": 116779,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:02:50.707Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "1fa608f6-9b38-4ea5-a",
+  "fields": {
+    "file": "uploads/icon-skincare-03.webp",
+    "original_name": "icon-skincare-03.webp",
+    "size": 61298,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.625Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "2c098ec6-3a26-4ec7-a",
+  "fields": {
+    "file": "uploads/icon-phone-04.webp",
+    "original_name": "icon-phone-04.webp",
+    "size": 71619,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.626Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "38b8df81-01c8-481e-b",
+  "fields": {
+    "file": "uploads/icon-home-05.webp",
+    "original_name": "icon-home-05.webp",
+    "size": 75515,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.627Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "4730657f-cb55-4b9e-8",
+  "fields": {
+    "file": "uploads/product-12-bottle.webp",
+    "original_name": "product-12-bottle.webp",
+    "size": 84226,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.094Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "5dd5c65c-ba0b-4ea2-9",
+  "fields": {
+    "file": "uploads/product-11-tote.webp",
+    "original_name": "product-11-tote.webp",
+    "size": 96804,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.094Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "60c2a47a-0db7-4091-8",
+  "fields": {
+    "file": "uploads/product-09-notebook.webp",
+    "original_name": "product-09-notebook.webp",
+    "size": 83010,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.092Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "757f09e0-78c1-4ed6-a",
+  "fields": {
+    "file": "uploads/icon-beauty-08.webp",
+    "original_name": "icon-beauty-08.webp",
+    "size": 65667,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.629Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "78867165-4bc9-4d4f-b",
+  "fields": {
+    "file": "uploads/product-02-earbuds.webp",
+    "original_name": "product-02-earbuds.webp",
+    "size": 84247,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.086Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "80a930bf-5b4b-49b6-b",
+  "fields": {
+    "file": "uploads/product-08-plantpot.webp",
+    "original_name": "product-08-plantpot.webp",
+    "size": 121515,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.091Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "84f9ac80-f820-43d7-8",
+  "fields": {
+    "file": "uploads/banner-3-discount-1710.webp",
+    "original_name": "banner-3-discount-1710.webp",
+    "size": 325046,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:02:50.709Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "a28e8c4f-3998-455a-9",
+  "fields": {
+    "file": "uploads/product-07-sunglasses.webp",
+    "original_name": "product-07-sunglasses.webp",
+    "size": 98340,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.091Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "b2f01ce3-7081-4cde-9",
+  "fields": {
+    "file": "uploads/product-05-sneakers.webp",
+    "original_name": "product-05-sneakers.webp",
+    "size": 163776,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.089Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "b7f6a1aa-761d-4156-b",
+  "fields": {
+    "file": "uploads/product-03-mug.webp",
+    "original_name": "product-03-mug.webp",
+    "size": 76307,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.087Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "bf32e293-30e2-4696-b",
+  "fields": {
+    "file": "uploads/product-01-watch.webp",
+    "original_name": "product-01-watch.webp",
+    "size": 122207,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.085Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "caa684f5-6692-4d2a-a",
+  "fields": {
+    "file": "uploads/icon-fashion-01.webp",
+    "original_name": "icon-fashion-01.webp",
+    "size": 80224,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.623Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "e78d071b-4653-4922-b",
+  "fields": {
+    "file": "uploads/icon-sport-06.webp",
+    "original_name": "icon-sport-06.webp",
+    "size": 95329,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.627Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "f3f0a1bb-f79f-4e31-9",
+  "fields": {
+    "file": "uploads/product-10-candle.webp",
+    "original_name": "product-10-candle.webp",
+    "size": 92559,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.093Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "f858865a-b344-4a19-a",
+  "fields": {
+    "file": "uploads/icon-food-07.webp",
+    "original_name": "icon-food-07.webp",
+    "size": 73732,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.628Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "fa951ef8-fa43-4171-8",
+  "fields": {
+    "file": "uploads/product-06-wallet.webp",
+    "original_name": "product-06-wallet.webp",
+    "size": 84360,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:06:25.090Z"
+  }
+},
+{
+  "model": "mediafiles.mediafile",
+  "pk": "fdfccb3d-359a-471d-b",
+  "fields": {
+    "file": "uploads/icon-mens-02.webp",
+    "original_name": "icon-mens-02.webp",
+    "size": 75108,
+    "mime_type": "image/webp",
+    "uploaded_at": "2026-04-23T16:09:59.624Z"
+  }
+}
+]

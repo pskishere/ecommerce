@@ -1,17 +1,45 @@
 import SwiftUI
 
 struct NotificationsView: View {
-    @StateObject private var viewModel = NotificationsViewModel()
+    @State private var notifications: [UserNotification] = []
+    @State private var selectedTab: String = "全部"
+    @State private var isLoading = true
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
+    private let accentColor = DesignSystem.Colors.accent
+    private let tabs = ["全部", "订单", "优惠", "系统"]
+
+    private var filteredNotifications: [UserNotification] {
+        switch selectedTab {
+        case "全部":
+            return notifications
+        case "订单":
+            return notifications.filter { $0.type == "logistics" || $0.type == "order" }
+        case "优惠":
+            return notifications.filter { $0.type == "promo" }
+        case "系统":
+            return notifications.filter { $0.type == "sys" }
+        default:
+            return notifications
+        }
+    }
+
+    private var unreadCounts: [String: Int] {
+        [
+            "全部": notifications.filter { !$0.isRead }.count,
+            "订单": notifications.filter { !$0.isRead && ($0.type == "logistics" || $0.type == "order") }.count,
+            "优惠": notifications.filter { !$0.isRead && $0.type == "promo" }.count,
+            "系统": notifications.filter { !$0.isRead && $0.type == "sys" }.count
+        ]
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Tabs
             tabBar
 
-            // Notification List
-            if viewModel.filteredNotifications.isEmpty {
+            if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if filteredNotifications.isEmpty {
                 emptyView
             } else {
                 notificationList
@@ -22,7 +50,7 @@ struct NotificationsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { viewModel.markAllAsRead() }) {
+                Button(action: { Task { await markAllAsRead() } }) {
                     Text("全部已读")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(accentColor)
@@ -30,19 +58,27 @@ struct NotificationsView: View {
             }
         }
         .hideTabBar()
+        .task {
+            do {
+                notifications = try await UserNotification.getNotifications()
+            } catch {
+                print("Failed to load notifications: \(error)")
+            }
+            isLoading = false
+        }
     }
 
     // MARK: - Tab Bar
     private var tabBar: some View {
         ContentTab(
-            tabs: viewModel.tabs.map {
+            tabs: tabs.map {
                 ContentTabItem(
                     value: $0,
                     label: $0,
-                    badgeCount: viewModel.unreadCounts[$0]
+                    badgeCount: unreadCounts[$0]
                 )
             },
-            selectedTab: $viewModel.selectedTab
+            selectedTab: $selectedTab
         )
     }
 
@@ -50,9 +86,9 @@ struct NotificationsView: View {
     private var notificationList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(viewModel.filteredNotifications) { notification in
+                ForEach(filteredNotifications) { notification in
                     NotificationRow(notification: notification) {
-                        viewModel.markAsRead(notification)
+                        Task { await markAsRead(notification) }
                     }
                     Divider()
                         .padding(.leading, 60)
@@ -79,33 +115,77 @@ struct NotificationsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    private func markAsRead(_ notification: UserNotification) async {
+        do {
+            try await UserNotification.markRead(id: notification.id)
+            if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
+                notifications[index] = UserNotification(
+                    id: notification.id,
+                    type: notification.type,
+                    name: notification.name,
+                    time: notification.time,
+                    content: notification.content,
+                    action: notification.action,
+                    isRead: true
+                )
+            }
+        } catch {
+            print("Failed to mark as read: \(error)")
+        }
+    }
+
+    private func markAllAsRead() async {
+        do {
+            try await UserNotification.markAllRead()
+            notifications = notifications.map {
+                UserNotification(
+                    id: $0.id,
+                    type: $0.type,
+                    name: $0.name,
+                    time: $0.time,
+                    content: $0.content,
+                    action: $0.action,
+                    isRead: true
+                )
+            }
+        } catch {
+            print("Failed to mark all as read: \(error)")
+        }
+    }
 }
 
 // MARK: - Notification Row
 struct NotificationRow: View {
-    let notification: AppNotification
+    let notification: UserNotification
     let onTap: () -> Void
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
+    private let accentColor = DesignSystem.Colors.accent
+
+    private var notificationType: NotificationType {
+        switch notification.type {
+        case "logistics", "order": return .order
+        case "promo": return .promotion
+        default: return .system
+        }
+    }
 
     var body: some View {
         Button(action: onTap) {
             HStack(alignment: .top, spacing: 12) {
-                // Icon
                 ZStack {
                     Circle()
-                        .fill(notification.type.color.opacity(0.1))
+                        .fill(notificationType.color.opacity(0.1))
                         .frame(width: 44, height: 44)
 
-                    Image(systemName: notification.type.icon)
+                    Image(systemName: notificationType.icon)
                         .font(.system(size: 18))
-                        .foregroundStyle(notification.type.color)
+                        .foregroundStyle(notificationType.color)
                 }
 
-                // Content
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text(notification.title)
+                        Text(notification.name)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.primary)
 
@@ -134,16 +214,7 @@ struct NotificationRow: View {
     }
 }
 
-// MARK: - App Notification
-struct AppNotification: Identifiable {
-    let id: UUID
-    let title: String
-    let content: String
-    let time: String
-    let type: NotificationType
-    var isRead: Bool
-}
-
+// MARK: - Notification Type
 enum NotificationType {
     case order
     case promotion
@@ -162,67 +233,6 @@ enum NotificationType {
         case .order: return Color.blue
         case .promotion: return Color.orange
         case .system: return Color.gray
-        }
-    }
-}
-
-// MARK: - Notifications ViewModel
-class NotificationsViewModel: ObservableObject {
-    @Published var selectedTab: String = "全部"
-    @Published var notifications: [AppNotification]
-
-    let tabs = ["全部", "订单", "优惠", "系统"]
-
-    var unreadCounts: [String: Int] {
-        [
-            "全部": notifications.filter { !$0.isRead }.count,
-            "订单": notifications.filter { !$0.isRead && $0.type == .order }.count,
-            "优惠": notifications.filter { !$0.isRead && $0.type == .promotion }.count,
-            "系统": notifications.filter { !$0.isRead && $0.type == .system }.count
-        ]
-    }
-
-    var filteredNotifications: [AppNotification] {
-        switch selectedTab {
-        case "全部":
-            return notifications
-        case "订单":
-            return notifications.filter { $0.type == .order }
-        case "优惠":
-            return notifications.filter { $0.type == .promotion }
-        case "系统":
-            return notifications.filter { $0.type == .system }
-        default:
-            return notifications
-        }
-    }
-
-    init() {
-        notifications = [
-            AppNotification(id: UUID(), title: "订单已发货", content: "您的订单已于今日发货，快递单号：SF1234567890，请注意查收", time: "刚刚", type: .order, isRead: false),
-            AppNotification(id: UUID(), title: "优惠券到账", content: "您有一张满99减20的优惠券已到账，有效期7天", time: "10分钟前", type: .promotion, isRead: false),
-            AppNotification(id: UUID(), title: "限时折扣", content: "春季新品上市，全场低至5折起", time: "1小时前", type: .promotion, isRead: true),
-            AppNotification(id: UUID(), title: "订单已签收", content: "您的订单已完成签收，如有问题可随时联系客服", time: "今天 12:30", type: .order, isRead: true),
-            AppNotification(id: UUID(), title: "系统更新", content: "App已更新至最新版本，体验更流畅", time: "昨天", type: .system, isRead: true)
-        ]
-    }
-
-    func markAsRead(_ notification: AppNotification) {
-        if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
-            notifications[index].isRead = true
-        }
-    }
-
-    func markAllAsRead() {
-        notifications = notifications.map { notification in
-            AppNotification(
-                id: notification.id,
-                title: notification.title,
-                content: notification.content,
-                time: notification.time,
-                type: notification.type,
-                isRead: true
-            )
         }
     }
 }

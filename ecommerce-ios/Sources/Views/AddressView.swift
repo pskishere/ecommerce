@@ -1,14 +1,17 @@
 import SwiftUI
 
 struct AddressView: View {
-    @StateObject private var viewModel = AddressViewModel()
-    @Environment(\.dismiss) private var dismiss
+    @State private var addresses: [Address] = []
+    @State private var isLoading = true
+    @State private var showingAddAddress = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
-                // Address List
-                if viewModel.addresses.isEmpty {
+                if isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if addresses.isEmpty {
                     emptyState
                 } else {
                     addressList
@@ -16,7 +19,6 @@ struct AddressView: View {
             }
             .padding(.bottom, 80)
 
-            // Bottom Add Button
             addButton
         }
         .background(Color(.systemGroupedBackground))
@@ -24,7 +26,7 @@ struct AddressView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {}) {
+                Button(action: { showingAddAddress = true }) {
                     Text("新增")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(DesignSystem.Colors.accent)
@@ -32,6 +34,14 @@ struct AddressView: View {
             }
         }
         .hideTabBar()
+        .task {
+            do {
+                addresses = try await Address.getAddresses()
+            } catch {
+                print("Failed to load addresses: \(error)")
+            }
+            isLoading = false
+        }
     }
 
     // MARK: - Empty State
@@ -56,13 +66,13 @@ struct AddressView: View {
     private var addressList: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                ForEach(viewModel.addresses) { address in
+                ForEach(addresses) { address in
                     AddressCard(
                         address: address,
                         isDefault: address.isDefault,
-                        onSetDefault: { viewModel.setDefault(address) },
+                        onSetDefault: { Task { await setDefault(address) } },
                         onEdit: { },
-                        onDelete: { viewModel.deleteAddress(address) }
+                        onDelete: { Task { await deleteAddress(address) } }
                     )
                 }
             }
@@ -75,7 +85,7 @@ struct AddressView: View {
         VStack(spacing: 0) {
             Divider()
 
-            Button(action: {}) {
+            Button(action: { showingAddAddress = true }) {
                 HStack(spacing: 8) {
                     Image(systemName: "plus")
                         .font(.system(size: 16, weight: .semibold))
@@ -96,11 +106,29 @@ struct AddressView: View {
             .background(Color(.systemBackground))
         }
     }
+
+    private func setDefault(_ address: Address) async {
+        do {
+            try await Address.setDefaultAddress(id: address.id)
+            addresses = try await Address.getAddresses()
+        } catch {
+            print("Failed to set default address: \(error)")
+        }
+    }
+
+    private func deleteAddress(_ address: Address) async {
+        do {
+            try await Address.deleteAddress(id: address.id)
+            addresses = try await Address.getAddresses()
+        } catch {
+            print("Failed to delete address: \(error)")
+        }
+    }
 }
 
 // MARK: - Address Card
 struct AddressCard: View {
-    let address: AddressItem
+    let address: Address
     let isDefault: Bool
     let onSetDefault: () -> Void
     let onEdit: () -> Void
@@ -108,7 +136,6 @@ struct AddressCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Header
             HStack {
                 Text(address.name)
                     .font(.system(size: 15, weight: .semibold))
@@ -131,13 +158,11 @@ struct AddressCard: View {
                 }
             }
 
-            // Detail
-            Text(address.detail)
+            Text(address.fullAddress)
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
 
-            // Footer
             HStack {
                 Button(action: onSetDefault) {
                     HStack(spacing: 4) {
@@ -178,51 +203,6 @@ struct AddressCard: View {
         .padding(14)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-// MARK: - Address Item Model
-struct AddressItem: Identifiable {
-    let id: UUID
-    let name: String
-    let phone: String
-    let detail: String
-    let isDefault: Bool
-}
-
-// MARK: - Address ViewModel
-class AddressViewModel: ObservableObject {
-    @Published var addresses: [AddressItem] = [
-        AddressItem(
-            id: UUID(),
-            name: "林小琳",
-            phone: "138****8888",
-            detail: "广东省广州市天河区珠江新城花城大道88号华夏中心A栋1501室",
-            isDefault: true
-        ),
-        AddressItem(
-            id: UUID(),
-            name: "林小琳",
-            phone: "139****9999",
-            detail: "广东省深圳市南山区科技园南区深南大道9996号松日鼎盛大厦8楼",
-            isDefault: false
-        )
-    ]
-
-    func setDefault(_ address: AddressItem) {
-        addresses = addresses.map {
-            AddressItem(
-                id: $0.id,
-                name: $0.name,
-                phone: $0.phone,
-                detail: $0.detail,
-                isDefault: $0.id == address.id
-            )
-        }
-    }
-
-    func deleteAddress(_ address: AddressItem) {
-        addresses.removeAll { $0.id == address.id }
     }
 }
 

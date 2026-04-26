@@ -6,7 +6,7 @@ struct CartView: View {
     @State private var isEditMode = false
     @State private var showingToast = false
     @State private var toastMessage = ""
-    @State private var swipedItemId: UUID?
+    @State private var swipedItemId: String?
 
     private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
@@ -33,6 +33,9 @@ struct CartView: View {
                         .foregroundStyle(accentColor)
                 }
             }
+        }
+        .task {
+            await cart.loadCart()
         }
     }
 
@@ -81,17 +84,6 @@ struct CartView: View {
             Text("快去挑选心仪的商品吧")
                 .font(.system(size: 13, weight: .regular))
                 .foregroundStyle(.gray)
-
-            NavigationLink(destination: HomeView()) {
-                Text("去逛逛")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 36)
-                    .padding(.vertical, 12)
-                    .background(accentColor)
-                    .clipShape(Capsule())
-            }
-            .padding(.top, 8)
 
             Spacer()
         }
@@ -354,16 +346,18 @@ struct CartItemRow: View {
             }
 
             // Product image
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.gray.opacity(0.1))
-                .frame(width: 88, height: 88)
-                .overlay {
-                    Image(item.product.imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 88, height: 88)
-                        .clipped()
-                }
+            AsyncImage(url: item.product.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 88, height: 88)
+                    .clipped()
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.gray.opacity(0.1))
+            }
+            .frame(width: 88, height: 88)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
 
             // Product info
             VStack(alignment: .leading, spacing: 4) {

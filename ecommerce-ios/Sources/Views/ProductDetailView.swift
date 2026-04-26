@@ -10,6 +10,11 @@ struct ProductDetailView: View {
     @State private var selectedImageIndex = 0
     @State private var showingSpecSheet = false
     @State private var isFavorite = false
+    @State private var relatedProducts: [Product] = []
+    @State private var productDetail: ProductDetail?
+    @State private var selectedSpecs: [String: String] = [:]  // groupId: valueId
+    @State private var availableSpecs: [String: Set<String>] = [:]  // groupId: available valueIds
+    @State private var selectedSKU: SKU?
 
     private let accentColor = DesignSystem.Colors.accent
 
@@ -32,10 +37,8 @@ struct ProductDetailView: View {
                 .scrollContentBackground(.hidden)
                 .ignoresSafeArea(edges: .top)
 
-                // Floating top buttons
-                floatingTopBar
             }
-            .navigationBarHidden(true)
+            .navigationBarBackButtonHidden(false)
             .hideTabBar()
             .safeAreaInset(edge: .bottom) {
                 bottomActionBar
@@ -47,45 +50,88 @@ struct ProductDetailView: View {
             }
         }
         .sheet(isPresented: $showingSpecSheet) {
-            SpecSheetView(
-                product: product,
-                quantity: $quantity,
-                isFavorite: $isFavorite,
-                onAddToCart: { addToCart() },
-                onBuyNow: { buyNow() }
-            )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
+            if let detail = productDetail {
+                SpecSheetView(
+                    productDetail: detail,
+                    selectedSpecs: $selectedSpecs,
+                    selectedSKU: $selectedSKU,
+                    availableSpecs: $availableSpecs,
+                    quantity: $quantity,
+                    isFavorite: $isFavorite,
+                    onSpecsChanged: { Task { await fetchAvailability() } },
+                    onAddToCart: { addToCart() },
+                    onBuyNow: { buyNow() }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
+        }
+        .task {
+            await loadProductDetail()
+            await loadRelatedProducts()
         }
     }
 
-    // MARK: - Floating Top Bar
-    private var floatingTopBar: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .foregroundStyle(Color(.darkGray))
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
+    private func loadProductDetail() async {
+        do {
+            productDetail = try await Product.getDetail(id: product.id)
+            await fetchAvailability()
+        } catch {
+            print("Failed to load product detail: \(error)")
+        }
+    }
+
+    private func loadRelatedProducts() async {
+        do {
+            relatedProducts = try await Product.getRelatedProducts(for: product.id)
+        } catch {
+            print("Failed to load related products: \(error)")
+        }
+    }
+
+    private func fetchAvailability() async {
+        guard let detail = productDetail else {
+            print("[DEBUG] fetchAvailability early return - productDetail is nil")
+            return
+        }
+        let selectedIds = Array(selectedSpecs.values)
+        print("[DEBUG] fetchAvailability called, detail.id: \(detail.id), selectedIds: \(selectedIds), specGroups count: \(detail.specGroups.count)")
+
+        if selectedIds.isEmpty {
+            var allAvailable: [String: Set<String>] = [:]
+            for group in detail.specGroups {
+                let valueIds = group.values.map { $0.id }
+                print("[DEBUG] Group \(group.id) (\(group.name)): \(valueIds)")
+                allAvailable[group.id] = Set(valueIds)
             }
+            availableSpecs = allAvailable
+            print("[DEBUG] No selection - all available: \(allAvailable)")
+            return
+        }
 
-            Spacer()
-
-            HStack(spacing: 8) {
-                Button(action: { /* share */ }) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.title3)
-                        .foregroundStyle(Color(.darkGray))
-                        .frame(width: 36, height: 36)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
+        do {
+            let responses = try await Product.getSpecAvailable(productId: detail.id, selectedIds: selectedIds)
+            print("[DEBUG] API returned \(responses.count) groups")
+            var newAvailable: [String: Set<String>] = [:]
+            for resp in responses {
+                newAvailable[resp.groupId] = Set(resp.availableValues)
+                print("[DEBUG] Group \(resp.groupId): available \(resp.availableValues)")
+            }
+            for group in detail.specGroups {
+                if newAvailable[group.id] == nil {
+                    newAvailable[group.id] = Set(group.values.map { $0.id })
                 }
             }
+            availableSpecs = newAvailable
+            print("[DEBUG] Updated availableSpecs: \(newAvailable)")
+        } catch {
+            print("[DEBUG] fetchAvailability error: \(error)")
+            var allAvailable: [String: Set<String>] = [:]
+            for group in detail.specGroups {
+                allAvailable[group.id] = Set(group.values.map { $0.id })
+            }
+            availableSpecs = allAvailable
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 8)
     }
 
     // MARK: - Product Image Section
@@ -93,13 +139,19 @@ struct ProductDetailView: View {
         ZStack(alignment: .bottom) {
             // Image swiper - full width, full image display
             GeometryReader { geometry in
-                Image(product.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: geometry.size.width)
-                    .clipped()
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                }
             }
-            .frame(height: UIScreen.main.bounds.width)
+            .aspectRatio(1, contentMode: .fit)
 
             // Page indicator
             HStack(spacing: 6) {
@@ -190,7 +242,7 @@ struct ProductDetailView: View {
             SpecRow(
                 icon: "circle.grid.2x2",
                 label: "选择",
-                value: "黑色经典款/标准版",
+                value: selectedSpecsText,
                 showArrow: true
             )
             .onTapGesture {
@@ -213,6 +265,18 @@ struct ProductDetailView: View {
         .padding(.horizontal, 8)
     }
 
+    private var selectedSpecsText: String {
+        guard let detail = productDetail else { return "请选择规格" }
+        var parts: [String] = []
+        for group in detail.specGroups {
+            if let valueId = selectedSpecs[group.id],
+               let specValue = group.values.first(where: { $0.id == valueId }) {
+                parts.append(specValue.value)
+            }
+        }
+        return parts.isEmpty ? "请选择规格" : parts.joined(separator: " / ")
+    }
+
     // MARK: - Shop Section
     private var shopSection: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -221,11 +285,15 @@ struct ProductDetailView: View {
                     .fill(Color.gray.opacity(0.1))
                     .frame(width: 52, height: 52)
                     .overlay {
-                        Image(product.imageName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 52, height: 52)
-                            .clipped()
+                        AsyncImage(url: product.imageURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 52, height: 52)
+                                .clipped()
+                        } placeholder: {
+                            Color.clear
+                        }
                     }
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -359,13 +427,19 @@ struct ProductDetailView: View {
 
             // Detail images - fill width
             GeometryReader { geometry in
-                Image(product.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: geometry.size.width)
-                    .clipped()
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                }
             }
-            .frame(height: UIScreen.main.bounds.width)
+            .aspectRatio(1, contentMode: .fit)
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -383,8 +457,11 @@ struct ProductDetailView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(Product.recommendedProducts) { relatedProduct in
-                        RelatedProductCard(product: relatedProduct)
+                    ForEach(relatedProducts) { relatedProduct in
+                        NavigationLink(destination: ProductDetailView(product: relatedProduct)) {
+                            RelatedProductCard(product: relatedProduct)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -487,15 +564,41 @@ struct ProductDetailView: View {
 
     // MARK: - Actions
     private func addToCart() {
+        guard let detail = productDetail else { return }
+        if !detail.specGroups.isEmpty && selectedSKU == nil {
+            showingSpecSheet = true
+            return
+        }
+        var productToAdd = product
+        if let sku = selectedSKU {
+            productToAdd = Product(
+                id: product.id,
+                name: product.name,
+                description: product.description,
+                price: sku.price,
+                originalPrice: sku.originalPrice,
+                image: sku.image ?? product.image,
+                subcategoryRef: product.subcategoryRef,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+                salesCount: product.salesCount,
+                isInStock: product.isInStock,
+                tag: product.tag
+            )
+        }
         for _ in 0..<quantity {
-            cart.addToCart(product)
+            cart.addToCart(productToAdd)
         }
         showToast()
     }
 
     private func buyNow() {
+        guard let detail = productDetail else { return }
+        if !detail.specGroups.isEmpty && selectedSKU == nil {
+            showingSpecSheet = true
+            return
+        }
         addToCart()
-        // Navigate to cart
     }
 
     private func showToast() {
@@ -576,11 +679,17 @@ struct RelatedProductCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Image(product.imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 140, height: 140)
-                .clipped()
+            AsyncImage(url: product.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 140, height: 140)
+                    .clipped()
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.1))
+                    .frame(width: 140, height: 140)
+            }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(product.name)
@@ -603,20 +712,19 @@ struct RelatedProductCard: View {
 
 // MARK: - Spec Sheet View
 struct SpecSheetView: View {
-    let product: Product
+    let productDetail: ProductDetail
+    @Binding var selectedSpecs: [String: String]
+    @Binding var selectedSKU: SKU?
+    @Binding var availableSpecs: [String: Set<String>]
     @Binding var quantity: Int
     @Binding var isFavorite: Bool
+    var onSpecsChanged: () -> Void
     var onAddToCart: () -> Void
     var onBuyNow: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedColor = "黑色经典款"
-    @State private var selectedSize = "标准版"
-    @State private var showToast = false
 
     private let accentColor = DesignSystem.Colors.accent
-    private let colors = ["黑色", "银色", "金色"]
-    private let sizes = ["标准版", "礼盒版"]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -624,25 +732,27 @@ struct SpecSheetView: View {
                 VStack(spacing: 20) {
                     // Product info
                     HStack(spacing: 14) {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.gray.opacity(0.1))
-                            .frame(width: 90, height: 90)
-                            .overlay {
-                                Image(product.imageName)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            }
+                        AsyncImage(url: selectedImageURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.gray.opacity(0.1))
+                        }
+                        .frame(width: 90, height: 90)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(product.formattedPrice)
+                            Text(formattedPrice)
                                 .font(.system(size: 24, weight: .black))
                                 .foregroundStyle(accentColor)
 
-                            Text("库存 128 件")
+                            Text(stockText)
                                 .font(.caption)
                                 .foregroundStyle(.gray)
 
-                            Text("已选：\(selectedColor) / \(selectedSize)")
+                            Text("已选：\(selectedSpecsText)")
                                 .font(.caption)
                                 .foregroundStyle(.gray)
                         }
@@ -651,37 +761,24 @@ struct SpecSheetView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                    // Color options
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("颜色")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.primary)
+                    // Spec groups
+                    ForEach(productDetail.specGroups) { group in
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(group.name)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.primary)
 
-                        WrapHStack(spacing: 8) {
-                            ForEach(colors, id: \.self) { color in
-                                SpecOption(
-                                    text: color,
-                                    isSelected: selectedColor == color,
-                                    isDisabled: color == "银色",
-                                    onTap: { selectedColor = color }
-                                )
-                            }
-                        }
-                    }
-
-                    // Size options
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("规格")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.primary)
-
-                        WrapHStack(spacing: 8) {
-                            ForEach(sizes, id: \.self) { size in
-                                SpecOption(
-                                    text: size,
-                                    isSelected: selectedSize == size,
-                                    onTap: { selectedSize = size }
-                                )
+                            WrapHStack(spacing: 2) {
+                                ForEach(group.values) { specValue in
+                                    SpecOption(
+                                        text: specValue.value,
+                                        isSelected: selectedSpecs[group.id] == specValue.id,
+                                        isDisabled: !isSpecAvailable(groupId: group.id, valueId: specValue.id),
+                                        onTap: {
+                                            toggleSpec(groupId: group.id, valueId: specValue.id)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -757,6 +854,74 @@ struct SpecSheetView: View {
             .padding(.bottom, 14)
         }
     }
+
+    private var formattedPrice: String {
+        if let sku = selectedSKU {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencyCode = "CNY"
+            formatter.locale = Locale(identifier: "zh_CN")
+            return formatter.string(from: NSDecimalNumber(decimal: sku.price)) ?? "¥\(sku.price)"
+        }
+        return productDetail.formattedPrice
+    }
+
+    private var stockText: String {
+        if let sku = selectedSKU {
+            return sku.stock > 0 ? "库存 \(sku.stock) 件" : "暂无库存"
+        }
+        return "请选择规格"
+    }
+
+    private var selectedSpecsText: String {
+        var parts: [String] = []
+        for group in productDetail.specGroups {
+            if let valueId = selectedSpecs[group.id],
+               let specValue = group.values.first(where: { $0.id == valueId }) {
+                parts.append(specValue.value)
+            }
+        }
+        return parts.isEmpty ? "" : parts.joined(separator: " / ")
+    }
+
+    private var selectedImageURL: URL? {
+        if let sku = selectedSKU, let image = sku.image {
+            return URL(string: image)
+        }
+        return productDetail.imageURL
+    }
+
+    private func isSpecAvailable(groupId: String, valueId: String) -> Bool {
+        if let available = availableSpecs[groupId] {
+            let isAvail = available.contains(valueId)
+            print("[DEBUG] isSpecAvailable(\(groupId), \(valueId)) = \(isAvail), available: \(available)")
+            return isAvail
+        }
+        print("[DEBUG] isSpecAvailable(\(groupId), \(valueId)) = true (no entry in availableSpecs), availableSpecs: \(availableSpecs)")
+        return true
+    }
+
+    private func toggleSpec(groupId: String, valueId: String) {
+        print("[DEBUG] toggleSpec called with (\(groupId), \(valueId))")
+        // Toggle selection - if already selected, deselect (same as H5)
+        if selectedSpecs[groupId] == valueId {
+            selectedSpecs.removeValue(forKey: groupId)
+        } else {
+            selectedSpecs[groupId] = valueId
+        }
+        print("[DEBUG] toggleSpec selectedSpecs now: \(selectedSpecs)")
+        updateSelectedSKU()
+        print("[DEBUG] toggleSpec calling onSpecsChanged")
+        onSpecsChanged()
+    }
+
+    private func updateSelectedSKU() {
+        let selectedIds = Array(selectedSpecs.values)
+        selectedSKU = productDetail.skus.first { sku in
+            if sku.specValueIds.count != selectedIds.count { return false }
+            return selectedIds.allSatisfy { sku.specValueIds.contains($0) }
+        }
+    }
 }
 
 // MARK: - Spec Option
@@ -766,23 +931,32 @@ struct SpecOption: View {
     var isDisabled: Bool = false
     var onTap: () -> Void
 
-    private let accentColor = DesignSystem.Colors.accent
+    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)  // #FF6B4A
+
+    private var normalBg: Color { Color(red: 0.97, green: 0.97, blue: 0.97) }  // #F8F8F8
+    private var normalBorder: Color { Color(red: 0.90, green: 0.90, blue: 0.90) }  // #E5E5E5
+    private var normalText: Color { Color(red: 0.40, green: 0.40, blue: 0.40) }  // #666666
+    private var selectedBg: Color { Color(red: 1.0, green: 0.94, blue: 0.93) }  // #FFF0ED
 
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            if !isDisabled {
+                onTap()
+            }
+        }) {
             Text(text)
-                .font(.subheadline)
+                .font(.system(size: 13))
                 .fontWeight(isSelected ? .bold : .medium)
-                .foregroundStyle(isSelected ? accentColor : .gray)
+                .foregroundStyle(isSelected ? accentColor : normalText)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(isSelected ? accentColor.opacity(0.1) : Color(.systemGray6))
+                        .fill(isSelected ? selectedBg : normalBg)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(isSelected ? accentColor : Color.gray.opacity(0.2), lineWidth: 1.5)
+                        .stroke(isSelected ? accentColor : normalBorder, lineWidth: 1.5)
                 )
         }
         .disabled(isDisabled)
@@ -828,6 +1002,5 @@ struct FlowLayoutView<Content: View>: View {
 }
 
 #Preview {
-    ProductDetailView(product: Product.allProducts[0])
-        .environmentObject(Cart())
+    Text("ProductDetailView Preview")
 }

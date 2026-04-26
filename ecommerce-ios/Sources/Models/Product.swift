@@ -2,18 +2,133 @@ import Foundation
 import SwiftUI
 
 // MARK: - Product Model
-struct Product: Identifiable, Hashable {
-    let id: UUID
+struct Product: Identifiable, Hashable, Codable {
+    let id: String
     let name: String
     let description: String
     let price: Decimal
     let originalPrice: Decimal?
-    let imageName: String
-    let category: Category
+    let image: String
+    let subcategoryRef: SubcategoryRef?
     let rating: Double
     let reviewCount: Int
     let salesCount: Int
     let isInStock: Bool
+    let tag: String
+
+    // Custom CodingKeys to map backend JSON fields
+    enum CodingKeys: String, CodingKey {
+        case id, name, description
+        case price
+        case originalPrice = "original_price"
+        case image
+        case subcategory
+        case rating
+        case reviewCount = "review_count"
+        case salesCount = "sales_count"
+        case isInStock = "is_in_stock"
+        case tag
+    }
+
+    var imageURL: URL? { URL(string: image) }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+
+        // Price can be string or number from backend
+        if let priceStr = try? container.decode(String.self, forKey: .price) {
+            price = Decimal(string: priceStr) ?? 0
+        } else {
+            price = try container.decode(Decimal.self, forKey: .price)
+        }
+
+        // Original price can be string, number, or null
+        if let originalStr = try? container.decode(String.self, forKey: .originalPrice) {
+            originalPrice = Decimal(string: originalStr)
+        } else if let originalNum = try? container.decode(Double.self, forKey: .originalPrice) {
+            originalPrice = Decimal(originalNum)
+        } else {
+            originalPrice = nil
+        }
+
+        image = try container.decode(String.self, forKey: .image)
+
+        // Rating can be string or number from backend
+        if let ratingStr = try? container.decode(String.self, forKey: .rating) {
+            rating = Double(ratingStr) ?? 0
+        } else {
+            rating = try container.decode(Double.self, forKey: .rating)
+        }
+
+        // Review count can be string or number
+        if let rcStr = try? container.decode(String.self, forKey: .reviewCount) {
+            reviewCount = Int(rcStr) ?? 0
+        } else {
+            reviewCount = try container.decode(Int.self, forKey: .reviewCount)
+        }
+
+        // Sales count can be string or number
+        if let scStr = try? container.decode(String.self, forKey: .salesCount) {
+            salesCount = Int(scStr) ?? 0
+        } else {
+            salesCount = try container.decode(Int.self, forKey: .salesCount)
+        }
+        isInStock = try container.decode(Bool.self, forKey: .isInStock)
+        tag = try container.decode(String.self, forKey: .tag)
+
+        // Parse subcategory from backend
+        subcategoryRef = try container.decodeIfPresent(SubcategoryRef.self, forKey: .subcategory)
+    }
+
+    // Encoder for sending data (if needed)
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode("\(price)", forKey: .price)
+        if let orig = originalPrice {
+            try container.encode("\(orig)", forKey: .originalPrice)
+        }
+        try container.encode(image, forKey: .image)
+        try container.encode(rating, forKey: .rating)
+        try container.encode(reviewCount, forKey: .reviewCount)
+        try container.encode(salesCount, forKey: .salesCount)
+        try container.encode(isInStock, forKey: .isInStock)
+        try container.encode(tag, forKey: .tag)
+    }
+
+    // Manual initializer for previews/testing
+    init(
+        id: String,
+        name: String,
+        description: String,
+        price: Decimal,
+        originalPrice: Decimal?,
+        image: String,
+        subcategoryRef: SubcategoryRef?,
+        rating: Double,
+        reviewCount: Int,
+        salesCount: Int,
+        isInStock: Bool,
+        tag: String
+    ) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.price = price
+        self.originalPrice = originalPrice
+        self.image = image
+        self.subcategoryRef = subcategoryRef
+        self.rating = rating
+        self.reviewCount = reviewCount
+        self.salesCount = salesCount
+        self.isInStock = isInStock
+        self.tag = tag
+    }
 
     var discount: Int? {
         guard let original = originalPrice, original > price else { return nil }
@@ -54,36 +169,125 @@ struct Product: Identifiable, Hashable {
 }
 
 // MARK: - Category Model
-struct Category: Identifiable, Hashable {
-    let id: UUID
+struct Category: Identifiable, Hashable, Codable {
+    let id: String
     let name: String
     let iconName: String
+    let bannerName: String
+    let subcategories: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case iconName = "icon"
+        case bannerName = "banner"
+        case subcategories
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        iconName = try container.decodeIfPresent(String.self, forKey: .iconName) ?? ""
+        bannerName = try container.decodeIfPresent(String.self, forKey: .bannerName) ?? ""
+        subcategories = try container.decodeIfPresent([String].self, forKey: .subcategories) ?? []
+    }
+
+    // Manual initializer for static all array
+    init(id: String, name: String, iconName: String, bannerName: String, subcategories: [String]) {
+        self.id = id
+        self.name = name
+        self.iconName = iconName
+        self.bannerName = bannerName
+        self.subcategories = subcategories
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(iconName, forKey: .iconName)
+        try container.encode(bannerName, forKey: .bannerName)
+        try container.encode(subcategories, forKey: .subcategories)
+    }
 
     static let all: [Category] = [
-        Category(id: UUID(), name: "女装", iconName: "icon_fashion"),
-        Category(id: UUID(), name: "男装", iconName: "icon_mens"),
-        Category(id: UUID(), name: "美妆护肤", iconName: "icon_skincare"),
-        Category(id: UUID(), name: "数码电子", iconName: "icon_phone"),
-        Category(id: UUID(), name: "家居生活", iconName: "icon_home"),
-        Category(id: UUID(), name: "运动户外", iconName: "icon_sport"),
-        Category(id: UUID(), name: "食品生鲜", iconName: "icon_food"),
-        Category(id: UUID(), name: "潮流配饰", iconName: "icon_beauty"),
+        Category(id: "cat_women", name: "女装", iconName: "icon_fashion", bannerName: "https://picsum.photos/600/200?random=201", subcategories: ["T恤", "连衣裙", "牛仔裤", "外套", "衬衫", "半身裙"]),
+        Category(id: "cat_men", name: "男装", iconName: "icon_mens", bannerName: "https://picsum.photos/600/200?random=202", subcategories: ["T恤", "休闲裤", "牛仔裤", "外套", "衬衫", "卫衣"]),
+        Category(id: "cat_skincare", name: "美妆护肤", iconName: "icon_skincare", bannerName: "https://picsum.photos/600/200?random=203", subcategories: ["护肤", "彩妆", "面膜", "洁面", "精华", "防晒"]),
+        Category(id: "cat_digital", name: "数码电子", iconName: "icon_phone", bannerName: "https://picsum.photos/600/200?random=204", subcategories: ["手机", "耳机", "充电宝", "数据线", "键盘", "鼠标"]),
+        Category(id: "cat_home", name: "家居生活", iconName: "icon_home", bannerName: "https://picsum.photos/600/200?random=205", subcategories: ["收纳", "清洁", "餐厨", "家纺", "装饰", "绿植"]),
+        Category(id: "cat_sport", name: "运动户外", iconName: "icon_sport", bannerName: "https://picsum.photos/600/200?random=206", subcategories: ["运动鞋", "健身服", "球类", "泳装", "户外装备", "瑜伽"]),
+        Category(id: "cat_food", name: "食品生鲜", iconName: "icon_food", bannerName: "https://picsum.photos/600/200?random=207", subcategories: ["水果", "零食", "粮油", "饮料", "肉禽", "海鲜"]),
+        Category(id: "cat_accessories", name: "潮流配饰", iconName: "icon_beauty", bannerName: "https://picsum.photos/600/200?random=208", subcategories: ["腕表", "包袋", "围巾", "帽子", "饰品", "眼镜"]),
     ]
 }
 
+// Helper for decoding subcategory reference from backend
+struct SubcategoryRef: Codable, Hashable, Equatable {
+    let id: String
+    let name: String
+    let categoryId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case categoryId = "category_id"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        categoryId = try container.decodeIfPresent(String.self, forKey: .categoryId)
+    }
+
+    init(id: String, name: String, categoryId: String? = nil) {
+        self.id = id
+        self.name = name
+        self.categoryId = categoryId
+    }
+}
+
 // MARK: - Banner Model
-struct Banner: Identifiable, Hashable {
-    let id: UUID
-    let imageName: String
+struct Banner: Identifiable, Hashable, Codable {
+    let id: String
+    let image: String
     let tag: String
     let title: String
     let actionTitle: String
     let gradientType: GradientType
 
-    enum GradientType: Int, Hashable {
+    enum GradientType: Int, Hashable, Codable {
         case summer = 0
         case newArrival = 1
         case flashSale = 2
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, image, tag, title
+        case actionTitle = "action_title"
+        case gradientType = "gradient_type"
+    }
+
+    var imageURL: URL? { URL(string: image) }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        image = try container.decode(String.self, forKey: .image)
+        tag = try container.decode(String.self, forKey: .tag)
+        title = try container.decode(String.self, forKey: .title)
+        actionTitle = try container.decode(String.self, forKey: .actionTitle)
+        gradientType = try container.decode(GradientType.self, forKey: .gradientType)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(image, forKey: .image)
+        try container.encode(tag, forKey: .tag)
+        try container.encode(title, forKey: .title)
+        try container.encode(actionTitle, forKey: .actionTitle)
+        try container.encode(gradientType, forKey: .gradientType)
     }
 
     var gradientColors: [Color] {
@@ -99,8 +303,8 @@ struct Banner: Identifiable, Hashable {
 }
 
 // MARK: - CategoryPage Model
-struct CategoryPage: Identifiable, Hashable {
-    let id: UUID
+struct CategoryPage: Identifiable, Hashable, Codable {
+    let id: String
     let name: String
     let iconName: String
     let bannerName: String
@@ -110,133 +314,415 @@ struct CategoryPage: Identifiable, Hashable {
 
 // MARK: - Product API
 extension Product {
-    // MARK: - Mock Data
-    static let flashSaleProducts: [Product] = [
-        Product(id: UUID(), name: "时尚简约腕表", description: "经典设计，优质材料", price: 299, originalPrice: 899, imageName: "product_01_watch", category: Category.all[7], rating: 4.8, reviewCount: 1200, salesCount: 23000, isInStock: true),
-        Product(id: UUID(), name: "无线蓝牙耳机", description: "主动降噪，高品质音效", price: 199, originalPrice: 499, imageName: "product_02_earbuds", category: Category.all[3], rating: 4.7, reviewCount: 890, salesCount: 18000, isInStock: true),
-        Product(id: UUID(), name: "极简陶瓷咖啡杯", description: "简约设计，优质陶瓷", price: 39, originalPrice: 79, imageName: "product_03_mug", category: Category.all[4], rating: 4.6, reviewCount: 560, salesCount: 12000, isInStock: true),
-        Product(id: UUID(), name: "有机护肤精华液", description: "深层补水，保湿滋养", price: 129, originalPrice: 399, imageName: "product_04_serum", category: Category.all[2], rating: 4.9, reviewCount: 2300, salesCount: 15000, isInStock: true),
-        Product(id: UUID(), name: "经典帆布硫化鞋", description: "时尚百搭，舒适透气", price: 159, originalPrice: 359, imageName: "product_05_sneakers", category: Category.all[5], rating: 4.7, reviewCount: 1800, salesCount: 20000, isInStock: true),
-    ]
+    // MARK: - API Methods
+    static func getProducts(for category: Category? = nil) async throws -> [Product] {
+        var products: [Product] = try await APIClient.shared.request(
+            endpoint: APIEndpoints.products,
+            requiresAuth: false
+        )
+        if let category = category {
+            products = products.filter { $0.subcategoryRef?.categoryId == category.id }
+        }
+        return products
+    }
 
-    static let hotRankingProducts: [Product] = [
-        Product(id: UUID(), name: "头层牛皮钱包", description: "真皮材质，经典款式", price: 189, originalPrice: nil, imageName: "product_06_wallet", category: Category.all[7], rating: 4.8, reviewCount: 1500, salesCount: 23000, isInStock: true),
-        Product(id: UUID(), name: "复古飞行员太阳镜", description: "时尚复古，防晒实用", price: 129, originalPrice: nil, imageName: "product_07_sunglasses", category: Category.all[7], rating: 4.6, reviewCount: 980, salesCount: 18000, isInStock: true),
-        Product(id: UUID(), name: "多肉植物盆栽", description: "可爱易养，净化空气", price: 49, originalPrice: nil, imageName: "product_08_plantpot", category: Category.all[4], rating: 4.5, reviewCount: 670, salesCount: 15000, isInStock: true),
-        Product(id: UUID(), name: "手账笔记本 A5", description: "优质纸张，精致装订", price: 35, originalPrice: nil, imageName: "product_09_notebook", category: Category.all[4], rating: 4.7, reviewCount: 890, salesCount: 12000, isInStock: true),
-    ]
+    static func searchProducts(query: String) async throws -> [Product] {
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.searchProducts(q: encoded),
+            requiresAuth: false
+        )
+    }
 
-    static let recommendedProducts: [Product] = [
-        Product(id: UUID(), name: "天然香薰蜡烛 150g", description: "纯天然植物精油", price: 89, originalPrice: nil, imageName: "product_10_candle", category: Category.all[4], rating: 4.8, reviewCount: 1200, salesCount: 12000, isInStock: true),
-        Product(id: UUID(), name: "文艺帆布托特包", description: "大容量，文艺风格", price: 59, originalPrice: nil, imageName: "product_11_tote", category: Category.all[7], rating: 4.7, reviewCount: 890, salesCount: 9800, isInStock: true),
-        Product(id: UUID(), name: "不锈钢保温水瓶 750ml", description: "持久保温，保冷保热", price: 79, originalPrice: nil, imageName: "product_12_bottle", category: Category.all[5], rating: 4.9, reviewCount: 2100, salesCount: 8600, isInStock: true),
-        Product(id: UUID(), name: "简约真皮腕表", description: "时尚简约，真皮表带", price: 299, originalPrice: nil, imageName: "product_01_watch", category: Category.all[7], rating: 4.8, reviewCount: 1200, salesCount: 23000, isInStock: true),
-        Product(id: UUID(), name: "无线蓝牙耳机", description: "主动降噪，高品质音效", price: 199, originalPrice: nil, imageName: "product_02_earbuds", category: Category.all[3], rating: 4.7, reviewCount: 890, salesCount: 18000, isInStock: true),
-        Product(id: UUID(), name: "头层牛皮短款钱包", description: "真皮材质，小巧实用", price: 189, originalPrice: nil, imageName: "product_06_wallet", category: Category.all[7], rating: 4.8, reviewCount: 1500, salesCount: 15000, isInStock: true),
-    ]
+    static func getProduct(by id: String) async throws -> Product {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.product(id),
+            requiresAuth: false
+        )
+    }
 
-    static let allProducts: [Product] = flashSaleProducts + hotRankingProducts + recommendedProducts
+    static func getFeaturedProducts() async throws -> [Product] {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.products,
+            requiresAuth: false
+        )
+    }
 
-    static let banners: [Banner] = [
-        Banner(id: UUID(), imageName: "banner_summer", tag: "限时特惠", title: "夏季焕新\n全场低至5折", actionTitle: "立即选购", gradientType: .summer),
-        Banner(id: UUID(), imageName: "banner_new", tag: "新品首发", title: "当季新款\n潮流抢先穿", actionTitle: "查看全部", gradientType: .newArrival),
-        Banner(id: UUID(), imageName: "banner_flash", tag: "今日疯抢", title: "爆款直降\n再享折上折", actionTitle: "马上抢", gradientType: .flashSale),
-    ]
+    static func getOnSaleProducts() async throws -> [Product] {
+        return try await getProducts()
+    }
+
+    static func getBanners() async throws -> [Banner] {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.homeBanners,
+            requiresAuth: false
+        )
+    }
+
+    static func getFlashSaleProducts() async throws -> [Product] {
+        let sections: [FlashSaleSection] = try await APIClient.shared.request(
+            endpoint: APIEndpoints.homeFlashSales,
+            requiresAuth: false
+        )
+        return sections.flatMap { $0.products }
+    }
+
+    static func getHotRankingProducts() async throws -> [Product] {
+        let sections: [HotRankSection] = try await APIClient.shared.request(
+            endpoint: APIEndpoints.homeHotRanks,
+            requiresAuth: false
+        )
+        return sections.flatMap { $0.products }
+    }
+
+    static func getRecommendProducts() async throws -> [Product] {
+        let sections: [RecommendSection] = try await APIClient.shared.request(
+            endpoint: APIEndpoints.homeRecommends,
+            requiresAuth: false
+        )
+        return sections.flatMap { $0.products }
+    }
+
+    static func getNewArrivalProducts() async throws -> [Product] {
+        let sections: [NewArrivalSection] = try await APIClient.shared.request(
+            endpoint: APIEndpoints.homeNewArrivals,
+            requiresAuth: false
+        )
+        return sections.flatMap { $0.products }
+    }
+
+    static func getRelatedProducts(for productId: String? = nil) async throws -> [Product] {
+        var products: [Product] = try await APIClient.shared.request(
+            endpoint: APIEndpoints.products,
+            requiresAuth: false
+        )
+        if let id = productId {
+            products = products.filter { $0.id != id }
+        }
+        return Array(products.prefix(6))
+    }
 
     static let categoryPages: [CategoryPage] = [
-        CategoryPage(id: UUID(), name: "女装", iconName: "icon_fashion", bannerName: "banner_summer", subcategories: ["连衣裙", "T恤", "衬衫", "牛仔裤"], products: [
-            Product(id: UUID(), name: "法式碎花连衣裙", description: "优雅碎花设计，夏季必备", price: 189, originalPrice: 259, imageName: "product_11_tote", category: Category.all[0], rating: 4.8, reviewCount: 1200, salesCount: 8500, isInStock: true),
-            Product(id: UUID(), name: "纯棉宽松T恤", description: "舒适纯棉面料", price: 79, originalPrice: 99, imageName: "product_03_mug", category: Category.all[0], rating: 4.6, reviewCount: 800, salesCount: 12000, isInStock: true),
-            Product(id: UUID(), name: "高腰直筒牛仔裤", description: "显瘦百搭款", price: 159, originalPrice: 199, imageName: "product_05_sneakers", category: Category.all[0], rating: 4.7, reviewCount: 650, salesCount: 5600, isInStock: true),
-            Product(id: UUID(), name: "百褶半身长裙", description: "气质百褶设计", price: 139, originalPrice: 179, imageName: "product_01_watch", category: Category.all[0], rating: 4.5, reviewCount: 420, salesCount: 3200, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "男装", iconName: "icon_mens", bannerName: "banner_new", subcategories: ["T恤", "衬衫", "裤装", "外套"], products: [
-            Product(id: UUID(), name: "经典纯白T恤", description: "百搭基础款", price: 99, originalPrice: 129, imageName: "product_05_sneakers", category: Category.all[1], rating: 4.8, reviewCount: 1500, salesCount: 9800, isInStock: true),
-            Product(id: UUID(), name: "休闲商务衬衫", description: "上班休闲两不误", price: 149, originalPrice: 199, imageName: "product_03_mug", category: Category.all[1], rating: 4.6, reviewCount: 780, salesCount: 4500, isInStock: true),
-            Product(id: UUID(), name: "飞行员夹克", description: "时尚帅气", price: 299, originalPrice: 399, imageName: "product_11_tote", category: Category.all[1], rating: 4.9, reviewCount: 520, salesCount: 2800, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "美妆护肤", iconName: "icon_skincare", bannerName: "banner_flash", subcategories: ["护肤", "彩妆", "香水", "个护"], products: [
-            Product(id: UUID(), name: "玻尿酸保湿精华液", description: "深层补水保湿", price: 159, originalPrice: 219, imageName: "product_04_serum", category: Category.all[2], rating: 4.7, reviewCount: 2300, salesCount: 15000, isInStock: true),
-            Product(id: UUID(), name: "氨基酸洁面乳", description: "温和清洁", price: 89, originalPrice: 119, imageName: "product_02_earbuds", category: Category.all[2], rating: 4.5, reviewCount: 1800, salesCount: 22000, isInStock: true),
-            Product(id: UUID(), name: "经典女士香水", description: "优雅气质", price: 259, originalPrice: 329, imageName: "product_03_mug", category: Category.all[2], rating: 4.8, reviewCount: 920, salesCount: 5100, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "数码电子", iconName: "icon_phone", bannerName: "banner_summer", subcategories: ["手机", "耳机", "音箱", "配件"], products: [
-            Product(id: UUID(), name: "无线蓝牙耳机Pro", description: "主动降噪", price: 299, originalPrice: 399, imageName: "product_02_earbuds", category: Category.all[3], rating: 4.8, reviewCount: 4500, salesCount: 35000, isInStock: true),
-            Product(id: UUID(), name: "便携蓝牙音箱", description: "小巧便携", price: 199, originalPrice: 259, imageName: "product_03_mug", category: Category.all[3], rating: 4.6, reviewCount: 2100, salesCount: 18000, isInStock: true),
-            Product(id: UUID(), name: "快充充电宝", description: "大容量快充", price: 129, originalPrice: 169, imageName: "product_12_bottle", category: Category.all[3], rating: 4.7, reviewCount: 3200, salesCount: 25000, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "家居生活", iconName: "icon_home", bannerName: "banner_new", subcategories: ["家纺", "收纳", "厨具", "家装"], products: [
-            Product(id: UUID(), name: "不锈钢保温水瓶", description: "持久保温", price: 89, originalPrice: 129, imageName: "product_12_bottle", category: Category.all[4], rating: 4.5, reviewCount: 1600, salesCount: 12000, isInStock: true),
-            Product(id: UUID(), name: "全棉四件套", description: "柔软舒适", price: 259, originalPrice: 359, imageName: "product_11_tote", category: Category.all[4], rating: 4.8, reviewCount: 890, salesCount: 4200, isInStock: true),
-            Product(id: UUID(), name: "智能LED台灯", description: "护眼设计", price: 99, originalPrice: 149, imageName: "product_01_watch", category: Category.all[4], rating: 4.6, reviewCount: 2100, salesCount: 15000, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "运动户外", iconName: "icon_sport", bannerName: "banner_flash", subcategories: ["运动鞋", "健身", "户外", "箱包"], products: [
-            Product(id: UUID(), name: "经典帆布硫化鞋", description: "时尚百搭", price: 159, originalPrice: 219, imageName: "product_05_sneakers", category: Category.all[5], rating: 4.7, reviewCount: 2800, salesCount: 20000, isInStock: true),
-            Product(id: UUID(), name: "瑜伽垫加厚", description: "防滑耐用", price: 89, originalPrice: 129, imageName: "product_04_serum", category: Category.all[5], rating: 4.5, reviewCount: 1900, salesCount: 16000, isInStock: true),
-            Product(id: UUID(), name: "双肩背包旅行", description: "大容量防水", price: 199, originalPrice: 279, imageName: "product_11_tote", category: Category.all[5], rating: 4.8, reviewCount: 1100, salesCount: 7800, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "食品生鲜", iconName: "icon_food", bannerName: "banner_summer", subcategories: ["零食", "茶叶", "水果", "粮油"], products: [
-            Product(id: UUID(), name: "进口混合坚果", description: "营养健康", price: 89, originalPrice: 119, imageName: "product_12_bottle", category: Category.all[6], rating: 4.6, reviewCount: 2200, salesCount: 18000, isInStock: true),
-            Product(id: UUID(), name: "云南古树普洱", description: "正宗云南产", price: 159, originalPrice: 219, imageName: "product_03_mug", category: Category.all[6], rating: 4.9, reviewCount: 780, salesCount: 4500, isInStock: true),
-            Product(id: UUID(), name: "纯正蜂蜜500g", description: "天然纯正", price: 69, originalPrice: 99, imageName: "product_04_serum", category: Category.all[6], rating: 4.7, reviewCount: 1300, salesCount: 9500, isInStock: true),
-        ]),
-        CategoryPage(id: UUID(), name: "潮流配饰", iconName: "icon_beauty", bannerName: "banner_new", subcategories: ["腕表", "眼镜", "包包", "首饰"], products: [
-            Product(id: UUID(), name: "简约真皮腕表", description: "时尚简约", price: 299, originalPrice: 399, imageName: "product_01_watch", category: Category.all[7], rating: 4.8, reviewCount: 1800, salesCount: 12000, isInStock: true),
-            Product(id: UUID(), name: "复古墨镜", description: "遮阳防晒", price: 159, originalPrice: 219, imageName: "product_05_sneakers", category: Category.all[7], rating: 4.5, reviewCount: 950, salesCount: 6800, isInStock: true),
-            Product(id: UUID(), name: "轻奢手提包", description: "品质皮料", price: 399, originalPrice: 559, imageName: "product_11_tote", category: Category.all[7], rating: 4.9, reviewCount: 620, salesCount: 3200, isInStock: true),
-        ]),
+        CategoryPage(id: "cp_women", name: "女装", iconName: "icon_fashion", bannerName: "https://picsum.photos/600/200?random=201", subcategories: ["T恤", "连衣裙", "牛仔裤", "外套", "衬衫", "半身裙"], products: []),
+        CategoryPage(id: "cp_men", name: "男装", iconName: "icon_mens", bannerName: "https://picsum.photos/600/200?random=202", subcategories: ["T恤", "休闲裤", "牛仔裤", "外套", "衬衫", "卫衣"], products: []),
+        CategoryPage(id: "cp_skincare", name: "美妆护肤", iconName: "icon_skincare", bannerName: "https://picsum.photos/600/200?random=203", subcategories: ["护肤", "彩妆", "面膜", "洁面", "精华", "防晒"], products: []),
+        CategoryPage(id: "cp_digital", name: "数码电子", iconName: "icon_phone", bannerName: "https://picsum.photos/600/200?random=204", subcategories: ["手机", "耳机", "充电宝", "数据线", "键盘", "鼠标"], products: []),
+        CategoryPage(id: "cp_home", name: "家居生活", iconName: "icon_home", bannerName: "https://picsum.photos/600/200?random=205", subcategories: ["收纳", "清洁", "餐厨", "家纺", "装饰", "绿植"], products: []),
+        CategoryPage(id: "cp_sport", name: "运动户外", iconName: "icon_sport", bannerName: "https://picsum.photos/600/200?random=206", subcategories: ["运动鞋", "健身服", "球类", "泳装", "户外装备", "瑜伽"], products: []),
+        CategoryPage(id: "cp_food", name: "食品生鲜", iconName: "icon_food", bannerName: "https://picsum.photos/600/200?random=207", subcategories: ["水果", "零食", "粮油", "饮料", "肉禽", "海鲜"], products: []),
+        CategoryPage(id: "cp_accessories", name: "潮流配饰", iconName: "icon_beauty", bannerName: "https://picsum.photos/600/200?random=208", subcategories: ["腕表", "包袋", "围巾", "帽子", "饰品", "眼镜"], products: []),
     ]
+}
 
-    // MARK: - API Methods (async with mock delay)
-    private static func mockRequest<T>(_ data: T, delay: UInt64 = 300_000_000) async -> T {
-        try? await Task.sleep(nanoseconds: delay)
-        return data
+// MARK: - Home Section Response Models
+struct FlashSaleSection: Codable {
+    let id: String
+    let title: String
+    let subtitle: String?
+    let products: [Product]
+}
+
+struct HotRankSection: Codable {
+    let id: String
+    let title: String
+    let products: [Product]
+}
+
+struct RecommendSection: Codable {
+    let id: String
+    let title: String
+    let products: [Product]
+}
+
+struct NewArrivalSection: Codable {
+    let id: String
+    let title: String
+    let products: [Product]
+}
+
+// MARK: - Spec Models
+struct SpecValue: Identifiable, Hashable, Codable {
+    let id: String
+    let value: String
+    let image: String?
+    let sortOrder: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, value, image
+        case sortOrder = "sort_order"
     }
 
-    static func getProducts(for category: Category? = nil) async -> [Product] {
-        let products = allProducts
-        guard let category = category, category.name != "All" else {
-            return products
+    var imageURL: URL? {
+        guard let image = image else { return nil }
+        return URL(string: image)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(value, forKey: .value)
+        try container.encodeIfPresent(image, forKey: .image)
+        try container.encode(sortOrder, forKey: .sortOrder)
+    }
+}
+
+struct SpecGroup: Identifiable, Hashable, Codable {
+    let id: String
+    let name: String
+    let sortOrder: Int
+    let values: [SpecValue]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case sortOrder = "sort_order"
+        case values
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(sortOrder, forKey: .sortOrder)
+        try container.encode(values, forKey: .values)
+    }
+}
+
+struct SKU: Identifiable, Hashable, Codable {
+    let id: String
+    let price: Decimal
+    let originalPrice: Decimal?
+    let stock: Int
+    let image: String?
+    let specValueIds: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, price
+        case originalPrice = "original_price"
+        case stock, image
+        case specValueIds = "spec_value_ids"
+    }
+
+    var imageURL: URL? {
+        guard let image = image else { return nil }
+        return URL(string: image)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+
+        if let priceStr = try? container.decode(String.self, forKey: .price) {
+            price = Decimal(string: priceStr) ?? 0
+        } else {
+            price = try container.decode(Decimal.self, forKey: .price)
         }
-        return await mockRequest(products.filter { $0.category.id == category.id })
+
+        if let originalStr = try? container.decode(String.self, forKey: .originalPrice) {
+            originalPrice = Decimal(string: originalStr)
+        } else if let originalNum = try? container.decode(Double.self, forKey: .originalPrice) {
+            originalPrice = Decimal(originalNum)
+        } else {
+            originalPrice = nil
+        }
+
+        stock = try container.decode(Int.self, forKey: .stock)
+        image = try container.decodeIfPresent(String.self, forKey: .image)
+        specValueIds = try container.decode([String].self, forKey: .specValueIds)
     }
 
-    static func searchProducts(query: String) async -> [Product] {
-        let products = allProducts
-        guard !query.isEmpty else { return await mockRequest(products) }
-        let lowercased = query.lowercased()
-        return await mockRequest(products.filter {
-            $0.name.lowercased().contains(lowercased) ||
-            $0.description.lowercased().contains(lowercased)
-        })
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode("\(price)", forKey: .price)
+        if let orig = originalPrice {
+            try container.encode("\(orig)", forKey: .originalPrice)
+        }
+        try container.encode(stock, forKey: .stock)
+        try container.encodeIfPresent(image, forKey: .image)
+        try container.encode(specValueIds, forKey: .specValueIds)
+    }
+}
+
+// MARK: - Product Detail Response
+struct ProductDetail: Codable {
+    let id: String
+    let name: String
+    let description: String
+    let price: Decimal
+    let originalPrice: Decimal?
+    let image: String
+    let subcategoryRef: SubcategoryRef?
+    let rating: Double
+    let reviewCount: Int
+    let salesCount: Int
+    let isInStock: Bool
+    let tag: String
+    let detail: ProductDetailInfo?
+    let specGroups: [SpecGroup]
+    let skus: [SKU]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, price
+        case originalPrice = "original_price"
+        case image, subcategory
+        case rating
+        case reviewCount = "review_count"
+        case salesCount = "sales_count"
+        case isInStock = "is_in_stock"
+        case tag, detail
+        case specGroups = "spec_groups"
+        case skus
     }
 
-    static func getProduct(by id: UUID) async -> Product? {
-        await mockRequest(allProducts.first { $0.id == id })
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+
+        if let priceStr = try? container.decode(String.self, forKey: .price) {
+            price = Decimal(string: priceStr) ?? 0
+        } else {
+            price = try container.decode(Decimal.self, forKey: .price)
+        }
+
+        if let originalStr = try? container.decode(String.self, forKey: .originalPrice) {
+            originalPrice = Decimal(string: originalStr)
+        } else if let originalNum = try? container.decode(Double.self, forKey: .originalPrice) {
+            originalPrice = Decimal(originalNum)
+        } else {
+            originalPrice = nil
+        }
+
+        image = try container.decode(String.self, forKey: .image)
+        subcategoryRef = try container.decodeIfPresent(SubcategoryRef.self, forKey: .subcategory)
+
+        if let ratingStr = try? container.decode(String.self, forKey: .rating) {
+            rating = Double(ratingStr) ?? 0
+        } else {
+            rating = try container.decode(Double.self, forKey: .rating)
+        }
+
+        if let rcStr = try? container.decode(String.self, forKey: .reviewCount) {
+            reviewCount = Int(rcStr) ?? 0
+        } else {
+            reviewCount = try container.decode(Int.self, forKey: .reviewCount)
+        }
+
+        if let scStr = try? container.decode(String.self, forKey: .salesCount) {
+            salesCount = Int(scStr) ?? 0
+        } else {
+            salesCount = try container.decode(Int.self, forKey: .salesCount)
+        }
+
+        isInStock = try container.decode(Bool.self, forKey: .isInStock)
+        tag = try container.decode(String.self, forKey: .tag)
+        detail = try container.decodeIfPresent(ProductDetailInfo.self, forKey: .detail)
+        specGroups = try container.decodeIfPresent([SpecGroup].self, forKey: .specGroups) ?? []
+        skus = try container.decodeIfPresent([SKU].self, forKey: .skus) ?? []
     }
 
-    static func getFeaturedProducts() async -> [Product] {
-        await mockRequest(Array(allProducts.prefix(4)))
+    func toProduct() -> Product {
+        Product(
+            id: id,
+            name: name,
+            description: description,
+            price: price,
+            originalPrice: originalPrice,
+            image: image,
+            subcategoryRef: subcategoryRef,
+            rating: rating,
+            reviewCount: reviewCount,
+            salesCount: salesCount,
+            isInStock: isInStock,
+            tag: tag
+        )
     }
 
-    static func getOnSaleProducts() async -> [Product] {
-        await mockRequest(flashSaleProducts)
+    var formattedPrice: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "CNY"
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: NSDecimalNumber(decimal: price)) ?? "¥\(price)"
     }
 
-    static func getBanners() async -> [Banner] {
-        await mockRequest(banners)
+    var imageURL: URL? { URL(string: image) }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode("\(price)", forKey: .price)
+        if let orig = originalPrice {
+            try container.encode("\(orig)", forKey: .originalPrice)
+        }
+        try container.encode(image, forKey: .image)
+        try container.encode(rating, forKey: .rating)
+        try container.encode(reviewCount, forKey: .reviewCount)
+        try container.encode(salesCount, forKey: .salesCount)
+        try container.encode(isInStock, forKey: .isInStock)
+        try container.encode(tag, forKey: .tag)
+        try container.encodeIfPresent(detail, forKey: .detail)
+        try container.encode(specGroups, forKey: .specGroups)
+        try container.encode(skus, forKey: .skus)
+    }
+}
+
+struct ProductDetailInfo: Codable {
+    let shopName: String
+    let shopLogo: String?
+    let images: [String]
+    let detailImages: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case shopName = "shop_name"
+        case shopLogo = "shop_logo"
+        case images
+        case detailImages = "detail_images"
     }
 
-    static func getCategories() async -> [CategoryPage] {
-        await mockRequest(categoryPages)
+    var shopLogoURL: URL? {
+        guard let logo = shopLogo else { return nil }
+        return URL(string: logo)
     }
 
-    static func getCategoryPage(by id: UUID) async -> CategoryPage? {
-        await mockRequest(categoryPages.first { $0.id == id })
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(shopName, forKey: .shopName)
+        try container.encodeIfPresent(shopLogo, forKey: .shopLogo)
+        try container.encode(images, forKey: .images)
+        try container.encode(detailImages, forKey: .detailImages)
+    }
+}
+
+// MARK: - Spec Available Response
+struct SpecAvailableResponse: Codable {
+    let groupId: String
+    let availableValues: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case groupId
+        case availableValues
+    }
+}
+
+// MARK: - Product API Extensions
+extension Product {
+    static func getDetail(id: String) async throws -> ProductDetail {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.product(id),
+            requiresAuth: false
+        )
     }
 
-    static func getProducts(forCategoryId categoryId: UUID) async -> [Product] {
-        let page = categoryPages.first { $0.id == categoryId }
-        return await mockRequest(page?.products ?? [])
+    static func getSpecAvailable(productId: String, selectedIds: [String]) async throws -> [SpecAvailableResponse] {
+        let selectedStr = selectedIds.joined(separator: ",")
+        let endpoint = "\(APIEndpoints.product(productId))/spec-available/?selected=\(selectedStr)"
+        return try await APIClient.shared.request(
+            endpoint: endpoint,
+            requiresAuth: false
+        )
     }
 }

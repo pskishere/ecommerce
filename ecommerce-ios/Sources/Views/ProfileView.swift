@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @EnvironmentObject private var authManager: LoginView
+    @State private var user: User?
+    @State private var isLoading = true
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -11,13 +15,15 @@ struct ProfileView: View {
         }
         .background(Color(.systemGroupedBackground))
         .ignoresSafeArea(edges: .top)
+        .task {
+            await loadProfile()
+        }
     }
 
     // MARK: - User Header
     private var userHeader: some View {
         NavigationLink(destination: ProfileInfoView()) {
             ZStack(alignment: .topLeading) {
-                // Gradient Background
                 LinearGradient(
                     colors: [
                         Color(red: 1.0, green: 0.42, blue: 0.29),
@@ -29,7 +35,6 @@ struct ProfileView: View {
                 )
                 .frame(height: 220)
 
-                // Decorative circles
                 Circle()
                     .fill(Color.white.opacity(0.08))
                     .frame(width: 200, height: 200)
@@ -40,10 +45,8 @@ struct ProfileView: View {
                     .frame(width: 160, height: 160)
                     .offset(x: -20, y: 80)
 
-                // User Card
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                     HStack(spacing: DesignSystem.Spacing.md) {
-                        // Avatar
                         ZStack(alignment: .bottomTrailing) {
                             Circle()
                                 .fill(Color.white.opacity(0.2))
@@ -54,7 +57,6 @@ struct ProfileView: View {
                                         .foregroundStyle(.white.opacity(0.8))
                                 )
 
-                            // Level Badge
                             ZStack {
                                 Circle()
                                     .fill(LinearGradient(
@@ -71,10 +73,9 @@ struct ProfileView: View {
                             .offset(x: 4, y: 4)
                         }
 
-                        // User Info
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(spacing: 8) {
-                                Text("林小琳")
+                                Text(user?.name ?? "未登录")
                                     .font(.system(size: 22, weight: .black))
                                     .foregroundStyle(.white)
 
@@ -83,7 +84,7 @@ struct ProfileView: View {
                                     .foregroundStyle(.white.opacity(0.7))
                             }
 
-                            Text("ID: 88888888")
+                            Text("ID: \(user?.id ?? 0)")
                                 .font(.system(size: 12))
                                 .foregroundStyle(.white.opacity(0.7))
 
@@ -103,6 +104,15 @@ struct ProfileView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private func loadProfile() async {
+        do {
+            user = try await User.getProfile()
+        } catch {
+            print("Failed to load profile: \(error)")
+        }
+        isLoading = false
     }
 
     // MARK: - Member Banner

@@ -46,9 +46,13 @@ struct ReviewView: View {
                 .fill(Color(.secondarySystemBackground))
                 .frame(width: 70, height: 70)
                 .overlay(
-                    Image(product.imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
+                    AsyncImage(url: product.imageURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } placeholder: {
+                        Color.clear
+                    }
                 )
 
             VStack(alignment: .leading, spacing: 4) {
@@ -237,7 +241,5 @@ struct ReviewView: View {
 }
 
 #Preview {
-    NavigationStack {
-        ReviewView(product: Product.allProducts[0])
-    }
+    Text("ReviewView Preview")
 }

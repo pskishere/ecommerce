@@ -37,11 +37,17 @@ struct ProductCard: View {
     private var imageSection: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topTrailing) {
-                Image(product.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                }
 
                 if let discount = product.discount {
                     Text("-\(discount)%")
@@ -178,12 +184,5 @@ struct ProductCard: View {
 }
 
 #Preview {
-    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-        ProductCard(product: Product.allProducts[0])
-        ProductCard(product: Product.allProducts[1])
-        ProductCard(product: Product.allProducts[2])
-        ProductCard(product: Product.allProducts[3])
-    }
-    .padding()
-    .background(Color(.systemGroupedBackground))
+    Text("ProductCard Preview")
 }

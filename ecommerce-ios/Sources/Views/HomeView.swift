@@ -1,23 +1,47 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State private var banners: [Banner] = []
+    @State private var flashSaleProducts: [Product] = []
+    @State private var hotRankingProducts: [Product] = []
+    @State private var recommendedProducts: [Product] = []
+    @State private var isLoading = true
+
     var body: some View {
         ScrollView {
             VStack(spacing: DesignSystem.Spacing.md) {
-                heroBanner
-                categoryGrid
-                flashSaleSection
-                hotRankingsSection
-                recommendSection
+                if isLoading {
+                    skeletonContent
+                } else {
+                    heroBanner
+                    categoryGrid
+                    flashSaleSection
+                    hotRankingsSection
+                    recommendSection
+                }
             }
             .padding(.bottom, DesignSystem.Spacing.xxl)
         }
         .navigationTitle("潮流好物")
+        .task {
+            await loadData()
+        }
+    }
+
+    // MARK: - Skeleton Loading Content
+    private var skeletonContent: some View {
+        VStack(spacing: DesignSystem.Spacing.md) {
+            SkeletonBanner()
+            SkeletonCategoryGrid()
+            SkeletonFlashSale()
+            SkeletonHotRanking()
+            SkeletonRecommend()
+        }
     }
 
     // MARK: - Hero Banner
     private var heroBanner: some View {
-        HeroBanner(banners: Product.banners)
+        HeroBanner(banners: banners)
     }
 
     // MARK: - Category Grid
@@ -56,8 +80,8 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(Product.flashSaleProducts) { product in
-                        NavigationLink(value: product) {
+                    ForEach(flashSaleProducts) { product in
+                        NavigationLink(destination: ProductDetailView(product: product)) {
                             FlashSaleCard(product: product)
                         }
                         .buttonStyle(.plain)
@@ -97,17 +121,19 @@ struct HomeView: View {
 
             // Bento grid: 1 large card top, 3 small cards bottom
             VStack(spacing: DesignSystem.Spacing.sm) {
-                NavigationLink(value: Product.hotRankingProducts[0]) {
-                    HotRankingCard(product: Product.hotRankingProducts[0], rank: 1, isLarge: true)
-                }
-                .buttonStyle(.plain)
+                if hotRankingProducts.count > 0 {
+                    NavigationLink(destination: ProductDetailView(product: hotRankingProducts[0])) {
+                        HotRankingCard(product: hotRankingProducts[0], rank: 1, isLarge: true)
+                    }
+                    .buttonStyle(.plain)
 
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(1...3, id: \.self) { index in
-                        NavigationLink(value: Product.hotRankingProducts[index]) {
-                            HotRankingCard(product: Product.hotRankingProducts[index], rank: index + 1, isLarge: false)
+                    HStack(spacing: DesignSystem.Spacing.sm) {
+                        ForEach(1...min(3, hotRankingProducts.count - 1), id: \.self) { index in
+                            NavigationLink(destination: ProductDetailView(product: hotRankingProducts[index])) {
+                                HotRankingCard(product: hotRankingProducts[index], rank: index + 1, isLarge: false)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -138,8 +164,8 @@ struct HomeView: View {
                 GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
                 GridItem(.flexible(), spacing: DesignSystem.Spacing.sm)
             ], spacing: DesignSystem.Spacing.sm) {
-                ForEach(Product.recommendedProducts) { product in
-                    NavigationLink(value: product) {
+                ForEach(recommendedProducts) { product in
+                    NavigationLink(destination: ProductDetailView(product: product)) {
                         RecommendCard(product: product)
                     }
                     .buttonStyle(.plain)
@@ -147,6 +173,25 @@ struct HomeView: View {
             }
             .padding(.horizontal, DesignSystem.Spacing.md)
         }
+    }
+
+    // MARK: - Data Loading
+    private func loadData() async {
+        isLoading = true
+        do {
+            async let bannersTask = Product.getBanners()
+            async let flashTask = Product.getFlashSaleProducts()
+            async let hotTask = Product.getHotRankingProducts()
+            async let recommendTask = Product.getRecommendProducts()
+
+            banners = try await bannersTask
+            flashSaleProducts = try await flashTask
+            hotRankingProducts = try await hotTask
+            recommendedProducts = try await recommendTask
+        } catch {
+            print("Failed to load home data: \(error)")
+        }
+        isLoading = false
     }
 }
 
@@ -203,25 +248,24 @@ struct FeaturedCard: View {
 
     private var imageSection: some View {
         ZStack(alignment: .topLeading) {
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            DesignSystem.Colors.accent.opacity(0.08),
-                            DesignSystem.Colors.accent.opacity(0.02)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            AsyncImage(url: product.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } placeholder: {
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                DesignSystem.Colors.accent.opacity(0.08),
+                                DesignSystem.Colors.accent.opacity(0.02)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .frame(width: 200, height: 130)
-                .overlay {
-                    Image(product.imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxHeight: 90)
-                        .foregroundStyle(.secondary)
-                }
+            }
+            .frame(width: 200, height: 130)
 
             if let discount = product.discount {
                 Text("-\(discount)%")
@@ -316,20 +360,22 @@ struct BannerSlide: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomLeading) {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: banner.gradientColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                AsyncImage(url: banner.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: banner.gradientColors,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-
-                Image(banner.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
+                }
 
                 LinearGradient(
                     colors: [.clear, Color.black.opacity(0.4)],
@@ -416,11 +462,16 @@ struct FlashSaleCard: View {
         VStack(alignment: .leading, spacing: 0) {
             GeometryReader { geometry in
                 ZStack(alignment: .topLeading) {
-                    Image(product.imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .clipped()
+                    AsyncImage(url: product.imageURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .clipped()
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.05))
+                    }
 
                     if let discount = product.discount {
                         Text("-\(discount)%")
@@ -469,12 +520,17 @@ struct HotRankingCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
-                Image(product.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: isLarge ? 120 : 70)
-                    .clipped()
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: isLarge ? 120 : 70)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                }
 
                 Text("\(rank)")
                     .font(.caption2)
@@ -529,12 +585,17 @@ struct RecommendCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
-                Image(product.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 160)
-                    .clipped()
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 160)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                }
 
                 Button(action: { isFavorite.toggle() }) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -615,5 +676,147 @@ struct CategoryGridItem: View {
                 .foregroundStyle(Color(.label))
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Skeleton Views
+struct SkeletonBanner: View {
+    var body: some View {
+        VStack(spacing: DesignSystem.Spacing.sm) {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg)
+                .fill(Color.gray.opacity(0.15))
+                .frame(height: 180)
+                .padding(.horizontal, DesignSystem.Spacing.md)
+        }
+    }
+}
+
+struct SkeletonCategoryGrid: View {
+    let columns = [
+        GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
+        GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
+        GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
+        GridItem(.flexible(), spacing: DesignSystem.Spacing.sm)
+    ]
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: DesignSystem.Spacing.md) {
+            ForEach(0..<8, id: \.self) { _ in
+                VStack(spacing: 8) {
+                    Circle()
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(width: 30, height: 12)
+                }
+            }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.md)
+    }
+}
+
+struct SkeletonFlashSale: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 80, height: 20)
+                Spacer()
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(0..<4, id: \.self) { _ in
+                        VStack(alignment: .leading, spacing: 8) {
+                            RoundedRectangle(cornerRadius: DesignSystem.Radius.md)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(width: 110, height: 110)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(width: 60, height: 16)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(width: 40, height: 12)
+                        }
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+            }
+        }
+    }
+}
+
+struct SkeletonHotRanking: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 80, height: 20)
+                Spacer()
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+
+            VStack(spacing: DesignSystem.Spacing.sm) {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.md)
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(height: 120)
+                    .padding(.horizontal, DesignSystem.Spacing.md)
+
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.md)
+                            .fill(Color.gray.opacity(0.15))
+                            .frame(height: 70)
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+            }
+        }
+    }
+}
+
+struct SkeletonRecommend: View {
+    let columns = [
+        GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
+        GridItem(.flexible(), spacing: DesignSystem.Spacing.sm)
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.gray.opacity(0.15))
+                .frame(width: 80, height: 20)
+                .padding(.horizontal, DesignSystem.Spacing.md)
+
+            LazyVGrid(columns: columns, spacing: DesignSystem.Spacing.sm) {
+                ForEach(0..<6, id: \.self) { _ in
+                    VStack(alignment: .leading, spacing: 0) {
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.md)
+                            .fill(Color.gray.opacity(0.15))
+                            .frame(height: 160)
+                        VStack(alignment: .leading, spacing: 6) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(height: 14)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(width: 80, height: 14)
+                            HStack {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.gray.opacity(0.15))
+                                    .frame(width: 50, height: 16)
+                                Spacer()
+                            }
+                        }
+                        .padding(DesignSystem.Spacing.sm)
+                    }
+                }
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+        }
     }
 }

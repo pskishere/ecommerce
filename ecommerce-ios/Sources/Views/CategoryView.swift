@@ -1,12 +1,15 @@
 import SwiftUI
 
 struct CategoryView: View {
+    @State private var categories: [Category] = []
     @State private var selectedCategoryIndex = 0
+    @State private var categoryProducts: [String: [Product]] = [:]
+    @State private var categorySubcategories: [String: [String]] = [:]
+    @State private var isLoading = true
     @EnvironmentObject private var cart: Cart
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search Bar
             NavigationLink(destination: SearchView()) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
@@ -28,7 +31,6 @@ struct CategoryView: View {
 
             Divider()
 
-            // Main Content
             HStack(spacing: 0) {
                 categorySidebar
                 categoryContent
@@ -39,13 +41,16 @@ struct CategoryView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(product: product)
         }
+        .task {
+            await loadData()
+        }
     }
 
     // MARK: - Category Sidebar
     private var categorySidebar: some View {
         ScrollView {
             VStack(spacing: 0) {
-                ForEach(Array(Product.categoryPages.enumerated()), id: \.element.id) { index, category in
+                ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
                     CategorySidebarItem(
                         name: category.name,
                         isSelected: index == selectedCategoryIndex
@@ -65,55 +70,131 @@ struct CategoryView: View {
     // MARK: - Category Content
     private var categoryContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-                CategoryBanner(imageName: Product.categoryPages[selectedCategoryIndex].bannerName)
-
-                subcategoriesSection
-
-                productListSection
+            if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 100)
+            } else if selectedCategoryIndex < categories.count {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                    CategoryBanner(imageName: categories[selectedCategoryIndex].bannerName)
+                    subcategoriesSection
+                    productListSection
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+                .padding(.top, DesignSystem.Spacing.sm)
+                .padding(.bottom, DesignSystem.Spacing.xxl)
             }
-            .padding(.horizontal, DesignSystem.Spacing.md)
-            .padding(.top, DesignSystem.Spacing.sm)
-            .padding(.bottom, DesignSystem.Spacing.xxl)
         }
     }
 
     // MARK: - Subcategories Section
+    @ViewBuilder
     private var subcategoriesSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            Text("\(Product.categoryPages[selectedCategoryIndex].name)分类")
-                .font(.subheadline)
-                .fontWeight(.bold)
+        if selectedCategoryIndex < categories.count {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                Text("\(categories[selectedCategoryIndex].name)分类")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
 
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
-                GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
-                GridItem(.flexible(), spacing: DesignSystem.Spacing.md)
-            ], spacing: DesignSystem.Spacing.md) {
-                ForEach(Product.categoryPages[selectedCategoryIndex].subcategories, id: \.self) { sub in
-                    SubCategoryItem(name: sub, iconName: Product.categoryPages[selectedCategoryIndex].iconName)
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
+                    GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
+                    GridItem(.flexible(), spacing: DesignSystem.Spacing.md)
+                ], spacing: DesignSystem.Spacing.md) {
+                    ForEach(categories[selectedCategoryIndex].subcategories, id: \.self) { sub in
+                        SubCategoryItem(name: sub, iconName: categories[selectedCategoryIndex].iconName)
+                    }
                 }
             }
         }
     }
 
     // MARK: - Product List Section
+    @ViewBuilder
     private var productListSection: some View {
+        let categoryId = selectedCategoryIndex < categories.count ? categories[selectedCategoryIndex].id : ""
+        let products = categoryProducts[categoryId] ?? []
+
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             Text("热门商品")
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .padding(.vertical, DesignSystem.Spacing.md)
 
-            VStack(spacing: DesignSystem.Spacing.lg) {
-                ForEach(Product.categoryPages[selectedCategoryIndex].products) { product in
-                    NavigationLink(value: product) {
-                        CategoryProductRow(product: product)
+            if products.isEmpty {
+                Text("暂无商品")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 20)
+            } else {
+                VStack(spacing: DesignSystem.Spacing.lg) {
+                    ForEach(products) { product in
+                        NavigationLink(destination: ProductDetailView(product: product)) {
+                            CategoryProductRow(product: product)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
+    }
+
+    private func loadData() async {
+        isLoading = true
+        do {
+            let allCategories = try await CategoryAPI.getCategories()
+            categories = allCategories
+
+            // Load subcategories with products for each category
+            for category in categories {
+                let subcategories = try await CategoryAPI.getCategorySubcategories(categoryId: category.id)
+                var allProducts: [Product] = []
+                var subcatNames: [String] = []
+                for sub in subcategories {
+                    subcatNames.append(sub.name)
+                    allProducts.append(contentsOf: sub.products)
+                }
+                categoryProducts[category.id] = allProducts
+                // Store subcategory names if needed
+                if !subcatNames.isEmpty {
+                    categorySubcategories[category.id] = subcatNames
+                }
+            }
+        } catch {
+            print("Failed to load categories: \(error)")
+        }
+        isLoading = false
+    }
+}
+
+// MARK: - Category with Subcategories Model
+struct CategoryWithSubcategories: Codable {
+    let id: String
+    let name: String
+    let image: String?
+    let sortOrder: Int
+    let isEnabled: Bool
+    let products: [Product]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, image, products
+        case sortOrder = "sort_order"
+        case isEnabled = "is_enabled"
+    }
+}
+
+// MARK: - Category API
+enum CategoryAPI {
+    static func getCategories() async throws -> [Category] {
+        try await APIClient.shared.request(endpoint: APIEndpoints.categories, requiresAuth: false)
+    }
+
+    static func getCategorySubcategories(categoryId: String) async throws -> [CategoryWithSubcategories] {
+        try await APIClient.shared.request(
+            endpoint: "categories/\(categoryId)/subcategories/",
+            requiresAuth: false
+        )
     }
 }
 
@@ -153,11 +234,18 @@ struct CategoryBanner: View {
     let imageName: String
 
     var body: some View {
-        Image(imageName)
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(height: 100)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
+        AsyncImage(url: URL(string: imageName)) { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(height: 100)
+                .clipped()
+        } placeholder: {
+            Rectangle()
+                .fill(Color.gray.opacity(0.1))
+                .frame(height: 100)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
     }
 }
 
@@ -189,11 +277,18 @@ struct CategoryProductRow: View {
 
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.md) {
-            Image(product.imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 110, height: 110)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.sm))
+            AsyncImage(url: product.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 110, height: 110)
+                    .clipped()
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.1))
+                    .frame(width: 110, height: 110)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.sm))
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                 Text(product.name)

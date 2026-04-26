@@ -4,8 +4,10 @@ struct SearchView: View {
     @State private var searchText = ""
     @State private var searchHistory: [String] = []
     @State private var showResults = false
+    @State private var searchResults: [Product] = []
+    @State private var isSearching = false
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
+    private let accentColor = DesignSystem.Colors.accent
 
     private let hotTags = ["T恤", "运动鞋", "防晒霜", "蓝牙耳机", "帆布包", "保湿面霜", "腕表", "咖啡杯"]
 
@@ -16,10 +18,8 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search Header
             searchHeader
 
-            // Search Body
             if showResults {
                 searchResultsView
             } else {
@@ -181,26 +181,42 @@ struct SearchView: View {
     // MARK: - Search Results
     private var searchResultsView: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(Product.allProducts) { product in
-                    NavigationLink(value: product) {
-                        resultCard(product)
+            if isSearching {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 40)
+            } else if searchResults.isEmpty {
+                Text("未找到相关商品")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+            } else {
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(searchResults) { product in
+                        NavigationLink(destination: ProductDetailView(product: product)) {
+                            resultCard(product)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(12)
             }
-            .padding(12)
         }
     }
 
     private func resultCard(_ product: Product) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Image(product.imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(maxWidth: .infinity)
-                .frame(height: 150)
-                .clipped()
+            AsyncImage(url: product.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 150)
+                    .clipped()
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.1))
+            }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(product.name)
@@ -224,6 +240,16 @@ struct SearchView: View {
 
         addToHistory(query)
         showResults = true
+        Task {
+            isSearching = true
+            do {
+                searchResults = try await Product.searchProducts(query: query)
+            } catch {
+                print("Search failed: \(error)")
+                searchResults = []
+            }
+            isSearching = false
+        }
     }
 
     private func addToHistory(_ term: String) {

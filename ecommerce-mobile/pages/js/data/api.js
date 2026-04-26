@@ -1,5 +1,5 @@
 // API Configuration
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'http://127.0.0.1:8080'
 
 const getToken = () => localStorage.getItem('token') || ''
 const setToken = (token) => localStorage.setItem('token', token)

@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct FavoritesView: View {
-    @StateObject private var viewModel = FavoritesViewModel()
+    @State private var favorites: [FavoriteProduct] = []
+    @State private var isLoading = true
     @Environment(\.dismiss) private var dismiss
 
-    private let shopAccentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
+    private let shopAccentColor = DesignSystem.Colors.accent
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12)
@@ -12,11 +13,12 @@ struct FavoritesView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             headerBar
 
-            // Content
-            if viewModel.products.isEmpty {
+            if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if favorites.isEmpty {
                 emptyView
             } else {
                 productGrid
@@ -26,12 +28,20 @@ struct FavoritesView: View {
         .navigationTitle("我的收藏")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .task {
+            do {
+                favorites = try await FavoriteProduct.getFavorites()
+            } catch {
+                print("Failed to load favorites: \(error)")
+            }
+            isLoading = false
+        }
     }
 
     // MARK: - Header Bar
     private var headerBar: some View {
         HStack {
-            Text("\(viewModel.products.count)件商品")
+            Text("\(favorites.count)件商品")
                 .font(.system(size: 13))
                 .foregroundStyle(Color(.secondaryLabel))
 
@@ -46,10 +56,10 @@ struct FavoritesView: View {
     private var productGrid: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(viewModel.products) { product in
+                ForEach(favorites) { product in
                     FavoriteCard(
                         product: product,
-                        onRemove: { viewModel.removeFavorite(product) }
+                        onRemove: { Task { await removeFavorite(product) } }
                     )
                 }
             }
@@ -76,40 +86,40 @@ struct FavoritesView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Color(.secondaryLabel))
 
-            Button(action: { dismiss() }) {
-                Text("去逛逛")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 10)
-                    .background(shopAccentColor)
-                    .clipShape(Capsule())
-            }
-
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func removeFavorite(_ product: FavoriteProduct) async {
+        do {
+            try await FavoriteProduct.removeFavorite(id: product.id)
+            favorites.removeAll { $0.id == product.id }
+        } catch {
+            print("Failed to remove favorite: \(error)")
+        }
     }
 }
 
 // MARK: - Favorite Card
 struct FavoriteCard: View {
-    let product: Product
+    let product: FavoriteProduct
     let onRemove: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Image with remove button
             ZStack(alignment: .topTrailing) {
-                NavigationLink(destination: ProductDetailView(product: product)) {
-                    Image(product.imageName)
+                AsyncImage(url: product.imageURL) { image in
+                    image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .aspectRatio(3/4, contentMode: .fill)
                         .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color(hex: "F8F8F8"))
                 }
 
-                // Remove button
                 Button(action: onRemove) {
                     ZStack {
                         Circle()
@@ -125,7 +135,6 @@ struct FavoriteCard: View {
             }
             .background(Color(hex: "F8F8F8"))
 
-            // Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 13, weight: .medium))
@@ -140,7 +149,7 @@ struct FavoriteCard: View {
 
                     Spacer()
 
-                    Text("已售 \(product.salesCount)")
+                    Text("已售 \(product.sales)")
                         .font(.system(size: 11))
                         .foregroundStyle(Color(hex: "999999"))
                 }
@@ -149,34 +158,6 @@ struct FavoriteCard: View {
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-// MARK: - Favorites ViewModel
-@MainActor
-class FavoritesViewModel: ObservableObject {
-    @Published var products: [Product] = []
-    @Published var isLoading: Bool = false
-
-    init() {
-        Task {
-            await loadFavorites()
-        }
-    }
-
-    func loadFavorites() async {
-        isLoading = true
-        // Currently using recommended products as placeholder
-        // Full implementation would use User.getFavorites() which returns FavoriteProduct
-        products = Product.recommendedProducts
-        isLoading = false
-    }
-
-    func removeFavorite(_ product: Product) {
-        Task {
-            _ = await User.toggleFavorite(product)
-            products.removeAll { $0.id == product.id }
-        }
     }
 }
 

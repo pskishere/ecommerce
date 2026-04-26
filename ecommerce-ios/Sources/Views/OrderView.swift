@@ -31,7 +31,11 @@ final class OrderViewModel: ObservableObject {
     }
 
     func loadOrders() async {
-        orders = await Order.getList()
+        do {
+            orders = try await Order.getList()
+        } catch {
+            print("Failed to load orders: \(error)")
+        }
     }
 
     func selectTab(_ tab: OrderStatus) {
@@ -101,16 +105,6 @@ struct OrderView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Color(.secondaryLabel))
 
-            Button(action: {}) {
-                Text("去逛逛")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 10)
-                    .background(DesignSystem.Colors.accent)
-                    .clipShape(Capsule())
-            }
-
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -174,29 +168,30 @@ struct OrderCard: View {
 
     private func productRow(_ product: OrderProduct) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            // Product Image - tappable to product detail
             NavigationLink(destination: ProductDetailView(product: Product(
                 id: product.id,
                 name: product.name,
                 description: product.spec,
                 price: product.price,
                 originalPrice: nil,
-                imageName: product.imageName,
-                category: Category.all[0],
+                image: product.image,
+                subcategoryRef: nil,
                 rating: 4.8,
                 reviewCount: 100,
                 salesCount: 1000,
-                isInStock: true
+                isInStock: true,
+                tag: ""
             ))) {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(.secondarySystemBackground))
-                    .frame(width: 70, height: 70)
-                    .overlay(
-                        Image(product.imageName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(.secondarySystemBackground))
+                }
+                .frame(width: 70, height: 70)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
             .buttonStyle(.plain)
 

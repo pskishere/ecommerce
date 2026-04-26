@@ -301,7 +301,5 @@ class ReviewsViewModel: ObservableObject {
 }
 
 #Preview {
-    NavigationStack {
-        ReviewsView(product: Product.allProducts[0])
-    }
+    Text("ReviewsView Preview")
 }

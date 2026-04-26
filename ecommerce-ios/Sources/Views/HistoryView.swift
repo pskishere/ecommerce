@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct HistoryView: View {
-    @StateObject private var viewModel = HistoryViewModel()
+    @State private var products: [Product] = []
+    @State private var isLoading = true
+    @State private var showClearAlert = false
 
     private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
     private let columns = [
@@ -11,11 +13,12 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             headerBar
 
-            // Content
-            if viewModel.products.isEmpty {
+            if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if products.isEmpty {
                 emptyView
             } else {
                 productGrid
@@ -25,18 +28,28 @@ struct HistoryView: View {
         .navigationTitle("浏览足迹")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .alert("清空浏览记录", isPresented: $showClearAlert) {
+            Button("取消", role: .cancel) { }
+            Button("清空", role: .destructive) {
+                products.removeAll()
+            }
+        } message: {
+            Text("确定要清空所有浏览记录吗？")
+        }
+        .task {
+            await loadHistory()
+        }
     }
 
-    // MARK: - Header Bar
     private var headerBar: some View {
         HStack {
-            Text("\(viewModel.products.count)件商品")
+            Text("\(products.count)件商品")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
 
             Spacer()
 
-            Button(action: { viewModel.showClearAlert = true }) {
+            Button(action: { showClearAlert = true }) {
                 Text("清空")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(accentColor)
@@ -45,21 +58,12 @@ struct HistoryView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(Color.white)
-        .alert("清空浏览记录", isPresented: $viewModel.showClearAlert) {
-            Button("取消", role: .cancel) { }
-            Button("清空", role: .destructive) {
-                viewModel.clearHistory()
-            }
-        } message: {
-            Text("确定要清空所有浏览记录吗？")
-        }
     }
 
-    // MARK: - Product Grid
     private var productGrid: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(viewModel.products) { product in
+                ForEach(products) { product in
                     HistoryCard(product: product)
                 }
             }
@@ -67,7 +71,6 @@ struct HistoryView: View {
         }
     }
 
-    // MARK: - Empty View
     private var emptyView: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -80,23 +83,16 @@ struct HistoryView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
 
-            Button(action: {}) {
-                Text("去逛逛")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 10)
-                    .background(accentColor)
-                    .clipShape(Capsule())
-            }
-
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    private func loadHistory() async {
+        isLoading = false
+    }
 }
 
-// MARK: - History Card
 struct HistoryCard: View {
     let product: Product
 
@@ -105,16 +101,20 @@ struct HistoryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             NavigationLink(destination: ProductDetailView(product: product)) {
-                Image(product.imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 160)
-                    .clipped()
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 160)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.05))
+                        .frame(height: 160)
+                }
             }
             .frame(height: 160)
-            .background(Color.gray.opacity(0.05))
 
-            // Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 13, weight: .medium))
@@ -143,35 +143,6 @@ struct HistoryCard: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
-    }
-}
-
-// MARK: - History ViewModel
-@MainActor
-class HistoryViewModel: ObservableObject {
-    @Published var products: [Product] = []
-    @Published var showClearAlert = false
-    @Published var isLoading: Bool = false
-
-    init() {
-        Task {
-            await loadHistory()
-        }
-    }
-
-    func loadHistory() async {
-        isLoading = true
-        // Currently using all products as placeholder
-        // Full implementation would use User.getHistory() which returns HistoryItem
-        products = Product.allProducts
-        isLoading = false
-    }
-
-    func clearHistory() {
-        Task {
-            _ = await User.clearHistory()
-            products.removeAll()
-        }
     }
 }
 

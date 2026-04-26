@@ -175,15 +175,16 @@ struct OrderDetailView: View {
     private func productRow(_ product: OrderProduct) -> some View {
         HStack(alignment: .top, spacing: 10) {
             // Product Image
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color(hex: "F8F8F8"))
-                .frame(width: 70, height: 70)
-                .overlay(
-                    Image(product.imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            AsyncImage(url: product.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(hex: "F8F8F8"))
+            }
+            .frame(width: 70, height: 70)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
 
             // Product Info
             VStack(alignment: .leading, spacing: 4) {
@@ -419,15 +420,21 @@ struct OrderDetailView: View {
 #Preview {
     NavigationStack {
         OrderDetailView(order: Order(
-            id: UUID(),
+            id: "preview-order-1",
             orderNumber: "ORDER202603150001",
             store: "潮流优品官方旗舰店",
             status: .shipped,
+            totalAmount: 697,
+            payment: 697,
+            freight: 0,
+            discount: 0,
+            address: nil,
+            payTime: "2026-03-15 10:30:00",
+            createdAt: "2026-03-15 10:30:00",
             products: [
-                OrderProduct(id: UUID(), name: "时尚简约腕表", spec: "黑色经典款", price: 299, quantity: 1, imageName: "product_01_watch"),
-                OrderProduct(id: UUID(), name: "无线蓝牙耳机", spec: "白色标配版", price: 199, quantity: 2, imageName: "product_02_earbuds")
-            ],
-            totalAmount: 697
+                OrderProduct(id: "preview-product-1", name: "时尚简约腕表", spec: "黑色经典款", price: 299, quantity: 1, image: "https://picsum.photos/200/200?random=1"),
+                OrderProduct(id: "preview-product-2", name: "无线蓝牙耳机", spec: "白色标配版", price: 199, quantity: 2, image: "https://picsum.photos/200/200?random=2")
+            ]
         ))
     }
 }
