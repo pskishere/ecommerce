@@ -1,6 +1,6 @@
 /* ── Category Page ── */
 import { showToast } from '../components/toast.js'
-import { api, BASE_URL, request } from '../data/api.js'
+import { api, request, imgUrl } from '../data/api.js'
 
 const subIcons = [
   './assets/images/icon-fashion-01.webp',
@@ -13,43 +13,94 @@ const subIcons = [
   './assets/images/icon-beauty-08.webp',
 ]
 
-let categories = []
-let currentCat = 0
+// 左侧导航只存 id + name，右侧内容按需加载
+let categoryList = []
+let currentCatId = null
+// 缓存已加载的分类详情
+const catCache = {}
 
 function renderLeftNav() {
   const left = document.getElementById('catLeft')
-  left.innerHTML = categories.map((cat, i) =>
-    `<div class="cat-nav-item ${i === currentCat ? 'active' : ''}" data-index="${i}">${cat.name}</div>`
+  left.innerHTML = categoryList.map(cat =>
+    `<div class="cat-nav-item ${cat.id === currentCatId ? 'active' : ''}" data-id="${cat.id}">${cat.name}</div>`
   ).join('')
 
   left.querySelectorAll('.cat-nav-item').forEach(item => {
     item.addEventListener('click', () => {
-      switchCategory(parseInt(item.dataset.index))
+      switchCategory(item.dataset.id)
     })
   })
 }
 
-function renderRightContent(index) {
+function showRightSkeleton() {
   const right = document.getElementById('catRight')
-  const cat = categories[index]
+  right.innerHTML = `
+    <div class="cat-banner skeleton-banner"></div>
+    <div class="cat-sub-title skeleton-title"></div>
+    <div class="cat-sub-grid">
+      <div class="skeleton-icon-text"><div class="skeleton-icon"></div><div class="skeleton-icon-text-label"></div></div>
+      <div class="skeleton-icon-text"><div class="skeleton-icon"></div><div class="skeleton-icon-text-label"></div></div>
+      <div class="skeleton-icon-text"><div class="skeleton-icon"></div><div class="skeleton-icon-text-label"></div></div>
+      <div class="skeleton-icon-text"><div class="skeleton-icon"></div><div class="skeleton-icon-text-label"></div></div>
+    </div>
+    <div class="cat-sub-title skeleton-title" style="margin-top:20px"></div>
+    <div class="cat-product-list">
+      <div class="cat-product-row skeleton-product-row"></div>
+      <div class="cat-product-row skeleton-product-row"></div>
+    </div>
+  `
+}
 
-  // subcategories 现在是对象数组，包含 name 和 products
-  const subNames = cat.subcategories ? cat.subcategories.map(s => s.name) : []
-  // 获取所有子分类的产品
-  const allProducts = cat.subcategories ? cat.subcategories.flatMap(s => s.products || []) : []
+async function switchCategory(catId) {
+  if (catId === currentCatId) return
 
+  currentCatId = catId
+
+  // 更新左侧高亮
+  document.querySelectorAll('.cat-nav-item').forEach(item => {
+    item.classList.toggle('active', String(item.dataset.id) === String(catId))
+  })
+
+  // 如果已缓存，直接渲染
+  if (catCache[catId]) {
+    renderRightContent(catCache[catId])
+    return
+  }
+
+  // 显示骨架屏
+  showRightSkeleton()
+
+  // 加载分类详情
+  try {
+    const data = await request('/api/h5/categories/' + catId + '/')
+    const cat = categoryList.find(c => String(c.id) === String(catId))
+    const fullCat = { ...cat, ...data, subcategories: data.subcategories || [] }
+    catCache[catId] = fullCat
+    renderRightContent(fullCat)
+  } catch (err) {
+    console.error('Failed to load category:', err)
+    const right = document.getElementById('catRight')
+    right.innerHTML = '<div class="cat-empty">加载失败，请重试</div>'
+  }
+}
+
+function renderRightContent(cat) {
+  const subs = cat.subcategories || []
+  const allProducts = subs.flatMap(s => s.products || [])
+
+  const right = document.getElementById('catRight')
   right.innerHTML = `
     <div class="cat-banner">
       <img src="${cat.banner}" alt="${cat.name}">
     </div>
     <div class="cat-sub-title">${cat.name}分类</div>
     <div class="cat-sub-grid">
-      ${subNames.map((sub) => `
-        <div class="cat-sub-item" onclick="location.href='search.html?keyword=${encodeURIComponent(sub)}'">
+      ${subs.map((sub) => `
+        <div class="cat-sub-item" onclick="location.href='search.html?keyword=${encodeURIComponent(sub.name)}'">
           <div class="cat-sub-icon-wrap">
-            <img src="${subIcons[index] || subIcons[0]}" class="cat-sub-icon" alt="${sub}">
+            <img src="${imgUrl(sub.image)}" class="cat-sub-icon" alt="${sub.name}">
           </div>
-          <span class="cat-sub-name">${sub}</span>
+          <span class="cat-sub-name">${sub.name}</span>
         </div>
       `).join('')}
     </div>
@@ -62,7 +113,7 @@ function renderRightContent(index) {
   if (allProducts.length === 0) return
 
   const list = document.getElementById('catProductList')
-  list.innerHTML = allProducts.map(p => `
+  list.innerHTML = allProducts.map((p, i) => `
     <div class="cat-product-row" data-id="${p.id}">
       <div class="cat-product-img"><img src="${p.image}" alt="${p.name}"></div>
       <div class="cat-product-info">
@@ -78,7 +129,7 @@ function renderRightContent(index) {
           `).join('')}
           <span>${Number(p.rating || 0).toFixed(1)}</span>
         </div>
-        <div class="cat-product-cart" data-index="${allProducts.indexOf(p)}">
+        <div class="cat-product-cart" data-index="${i}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </div>
       </div>
@@ -101,14 +152,6 @@ function renderRightContent(index) {
       addToCart(allProducts[i])
     })
   })
-}
-
-function switchCategory(index) {
-  currentCat = index
-  document.querySelectorAll('.cat-nav-item').forEach((item, i) => {
-    item.classList.toggle('active', i === index)
-  })
-  renderRightContent(index)
 }
 
 function addToCart(product) {
@@ -142,26 +185,18 @@ function updateTabCartBadge() {
   }
 }
 
-// Load categories from API - get full category detail with subcategories with products
+// 1. 只加载分类列表（左侧导航用）
 api.category.getList().then(cs => {
-  // For each category, fetch full details including subcategories with products
-  // Use request() to properly unwrap {code: 0, data: ...} response from Django
-  return Promise.all(cs.map(c => request('/api/h5/categories/' + c.id + '/').then(data => ({
-    ...c,
-    subcategories: data.subcategories || []
-  }))))
-}).then(categoriesWithProducts => {
-  categories = categoriesWithProducts
-  // Remove skeleton loading
+  categoryList = cs || []
   document.getElementById('catLeft').classList.add('loaded')
-  document.getElementById('catRight').classList.add('loaded')
   renderLeftNav()
-  renderRightContent(0)
+  // 2. 默认加载第一个分类
+  if (categoryList.length > 0) {
+    switchCategory(categoryList[0].id)
+  }
 }).catch(err => {
   console.error('Failed to load categories:', err)
-  // Hide skeleton on error too
   document.getElementById('catLeft').classList.add('loaded')
-  document.getElementById('catRight').classList.add('loaded')
 })
 
 updateTabCartBadge()

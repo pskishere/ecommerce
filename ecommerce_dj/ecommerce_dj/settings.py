@@ -58,18 +58,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ecommerce_dj.wsgi.application'
 
-# PostgreSQL (Neon) or SQLite for local development
-if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600)
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# PostgreSQL (Neon)
+DATABASES = {
+    'default': dj_database_url.parse(os.environ['DATABASE_URL'], conn_max_age=600)
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -99,6 +91,7 @@ REST_FRAMEWORK = {
 }
 
 # Media files (user uploads)
+MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
 # GitHub Raw URL for media files (for production)

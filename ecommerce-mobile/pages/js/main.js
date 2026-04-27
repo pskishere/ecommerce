@@ -186,11 +186,17 @@ document.addEventListener('click', (e) => {
 
 // ── 0. Home Page Data (index.html) ──
 async function renderHomePage() {
+  const hideSkeleton = (id) => {
+    const el = document.getElementById(id)
+    if (el) el.style.display = 'none'
+  }
+
   // 轮播图
   const carouselTrack = document.getElementById('carouselTrack')
   const carouselDots = document.getElementById('carouselDots')
   if (carouselTrack) {
     const banners = await api.home.getBanners()
+    hideSkeleton('skeletonBanner')
     carouselTrack.innerHTML = banners.map((b, i) => `
       <div class="carousel-slide${i === 0 ? ' active' : ''}">
         <img src="${b.img}" alt="${b.title}" class="carousel-img">
@@ -209,9 +215,10 @@ async function renderHomePage() {
   }
 
   // 分类图标
-  const categoryGrid = document.querySelector('.category-grid')
+  const categoryGrid = document.getElementById('categoryGrid')
   if (categoryGrid) {
     const cats = await api.home.getCategories()
+    hideSkeleton('skeletonCategory')
     categoryGrid.innerHTML = cats.map(c => `
       <a href="${c.link}" class="category-item" data-reveal>
         <div class="category-icon-wrap">
@@ -227,6 +234,7 @@ async function renderHomePage() {
   const flashTrack = document.getElementById('flashTrack')
   if (flashTrack) {
     const flashSales = await api.home.getFlashSale()
+    hideSkeleton('skeletonFlash')
     // flashSales 是数组，每个元素包含 products
     const allProducts = []
     flashSales.forEach(fs => {
@@ -252,9 +260,10 @@ async function renderHomePage() {
     }
   }
 
-  const hotBento = document.querySelector('.hot-bento')
+  const hotBento = document.getElementById('hotBento')
   if (hotBento) {
     const hotRanks = await api.home.getHotRank()
+    hideSkeleton('skeletonHot')
     const allHotProducts = []
     hotRanks.forEach(hr => {
       if (hr.products && hr.products.length > 0) {
@@ -290,6 +299,7 @@ async function renderHomePage() {
   const recommendGrid = document.getElementById('recommendGrid')
   if (recommendGrid) {
     const recommends = await api.home.getRecommend()
+    hideSkeleton('skeletonRecommend')
     const allRecProducts = []
     recommends.forEach(rec => {
       if (rec.products && rec.products.length > 0) {

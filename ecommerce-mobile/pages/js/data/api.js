@@ -472,4 +472,4 @@ const api = {
 }
 
 window.api = api
-export { api, BASE_URL, request, clearAuth }
+export { api, BASE_URL, request, clearAuth, imgUrl }

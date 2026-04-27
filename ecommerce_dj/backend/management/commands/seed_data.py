@@ -141,6 +141,17 @@ class Command(BaseCommand):
             '食品生鲜': ['零食', '茶叶', '水果', '粮油', '生鲜'],
             '潮流配饰': ['腕表', '眼镜', '包包', '首饰', '帽子'],
         }
+        # Map category to subcategory icon filename
+        category_subcat_icon_map = {
+            '女装': 'icon-fashion-01.webp',
+            '男装': 'icon-mens-02.webp',
+            '美妆护肤': 'icon-skincare-03.webp',
+            '数码电子': 'icon-phone-04.webp',
+            '家居生活': 'icon-home-05.webp',
+            '运动户外': 'icon-sport-06.webp',
+            '食品生鲜': 'icon-food-07.webp',
+            '潮流配饰': 'icon-beauty-08.webp',
+        }
         self.subcategories = {}
         for cat_name, subcat_list in subcategories_data.items():
             for subcat_name in subcat_list:
@@ -148,6 +159,13 @@ class Command(BaseCommand):
                     name=subcat_name,
                     category=self.categories[cat_name]
                 )
+                # Assign icon based on parent category
+                icon_filename = category_subcat_icon_map.get(cat_name)
+                if icon_filename:
+                    icon_media = self._get_media(icon_filename)
+                    if icon_media:
+                        subcat.icon = icon_media
+                        subcat.save()
                 key = f"{cat_name}:{subcat_name}"
                 self.subcategories[key] = subcat
                 self.stdout.write(f'  {"Created" if created else "Exists"}: {cat_name} > {subcat_name}')

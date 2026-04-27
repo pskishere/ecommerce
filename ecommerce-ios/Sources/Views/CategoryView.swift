@@ -5,6 +5,7 @@ struct CategoryView: View {
     @State private var selectedCategoryIndex = 0
     @State private var categoryProducts: [String: [Product]] = [:]
     @State private var categorySubcategories: [String: [String]] = [:]
+    @State private var categorySubcategoryIcons: [String: [String]] = [:]
     @State private var isLoading = true
     @EnvironmentObject private var cart: Cart
 
@@ -47,33 +48,51 @@ struct CategoryView: View {
     }
 
     // MARK: - Category Sidebar
+    @ViewBuilder
     private var categorySidebar: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
-                    CategorySidebarItem(
-                        name: category.name,
-                        isSelected: index == selectedCategoryIndex
-                    )
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            selectedCategoryIndex = index
+        if isLoading {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(0..<8, id: \.self) { _ in
+                        SkeletonView(height: 52)
+                            .frame(width: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.sm))
+                            .padding(.vertical, 4)
+                    }
+                }
+            }
+            .frame(width: 88)
+            .background(Color(.secondarySystemBackground))
+        } else {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
+                        CategorySidebarItem(
+                            name: category.name,
+                            isSelected: index == selectedCategoryIndex
+                        )
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                selectedCategoryIndex = index
+                            }
                         }
                     }
                 }
             }
+            .frame(width: 88)
+            .background(Color(.secondarySystemBackground))
         }
-        .frame(width: 88)
-        .background(Color(.secondarySystemBackground))
     }
 
     // MARK: - Category Content
+    @ViewBuilder
     private var categoryContent: some View {
         ScrollView {
             if isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 100)
+                categoryContentSkeleton
+                    .padding(.horizontal, DesignSystem.Spacing.md)
+                    .padding(.top, DesignSystem.Spacing.sm)
+                    .padding(.bottom, DesignSystem.Spacing.xxl)
             } else if selectedCategoryIndex < categories.count {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                     CategoryBanner(imageName: categories[selectedCategoryIndex].bannerName)
@@ -87,10 +106,53 @@ struct CategoryView: View {
         }
     }
 
+    // MARK: - Category Content Skeleton
+    private var categoryContentSkeleton: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
+            // Banner skeleton
+            SkeletonView(height: 100)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
+
+            // Subcategories skeleton
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                SkeletonView(width: 80, height: 16)
+
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
+                    GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
+                    GridItem(.flexible(), spacing: DesignSystem.Spacing.md)
+                ], spacing: DesignSystem.Spacing.md) {
+                    ForEach(0..<6, id: \.self) { _ in
+                        VStack(spacing: 6) {
+                            SkeletonView(width: 36, height: 36)
+                                .clipShape(Circle())
+                            SkeletonView(width: 40, height: 12)
+                        }
+                    }
+                }
+            }
+
+            // Product list skeleton
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                SkeletonView(width: 80, height: 16)
+                    .padding(.vertical, DesignSystem.Spacing.md)
+
+                ForEach(0..<3, id: \.self) { _ in
+                    CategoryProductRowSkeleton()
+                }
+            }
+        }
+    }
+
     // MARK: - Subcategories Section
     @ViewBuilder
     private var subcategoriesSection: some View {
-        if selectedCategoryIndex < categories.count {
+        let categoryId = selectedCategoryIndex < categories.count ? categories[selectedCategoryIndex].id : ""
+        let subcatNames = categorySubcategories[categoryId] ?? []
+        let subcatIcons = categorySubcategoryIcons[categoryId] ?? []
+
+        if !subcatNames.isEmpty {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text("\(categories[selectedCategoryIndex].name)分类")
                     .font(.subheadline)
@@ -101,8 +163,8 @@ struct CategoryView: View {
                     GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
                     GridItem(.flexible(), spacing: DesignSystem.Spacing.md)
                 ], spacing: DesignSystem.Spacing.md) {
-                    ForEach(categories[selectedCategoryIndex].subcategories, id: \.self) { sub in
-                        SubCategoryItem(name: sub, iconName: categories[selectedCategoryIndex].iconName)
+                    ForEach(Array(subcatNames.enumerated()), id: \.offset) { index, sub in
+                        SubCategoryItem(name: sub, iconURL: subcatIcons.indices.contains(index) ? subcatIcons[index] : nil, fallbackIconURL: categories[selectedCategoryIndex].iconName)
                     }
                 }
             }
@@ -151,14 +213,16 @@ struct CategoryView: View {
                 let subcategories = try await CategoryAPI.getCategorySubcategories(categoryId: category.id)
                 var allProducts: [Product] = []
                 var subcatNames: [String] = []
+                var subcatIcons: [String] = []
                 for sub in subcategories {
                     subcatNames.append(sub.name)
+                    subcatIcons.append(sub.image ?? "")
                     allProducts.append(contentsOf: sub.products)
                 }
                 categoryProducts[category.id] = allProducts
-                // Store subcategory names if needed
                 if !subcatNames.isEmpty {
                     categorySubcategories[category.id] = subcatNames
+                    categorySubcategoryIcons[category.id] = subcatIcons
                 }
             }
         } catch {
@@ -252,14 +316,21 @@ struct CategoryBanner: View {
 // MARK: - Sub Category Item
 struct SubCategoryItem: View {
     let name: String
-    let iconName: String
+    let iconURL: String?
+    let fallbackIconURL: String?
 
     var body: some View {
         VStack(spacing: 6) {
-            Image(iconName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 36, height: 36)
+            AsyncImage(url: URL(string: iconURL ?? fallbackIconURL ?? "")) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 36, height: 36)
+            } placeholder: {
+                Circle()
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 36, height: 36)
+            }
 
             Text(name)
                 .font(.caption2)
@@ -316,6 +387,31 @@ struct CategoryProductRow: View {
                             .background(DesignSystem.Colors.accent)
                             .clipShape(Circle())
                     }
+                }
+            }
+        }
+        .padding(DesignSystem.Spacing.sm)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
+        .frame(height: 110)
+    }
+}
+
+// MARK: - Category Product Row Skeleton
+struct CategoryProductRowSkeleton: View {
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.md) {
+            SkeletonView(width: 110, height: 110)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.sm))
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                SkeletonView(width: 140, height: 16)
+                SkeletonView(width: 80, height: 14)
+                Spacer()
+                HStack {
+                    SkeletonView(width: 60, height: 20)
+                    Spacer()
+                    SkeletonView(width: 32, height: 32)
+                        .clipShape(Circle())
                 }
             }
         }

@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = 'Seed media files from uploads directory'
 
     def handle(self, *args, **options):
-        upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
+        upload_dir = settings.MEDIA_ROOT
 
         # Files that have their original name
         named_files = [
@@ -36,6 +36,14 @@ class Command(BaseCommand):
             'icon-sport-06.webp',
             'icon-food-07.webp',
             'icon-beauty-08.webp',
+            'icon_fashion.png',
+            'icon_mens.png',
+            'icon_skincare.png',
+            'icon_phone.png',
+            'icon_home.png',
+            'icon_sport.png',
+            'icon_food.png',
+            'icon_beauty.png',
         ]
 
         # UUID-named files to rename to original names
@@ -63,15 +71,16 @@ class Command(BaseCommand):
                 self.stdout.write(f'  Not found: {filename}')
                 continue
 
+            mime_type = 'image/png' if filename.endswith('.png') else 'image/webp'
             media, is_new = MediaFile.objects.get_or_create(
                 original_name=filename,
                 defaults={
                     'size': os.path.getsize(filepath),
-                    'mime_type': 'image/webp',
+                    'mime_type': mime_type,
                 }
             )
             if is_new:
-                media.file.name = f'uploads/{filename}'
+                media.file.name = filename
                 media.save()
                 created += 1
                 self.stdout.write(f'  Created: {filename}')
