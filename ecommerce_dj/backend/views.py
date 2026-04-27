@@ -14,8 +14,8 @@ def api_response(data=None, msg='success', code=0):
     return Response({'code': code, 'msg': msg, 'data': data})
 
 
-class EnvelopeMixin:
-    """Mixin to wrap all responses in统一格式"""
+class ResponseMixin:
+    """Mixin to wrap all responses in unified format"""
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -355,7 +355,7 @@ class SubcategoryViewSet(viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'success', 'data': ProductListSerializer(products, many=True, context={'request': request}).data})
 
 
-class CategoryViewSet(EnvelopeMixin, viewsets.ModelViewSet):
+class CategoryViewSet(ResponseMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_enabled=True)
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
@@ -509,7 +509,7 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'cleared'})
 
 
-class OrderViewSet(EnvelopeMixin, viewsets.ModelViewSet):
+class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'put', 'delete']
@@ -645,7 +645,7 @@ class OrderViewSet(EnvelopeMixin, viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'confirmed'})
 
 
-class AddressViewSet(EnvelopeMixin, viewsets.ModelViewSet):
+class AddressViewSet(ResponseMixin, viewsets.ModelViewSet):
     serializer_class = AddressSerializer
     permission_classes = [IsAuthenticated]
 
@@ -672,7 +672,7 @@ class AddressViewSet(EnvelopeMixin, viewsets.ModelViewSet):
         return api_response(REGION_DATA)
 
 
-class FavoriteViewSet(EnvelopeMixin, viewsets.ModelViewSet):
+class FavoriteViewSet(ResponseMixin, viewsets.ModelViewSet):
     serializer_class = FavoriteSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'delete']
@@ -695,7 +695,7 @@ class FavoriteViewSet(EnvelopeMixin, viewsets.ModelViewSet):
 
 
 
-class CouponViewSet(EnvelopeMixin, viewsets.ReadOnlyModelViewSet):
+class CouponViewSet(ResponseMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = CouponSerializer
     permission_classes = [IsAuthenticated]
 
@@ -703,7 +703,7 @@ class CouponViewSet(EnvelopeMixin, viewsets.ReadOnlyModelViewSet):
         return UserCoupon.objects.filter(user=get_user(self.request))
 
 
-class NotificationViewSet(EnvelopeMixin, viewsets.ModelViewSet):
+class NotificationViewSet(ResponseMixin, viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'put']
