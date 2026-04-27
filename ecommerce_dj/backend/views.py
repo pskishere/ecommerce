@@ -1,4 +1,4 @@
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets, serializers, mixins
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -8,7 +8,27 @@ from django.contrib.auth.models import User
 import json
 from datetime import datetime
 
-from .models import (
+
+def api_response(data=None, msg='success', code=0):
+    """统一API响应格式"""
+    return Response({'code': code, 'msg': msg, 'data': data})
+
+
+class EnvelopeMixin:
+    """Mixin to wrap all responses in统一格式"""
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return api_response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return api_response(serializer.data)
+
+
+def get_image_url(image_field, context=None):
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
     CartItem, Order, OrderProduct, Address, Review, Favorite, UserCoupon, Notification,
@@ -335,7 +355,7 @@ class SubcategoryViewSet(viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'success', 'data': ProductListSerializer(products, many=True, context={'request': request}).data})
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(EnvelopeMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_enabled=True)
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
@@ -345,30 +365,30 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return CategoryWithSubcategoriesSerializer
         return CategorySerializer
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True, context={'request': request})
-        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, context={'request': request})
+        return api_response(serializer.data)
 
     @action(detail=True, methods=['get'])
     def subcategories(self, request, pk=None):
         category = self.get_object()
         subcategories = category.subcategories.filter(is_enabled=True)
-        return Response({'code': 0, 'msg': 'success', 'data': SubcategoryWithProductsSerializer(subcategories, many=True, context={'request': request}).data})
+        return api_response(SubcategoryWithProductsSerializer(subcategories, many=True, context={'request': request}).data)
 
     @action(detail=True, methods=['get'])
     def products(self, request, pk=None):
         """获取一级分类下所有子分类的产品"""
         category = self.get_object()
         products = Product.objects.filter(subcategory__category=category, is_in_stock=True)
-        return Response({'code': 0, 'msg': 'success', 'data': ProductListSerializer(products, many=True, context={'request': request}).data})
+        return api_response(ProductListSerializer(products, many=True, context={'request': request}).data)
 
     @action(detail=True, methods=['get'])
     def all_products(self, request, pk=None):
         """获取一级分类下所有子分类的产品（兼容旧端点）"""
         category = self.get_object()
         products = Product.objects.filter(subcategory__category=category, is_in_stock=True)
-        return Response({'code': 0, 'msg': 'success', 'data': ProductListSerializer(products, many=True, context={'request': request}).data})
+        return api_response(ProductListSerializer(products, many=True, context={'request': request}).data)
 
 
 class HomeBannerViewSet(viewsets.ModelViewSet):
@@ -489,10 +509,15 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'cleared'})
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(EnvelopeMixin, viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'put', 'delete']
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, context={'request': request})
+        return api_response(serializer.data)
 
     def get_queryset(self):
         qs = Order.objects.filter(user=get_user(self.request))
@@ -620,7 +645,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'confirmed'})
 
 
-class AddressViewSet(viewsets.ModelViewSet):
+class AddressViewSet(EnvelopeMixin, viewsets.ModelViewSet):
     serializer_class = AddressSerializer
     permission_classes = [IsAuthenticated]
 
@@ -630,19 +655,24 @@ class AddressViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=get_user(self.request))
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return api_response(serializer.data)
+
     @action(detail=True, methods=['put'])
     def set_default(self, request, pk=None):
         user = get_user(request)
         Address.objects.filter(user=user).update(is_default=False)
         Address.objects.filter(id=pk, user=user).update(is_default=True)
-        return Response({'code': 0, 'msg': 'success'})
+        return api_response()
 
     @action(detail=False, methods=['get'])
     def region(self, request):
-        return Response({'code': 0, 'data': REGION_DATA})
+        return api_response(REGION_DATA)
 
 
-class FavoriteViewSet(viewsets.ModelViewSet):
+class FavoriteViewSet(EnvelopeMixin, viewsets.ModelViewSet):
     serializer_class = FavoriteSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'delete']
@@ -665,7 +695,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
 
 
 
-class CouponViewSet(viewsets.ReadOnlyModelViewSet):
+class CouponViewSet(EnvelopeMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = CouponSerializer
     permission_classes = [IsAuthenticated]
 
@@ -673,7 +703,7 @@ class CouponViewSet(viewsets.ReadOnlyModelViewSet):
         return UserCoupon.objects.filter(user=get_user(self.request))
 
 
-class NotificationViewSet(viewsets.ModelViewSet):
+class NotificationViewSet(EnvelopeMixin, viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'put']
@@ -689,17 +719,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def count(self, request):
         user = get_user(request)
         count = Notification.objects.filter(user=user, is_read=False).count()
-        return Response({'code': 0, 'msg': 'success', 'data': {'count': count}})
+        return api_response({'count': count})
 
     @action(detail=False, methods=['put'])
     def read_all(self, request):
         Notification.objects.filter(user=get_user(request)).update(is_read=True)
-        return Response({'code': 0, 'msg': 'success'})
+        return api_response()
 
     @action(detail=True, methods=['put'])
     def read(self, request, pk=None):
         Notification.objects.filter(id=pk, user=get_user(request)).update(is_read=True)
-        return Response({'code': 0, 'msg': 'success'})
+        return api_response()
 
 
 class LoginViewSet(viewsets.ViewSet):
