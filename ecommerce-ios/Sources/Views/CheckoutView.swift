@@ -89,7 +89,7 @@ struct CheckoutView: View {
                         threshold: coupon.threshold,
                         description: coupon.description,
                         time: coupon.time,
-                        usable: cart.selectedTotalPrice >= coupon.threshold
+                        usable: cart.selectedTotalPrice >= Decimal(coupon.thresholdAmount)
                     )
                 }
             } catch {

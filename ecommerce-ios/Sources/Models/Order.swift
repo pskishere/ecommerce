@@ -279,13 +279,12 @@ struct CheckoutCoupon: Identifiable, Codable {
     let id: String
     let name: String
     let value: Decimal
-    let threshold: Decimal
+    let threshold: String  // Backend returns string like "满100元减20元"
     let description: String
     let time: String
     var usable: Bool = true
 
     var discountValue: Int { Int(truncating: value as NSDecimalNumber) }
-    var thresholdValue: Int { Int(truncating: threshold as NSDecimalNumber) }
 }
 
 // MARK: - PaymentMethod Model

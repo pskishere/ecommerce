@@ -27,7 +27,7 @@ struct User: Identifiable {
 
 // MARK: - Address model
 struct Address: Identifiable, Codable {
-    let id: String
+    let id: Int
     let name: String
     let phone: String
     let province: String
@@ -71,6 +71,11 @@ struct UserNotification: Identifiable, Codable {
     let content: String
     let action: String
     let isRead: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id, type, name, time, content, action
+        case isRead = "is_read"
+    }
 }
 
 // MARK: - UserCoupon model (for user coupons)
@@ -78,12 +83,17 @@ struct UserCoupon: Identifiable, Codable {
     let id: String
     let name: String
     let value: Decimal
-    let threshold: Decimal
+    let threshold: String  // Original string like "满100元减20元"
+    let thresholdAmount: Int  // Numeric value for comparison
     let description: String
     let time: String
 
+    enum CodingKeys: String, CodingKey {
+        case id, name, value, threshold, description, time
+        case thresholdAmount = "threshold_amount"
+    }
+
     var discountValue: Int { Int(truncating: value as NSDecimalNumber) }
-    var thresholdValue: Int { Int(truncating: threshold as NSDecimalNumber) }
 }
 
 // MARK: - User API
@@ -134,7 +144,7 @@ extension Address {
             let city: String; let district: String; let detail: String; let isDefault: Bool
         }
         _ = try await APIClient.shared.request(
-            endpoint: APIEndpoints.address(address.id),
+            endpoint: APIEndpoints.address(String(address.id)),
             method: "PUT",
             body: UpdateRequest(
                 name: address.name, phone: address.phone,

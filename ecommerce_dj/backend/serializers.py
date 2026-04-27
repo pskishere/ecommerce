@@ -347,9 +347,17 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 # ============== 优惠券序列化器 ==============
 class CouponSerializer(serializers.ModelSerializer):
+    threshold_amount = serializers.SerializerMethodField()
+
     class Meta:
         model = UserCoupon
-        fields = ['id', 'name', 'value', 'threshold', 'description', 'time']
+        fields = ['id', 'name', 'value', 'threshold', 'threshold_amount', 'description', 'time']
+
+    def get_threshold_amount(self, obj):
+        # 从 threshold 字符串中提取数字，如 "满100元减20元" -> 100
+        import re
+        match = re.search(r'(\d+)', obj.threshold)
+        return int(match.group(1)) if match else 0
 
 
 # ============== 通知序列化器 ==============
