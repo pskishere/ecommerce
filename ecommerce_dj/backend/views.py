@@ -28,12 +28,13 @@ class ResponseMixin:
         return api_response(serializer.data)
 
 
-def get_image_url(image_field, context=None):
+from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
     CartItem, Order, OrderProduct, Address, Review, Favorite, UserCoupon, Notification,
     SpecGroup, SpecValue, SKU, SKUSpec
 )
+
 from .serializers import (
     ProductListSerializer, ProductDetailSerializer, SpecValueSerializer, SpecGroupSerializer,
     CategorySerializer, CategoryWithSubcategoriesSerializer, SubcategorySerializer, SubcategoryWithProductsSerializer,
