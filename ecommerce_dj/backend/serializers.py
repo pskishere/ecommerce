@@ -9,17 +9,15 @@ from .models import (
 
 def get_image_url(image_field, context):
     from django.conf import settings
-    if image_field and image_field.file:
+    if image_field and hasattr(image_field, 'url'):
         if getattr(settings, 'GITHUB_RAW_URL', ''):
-            # Use GitHub Raw URL for images
-            filename = image_field.file.name  # e.g., "xxx.webp"
+            filename = image_field.file.name if hasattr(image_field, 'file') and image_field.file else image_field.name
             return f"{settings.GITHUB_RAW_URL}/{filename}"
         if context and 'request' in context:
-            return context['request'].build_absolute_uri(image_field.file.url)
-        # 如果没有request，尝试构建绝对URL
-        if hasattr(image_field, 'url'):
+            return context['request'].build_absolute_uri(image_field.url)
+        if hasattr(settings, 'SITE_URL'):
             return settings.SITE_URL.rstrip('/') + '/' + image_field.url.lstrip('/')
-        return image_field.file.url
+        return image_field.url
     return None
 
 
@@ -74,22 +72,30 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def get_detail(self, obj):
         try:
             d = obj.detail
+            if not d:
+                return None
             return {
                 'shop_name': d.shop_name,
                 'shop_logo': get_image_url(d.shop_logo, self.context),
                 'images': [get_image_url(img, self.context) for img in d.images.all()] if d.images else [],
                 'detail_images': [get_image_url(img, self.context) for img in d.detail_images.all()] if d.detail_images else [],
             }
-        except ProductDetail.DoesNotExist:
+        except (ProductDetail.DoesNotExist, Product.DoesNotExist, AttributeError):
             return None
 
     def get_spec_groups(self, obj):
-        groups = obj.spec_groups.all()
-        return SpecGroupSerializer(groups, many=True, context=self.context).data
+        try:
+            groups = obj.spec_groups.all()
+            return SpecGroupSerializer(groups, many=True, context=self.context).data
+        except AttributeError:
+            return []
 
     def get_skus(self, obj):
-        skus = obj.skus.all()
-        return SKUSerializer(skus, many=True, context=self.context).data
+        try:
+            skus = obj.skus.all()
+            return SKUSerializer(skus, many=True, context=self.context).data
+        except AttributeError:
+            return []
 
 
 # ============== 规格序列化器 ==============
