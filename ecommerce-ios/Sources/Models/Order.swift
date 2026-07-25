@@ -309,6 +309,73 @@ struct Order: Identifiable, Hashable, Codable {
     }
 }
 
+struct PaymentSession: Identifiable, Codable {
+    struct NextAction: Codable {
+        let type: String
+        let label: String?
+        let url: String?
+    }
+
+    let id: String
+    let orderId: String
+    let provider: String
+    let amount: Decimal
+    let currency: String
+    let status: String
+    let paymentUrl: String?
+    let clientSecret: String?
+    let providerTransactionId: String?
+    let nextAction: NextAction?
+    let failureReason: String?
+    let order: Order?
+
+    enum CodingKeys: String, CodingKey {
+        case id, provider, amount, currency, status, order
+        case orderId = "order_id"
+        case paymentUrl = "payment_url"
+        case clientSecret = "client_secret"
+        case providerTransactionId = "provider_transaction_id"
+        case nextAction = "next_action"
+        case failureReason = "failure_reason"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        orderId = try container.decode(String.self, forKey: .orderId)
+        provider = try container.decode(String.self, forKey: .provider)
+        if let amountString = try? container.decode(String.self, forKey: .amount) {
+            amount = Decimal(string: amountString) ?? 0
+        } else {
+            amount = (try? container.decode(Decimal.self, forKey: .amount)) ?? 0
+        }
+        currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "CNY"
+        status = try container.decode(String.self, forKey: .status)
+        paymentUrl = try container.decodeIfPresent(String.self, forKey: .paymentUrl)
+        clientSecret = try container.decodeIfPresent(String.self, forKey: .clientSecret)
+        providerTransactionId = try container.decodeIfPresent(String.self, forKey: .providerTransactionId)
+        nextAction = try container.decodeIfPresent(NextAction.self, forKey: .nextAction)
+        failureReason = try container.decodeIfPresent(String.self, forKey: .failureReason)
+        order = try container.decodeIfPresent(Order.self, forKey: .order)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(orderId, forKey: .orderId)
+        try container.encode(provider, forKey: .provider)
+        try container.encode("\(amount)", forKey: .amount)
+        try container.encode(currency, forKey: .currency)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(paymentUrl, forKey: .paymentUrl)
+        try container.encodeIfPresent(clientSecret, forKey: .clientSecret)
+        try container.encodeIfPresent(providerTransactionId, forKey: .providerTransactionId)
+        try container.encodeIfPresent(nextAction, forKey: .nextAction)
+        try container.encodeIfPresent(failureReason, forKey: .failureReason)
+        try container.encodeIfPresent(order, forKey: .order)
+    }
+}
+
 // MARK: - Order API
 extension Order {
     static func getList(status: OrderStatus = .all) async throws -> [Order] {
@@ -328,12 +395,20 @@ extension Order {
         try await APIClient.shared.requestNoData(endpoint: APIEndpoints.orderCancel(id), method: "PUT", requiresAuth: true)
     }
 
-    static func payOrder(id: String, method: String = "wxpay") async throws -> Order {
+    static func startPayment(id: String, method: String = "wxpay") async throws -> PaymentSession {
         struct PayRequest: Encodable { let paymentMethod: String }
         return try await APIClient.shared.request(
             endpoint: APIEndpoints.orderPay(id),
             method: "PUT",
             body: PayRequest(paymentMethod: method),
+            requiresAuth: true
+        )
+    }
+
+    static func confirmPayment(id: String) async throws -> PaymentSession {
+        try await APIClient.shared.request(
+            endpoint: APIEndpoints.paymentConfirm(id),
+            method: "POST",
             requiresAuth: true
         )
     }

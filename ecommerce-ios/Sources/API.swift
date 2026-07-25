@@ -89,6 +89,8 @@ enum APIEndpoints {
     static func orderConfirm(_ id: String) -> String { "orders/\(id)/confirm/" }
     static func orderAfterSale(_ id: String) -> String { "orders/\(id)/after-sale/" }
     static func orderBuyAgain(_ id: String) -> String { "orders/\(id)/buy-again/" }
+    static func payment(_ id: String) -> String { "payments/\(id)/" }
+    static func paymentConfirm(_ id: String) -> String { "payments/\(id)/confirm/" }
 
     // Addresses
     static let addresses = "addresses/"

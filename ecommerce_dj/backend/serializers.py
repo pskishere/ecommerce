@@ -4,7 +4,7 @@ from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
     CartItem, Order, OrderProduct, Address, Review, Favorite, BrowseHistory, UserCoupon, Notification,
-    SpecGroup, SpecValue, SKU, ShopInfo, VIPMembership, VIP_LEVEL_NAMES, VIP_LEVEL_ORDER
+    PaymentTransaction, SpecGroup, SpecValue, SKU, ShopInfo, VIPMembership, VIP_LEVEL_NAMES, VIP_LEVEL_ORDER
 )
 
 
@@ -394,6 +394,38 @@ class OrderSerializer(serializers.ModelSerializer):
             'active': obj.status == 'pending',
         })
         return [item for item in items if item['time']]
+
+
+class PaymentTransactionSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    order_id = serializers.CharField(source='order.id', read_only=True)
+    order = OrderSerializer(read_only=True)
+    next_action = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PaymentTransaction
+        fields = [
+            'id', 'order_id', 'provider', 'amount', 'currency', 'status',
+            'payment_url', 'client_secret', 'provider_transaction_id',
+            'next_action', 'failure_reason', 'created_at', 'updated_at',
+            'confirmed_at', 'order',
+        ]
+
+    def get_next_action(self, obj):
+        if obj.status != 'requires_action':
+            return None
+        mode = obj.provider_payload.get('mode') if isinstance(obj.provider_payload, dict) else ''
+        if mode == 'sandbox':
+            return {
+                'type': 'sandbox_confirm',
+                'label': '确认沙箱支付',
+            }
+        if obj.payment_url:
+            return {
+                'type': 'external_redirect',
+                'url': obj.payment_url,
+            }
+        return {'type': 'provider_sdk'}
 
 
 # ============== 收藏序列化器 ==============

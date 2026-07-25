@@ -11,6 +11,7 @@ from .models import (
     HomeFlashSale,
     HomeHotRank,
     HomeRecommend,
+    PaymentTransaction,
     Product,
     Subcategory,
     UserCoupon,
@@ -163,9 +164,16 @@ class H5APISmokeTests(APITestCase):
         self.assertEqual(Address.objects.filter(user=self.user).count(), 1)
         self.assertEqual(UserCoupon.objects.get(id=coupon.id).status, 'used')
 
-        paid = self.assert_success(self.client.put(f"/api/h5/orders/{order['id']}/pay/", {
+        payment = self.assert_success(self.client.put(f"/api/h5/orders/{order['id']}/pay/", {
             'paymentMethod': 'wxpay',
         }, format='json'))
+        self.assertEqual(payment['status'], 'requires_action')
+        self.assertEqual(payment['order']['status'], 'pending')
+        self.assertEqual(PaymentTransaction.objects.filter(order_id=order['id'], status='requires_action').count(), 1)
+
+        paid_payment = self.assert_success(self.client.post(f"/api/h5/payments/{payment['id']}/confirm/", {}, format='json'))
+        self.assertEqual(paid_payment['status'], 'succeeded')
+        paid = paid_payment['order']
         self.assertEqual(paid['status'], 'paid')
 
         shipped = self.assert_success(self.client.put(f"/api/h5/orders/{order['id']}/ship/", {

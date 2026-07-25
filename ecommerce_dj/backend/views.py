@@ -6,6 +6,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
+from django.conf import settings
+from django.db import transaction
 from django.db.models import Avg, Prefetch
 from django.utils import timezone
 from mediafiles.models import MediaFile
@@ -182,7 +184,7 @@ from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
     CartItem, Order, OrderProduct, Address, Review, Favorite, BrowseHistory, UserCoupon, Notification, UserProfile,
-    SpecGroup, SpecValue, SKU, SKUSpec,
+    PaymentTransaction, SpecGroup, SpecValue, SKU, SKUSpec,
     ShopInfo, VIPMembership, VIP_LEVEL_ORDER
 )
 
@@ -193,7 +195,7 @@ from .serializers import (
     HomeRecommendSerializer, HomeNewArrivalSerializer, HomePromotionSerializer,
     CartItemSerializer, OrderSerializer, OrderProductSerializer, AddressSerializer,
     FavoriteSerializer, BrowseHistorySerializer, CouponSerializer, NotificationSerializer,
-    ReviewSerializer, ShopInfoSerializer, VIPSerializer
+    ReviewSerializer, PaymentTransactionSerializer, ShopInfoSerializer, VIPSerializer
 )
 
 
@@ -326,6 +328,55 @@ REGION_DATA = {
     '高雄市': ['鹽埕區', '鼓山區', '左營區', '楠梓區', '三民區', '新興區', '前金區', '苓雅區', '前鎮區', '旗津區', '小港區', '鳳山區'],
   },
 }
+
+
+SUPPORTED_PAYMENT_METHODS = {'wxpay', 'alipay', 'balance', 'sandbox'}
+
+
+def normalize_payment_method(value):
+    method = str(value or 'wxpay').strip().lower()
+    return method if method in SUPPORTED_PAYMENT_METHODS else 'wxpay'
+
+
+def payment_mode():
+    return getattr(settings, 'PAYMENT_PROVIDER_MODE', 'sandbox')
+
+
+def complete_payment_transaction(payment, request):
+    if payment.status == 'succeeded':
+        return payment
+
+    order = payment.order
+    if order.status != 'pending':
+        payment.status = 'failed'
+        payment.failure_reason = '订单状态不可支付'
+        payment.save(update_fields=['status', 'failure_reason', 'updated_at'])
+        return payment
+
+    order.status = 'paid'
+    order.pay_time = timezone.now()
+    order.save(update_fields=['status', 'pay_time'])
+
+    payment.status = 'succeeded'
+    payment.confirmed_at = order.pay_time
+    payment.provider_transaction_id = payment.provider_transaction_id or f"LOCAL-{payment.id}"
+    payment.save(update_fields=['status', 'confirmed_at', 'provider_transaction_id', 'updated_at'])
+
+    vip, _ = VIPMembership.objects.get_or_create(user=payment.user)
+    points = int(order.payment or 0)
+    vip.points += points
+    vip.growth_value += points
+    vip.save()
+
+    Notification.objects.create(
+        user=payment.user,
+        type='order',
+        name='支付成功',
+        time='刚刚',
+        content=f'订单 {order.id} 已支付成功，商家将尽快发货。',
+        action='查看订单'
+    )
+    return payment
 
 
 # ============ SKU Algorithm ============
@@ -932,23 +983,39 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
         order = self.get_object()
         if order.status != 'pending':
             return api_response(msg='订单状态不可支付', code=400)
-        order.status = 'paid'
-        order.pay_time = timezone.now()
-        order.save()
-        vip, _ = VIPMembership.objects.get_or_create(user=request.user)
-        points = int(order.payment or 0)
-        vip.points += points
-        vip.growth_value += points
-        vip.save()
-        Notification.objects.create(
-            user=request.user,
-            type='order',
-            name='支付成功',
-            time='刚刚',
-            content=f'订单 {order.id} 已支付成功，商家将尽快发货。',
-            action='查看订单'
+        method = normalize_payment_method(
+            request.data.get('paymentMethod')
+            or request.data.get('payment_method')
+            or request.data.get('provider')
         )
-        return api_response(OrderSerializer(order, context={'request': request}).data)
+        active_payment = order.payment_transactions.filter(
+            user=request.user,
+            provider=method,
+            status__in=['created', 'requires_action', 'processing'],
+        ).first()
+        if active_payment:
+            payment = active_payment
+        else:
+            mode = payment_mode()
+            payment = PaymentTransaction.objects.create(
+                user=request.user,
+                order=order,
+                provider=method,
+                amount=order.payment or Decimal('0'),
+                status='requires_action',
+                provider_payload={
+                    'mode': mode,
+                    'display_method': dict(PaymentTransaction.PROVIDER_CHOICES).get(method, method),
+                },
+            )
+
+        if request.data.get('autoConfirm') is True:
+            payment = complete_payment_transaction(payment, request)
+
+        return api_response(
+            PaymentTransactionSerializer(payment, context={'request': request}).data,
+            msg='payment session created'
+        )
 
     @action(detail=True, methods=['put'])
     def ship(self, request, pk=None):
@@ -1051,6 +1118,41 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
         if added_count == 0:
             return api_response(msg='订单商品已下架，无法再次购买', code=400)
         return api_response({'added_count': added_count}, msg='added to cart')
+
+
+class PaymentViewSet(ResponseMixin, viewsets.ReadOnlyModelViewSet):
+    serializer_class = PaymentTransactionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PaymentTransaction.objects.filter(user=self.request.user).select_related('order')
+
+    def retrieve(self, request, *args, **kwargs):
+        payment = self.get_object()
+        return api_response(self.get_serializer(payment, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def confirm(self, request, pk=None):
+        payment = self.get_queryset().select_for_update().get(pk=pk)
+        if payment.status == 'succeeded':
+            return api_response(
+                self.get_serializer(payment, context={'request': request}).data,
+                msg='payment already succeeded'
+            )
+        if payment.status not in ('created', 'requires_action', 'processing'):
+            return api_response(msg='当前支付单不可确认', code=400)
+
+        mode = payment.provider_payload.get('mode') if isinstance(payment.provider_payload, dict) else ''
+        allow_client_confirm = getattr(settings, 'PAYMENT_ALLOW_CLIENT_CONFIRM', settings.DEBUG)
+        if mode != 'sandbox' and not allow_client_confirm:
+            return api_response(msg='请等待支付服务商回调确认', code=400)
+
+        payment = complete_payment_transaction(payment, request)
+        return api_response(
+            self.get_serializer(payment, context={'request': request}).data,
+            msg='payment confirmed'
+        )
 
 
 class AddressViewSet(ResponseMixin, viewsets.ModelViewSet):

@@ -6,12 +6,14 @@ struct PaymentView: View {
     var onPaid: ((Order) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var selectedMethod: String
     @State private var phase: Phase = .selecting
     @State private var paidOrder: Order? = nil
+    @State private var paymentSession: PaymentSession? = nil
     @State private var errorMessage: String? = nil
 
-    enum Phase { case selecting, processing, success, failed }
+    enum Phase { case selecting, processing, awaitingConfirmation, success, failed }
 
     init(
         order: Order,
@@ -37,6 +39,7 @@ struct PaymentView: View {
                 switch phase {
                 case .selecting:  selectingView
                 case .processing: processingView
+                case .awaitingConfirmation: awaitingConfirmationView
                 case .success:    successView
                 case .failed:     failedView
                 }
@@ -151,6 +154,93 @@ struct PaymentView: View {
         .background(Color(.systemBackground))
     }
 
+    // MARK: - Awaiting Confirmation
+    private var awaitingConfirmationView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 18) {
+                ZStack {
+                    Circle()
+                        .fill(DesignSystem.Colors.accent.opacity(0.12))
+                        .frame(width: 96, height: 96)
+                    Image(systemName: "wallet.pass")
+                        .font(.system(size: 46, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                }
+
+                VStack(spacing: 8) {
+                    Text("等待支付确认")
+                        .font(.system(size: 23, weight: .bold))
+                        .foregroundStyle(Color(.label))
+                    Text(awaitingMessage)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                }
+
+                if let paymentSession {
+                    VStack(spacing: 6) {
+                        Text("支付单号")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color(.tertiaryLabel))
+                        Text(paymentSession.id)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    .padding(.top, 8)
+                }
+            }
+            .padding(.horizontal, 30)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                if canOpenExternalPayment {
+                    Button(action: openPaymentAppOrPage) {
+                        Text("打开支付")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(DesignSystem.Colors.accent)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                Button(action: confirmPayment) {
+                    Text(confirmButtonTitle)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(DesignSystem.Colors.accent)
+                        .clipShape(Capsule())
+                }
+
+                Button(action: {
+                    paymentSession = nil
+                    phase = .selecting
+                }) {
+                    Text("更换支付方式")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color(red: 1.0, green: 0.94, blue: 0.92))
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 48)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
+    }
+
     // MARK: - Success
     private var successView: some View {
         VStack(spacing: 0) {
@@ -250,18 +340,76 @@ struct PaymentView: View {
         errorMessage = nil
         phase = .processing
         Task {
-            // Simulate network delay for realism
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
             do {
-                let updatedOrder = try await Order.payOrder(id: order.id, method: selectedMethod)
-                paidOrder = updatedOrder
-                onPaid?(updatedOrder)
-                phase = .success
+                let session = try await Order.startPayment(id: order.id, method: selectedMethod)
+                handlePaymentSession(session)
             } catch {
                 errorMessage = userFacingErrorMessage(error, fallback: "支付失败，请稍后重试")
                 phase = .failed
             }
         }
+    }
+
+    private func confirmPayment() {
+        guard let paymentSession else {
+            errorMessage = "支付单不存在，请重新支付"
+            phase = .failed
+            return
+        }
+        phase = .processing
+        Task {
+            do {
+                let session = try await Order.confirmPayment(id: paymentSession.id)
+                handlePaymentSession(session)
+            } catch {
+                errorMessage = userFacingErrorMessage(error, fallback: "支付确认失败，请稍后重试")
+                phase = .failed
+            }
+        }
+    }
+
+    private func handlePaymentSession(_ session: PaymentSession) {
+        paymentSession = session
+        if session.status == "succeeded", let updatedOrder = session.order {
+            paidOrder = updatedOrder
+            onPaid?(updatedOrder)
+            phase = .success
+        } else if session.status == "failed" || session.status == "cancelled" || session.status == "expired" {
+            errorMessage = session.failureReason ?? "支付未完成"
+            phase = .failed
+        } else {
+            phase = .awaitingConfirmation
+            if canOpenExternalPayment {
+                openPaymentAppOrPage()
+            }
+        }
+    }
+
+    private var awaitingMessage: String {
+        if paymentSession?.nextAction?.type == "sandbox_confirm" {
+            return "当前后端使用本地沙箱支付。确认后会走服务端支付完成逻辑，订单、积分和通知都会同步更新。"
+        }
+        return "请在支付服务商页面完成付款，完成后回到商城确认支付结果。"
+    }
+
+    private var confirmButtonTitle: String {
+        paymentSession?.nextAction?.label ?? "确认支付结果"
+    }
+
+    private var canOpenExternalPayment: Bool {
+        guard let value = paymentSession?.paymentUrl,
+              URL(string: value) != nil else {
+            return false
+        }
+        return paymentSession?.nextAction?.type == "external_redirect"
+    }
+
+    private func openPaymentAppOrPage() {
+        guard let value = paymentSession?.paymentUrl,
+              let url = URL(string: value) else {
+            return
+        }
+        openURL(url)
     }
 
     private func methodColor(_ id: String) -> Color {

@@ -29,7 +29,13 @@ async function submitPayment() {
   document.getElementById('processingOverlay').style.display = 'flex'
 
   try {
-    await api.order.pay(orderId, selectedMethod)
+    const session = await api.order.pay(orderId, selectedMethod)
+    if (session?.next_action?.type === 'sandbox_confirm') {
+      await api.payment.confirm(session.id)
+    } else if (session?.payment_url) {
+      window.location.href = session.payment_url
+      return
+    }
     document.getElementById('processingOverlay').style.display = 'none'
     document.getElementById('successAmount').textContent = parseFloat(amount).toFixed(2)
     document.getElementById('successOverlay').style.display = 'flex'

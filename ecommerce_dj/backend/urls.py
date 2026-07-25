@@ -14,6 +14,7 @@ router.register(r'home/new-arrivals', views.HomeNewArrivalViewSet, basename='hom
 router.register(r'home/promotions', views.HomePromotionViewSet, basename='home-promotion')
 router.register(r'cart', views.CartViewSet, basename='cart')
 router.register(r'orders', views.OrderViewSet, basename='order')
+router.register(r'payments', views.PaymentViewSet, basename='payment')
 router.register(r'addresses', views.AddressViewSet, basename='address')
 router.register(r'favorites', views.FavoriteViewSet, basename='favorite')
 router.register(r'browse-history', views.BrowseHistoryViewSet, basename='browse-history')

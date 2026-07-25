@@ -288,6 +288,53 @@ class Order(models.Model):
         return self.id
 
 
+class PaymentTransaction(models.Model):
+    STATUS_CHOICES = [
+        ('created', '已创建'),
+        ('requires_action', '待用户操作'),
+        ('processing', '处理中'),
+        ('succeeded', '支付成功'),
+        ('failed', '支付失败'),
+        ('cancelled', '已取消'),
+        ('expired', '已过期'),
+    ]
+
+    PROVIDER_CHOICES = [
+        ('wxpay', '微信支付'),
+        ('alipay', '支付宝'),
+        ('balance', '余额支付'),
+        ('sandbox', '沙箱支付'),
+    ]
+
+    id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payment_transactions')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='payment_transactions')
+    provider = models.CharField(max_length=30, choices=PROVIDER_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='CNY')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='created')
+    payment_url = models.URLField(blank=True)
+    client_secret = models.CharField(max_length=255, blank=True)
+    provider_transaction_id = models.CharField(max_length=255, blank=True)
+    provider_payload = models.JSONField(default=dict, blank=True)
+    failure_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'payment_transactions'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['order', 'status']),
+            models.Index(fields=['provider_transaction_id']),
+        ]
+
+    def __str__(self):
+        return f'{self.provider}:{self.id}'
+
+
 class OrderProduct(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='products')

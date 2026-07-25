@@ -12,6 +12,11 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = ['*']
 
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8080')
+PAYMENT_PROVIDER_MODE = os.environ.get('PAYMENT_PROVIDER_MODE', 'sandbox')
+PAYMENT_ALLOW_CLIENT_CONFIRM = os.environ.get(
+    'PAYMENT_ALLOW_CLIENT_CONFIRM',
+    'true' if DEBUG else 'false'
+).lower() == 'true'
 
 INSTALLED_APPS = [
     'django.contrib.admin',

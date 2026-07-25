@@ -387,6 +387,10 @@ const api = {
     buyAgain: (id) => request('/api/h5/orders/' + id + '/buy-again/', { method: 'POST' }),
   },
 
+  payment: {
+    confirm: (id) => request('/api/h5/payments/' + id + '/confirm/', { method: 'POST' }),
+  },
+
   address: {
     getList: () => request('/api/h5/addresses/').then(addrs => (addrs || []).map(mapAddress)),
     getById: (id) => request('/api/h5/addresses/' + id + '/').then(a => a ? mapAddress(a) : null),
