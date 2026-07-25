@@ -14,6 +14,7 @@ struct AddressEditView: View {
     @State private var isDefault: Bool
     @State private var regionData: [String: [String: [String]]] = [:]
     @State private var showRegionPicker = false
+    @State private var showDeleteConfirm = false
     @State private var isSaving = false
     @State private var toast: String? = nil
 
@@ -67,6 +68,14 @@ struct AddressEditView: View {
                 city: $city,
                 district: $district
             )
+        }
+        .alert("删除地址", isPresented: $showDeleteConfirm) {
+            Button("取消", role: .cancel) { }
+            Button("删除", role: .destructive) {
+                Task { await deleteAddress() }
+            }
+        } message: {
+            Text("确定要删除这个收货地址吗？")
         }
         .task {
             await loadRegions()
@@ -163,7 +172,7 @@ struct AddressEditView: View {
     }
 
     private var deleteButton: some View {
-        Button(role: .destructive, action: { Task { await deleteAddress() } }) {
+        Button(role: .destructive, action: { showDeleteConfirm = true }) {
             Text("删除地址")
                 .font(.system(size: 15))
                 .foregroundStyle(.red)
@@ -243,7 +252,9 @@ struct AddressEditView: View {
 
     private func saveAddress() async {
         guard validate() else { return }
+        guard !isSaving else { return }
         isSaving = true
+        defer { isSaving = false }
         let payload = Address(
             id: address?.id ?? "",
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -264,22 +275,22 @@ struct AddressEditView: View {
             onSaved?()
             dismiss()
         } catch {
-            toast = "保存失败，请重试"
+            toast = userFacingErrorMessage(error, fallback: "保存失败，请重试")
         }
-        isSaving = false
     }
 
     private func deleteAddress() async {
         guard let address else { return }
+        guard !isSaving else { return }
         isSaving = true
+        defer { isSaving = false }
         do {
             try await Address.deleteAddress(id: address.id)
             onSaved?()
             dismiss()
         } catch {
-            toast = "删除失败，请重试"
+            toast = userFacingErrorMessage(error, fallback: "删除失败，请重试")
         }
-        isSaving = false
     }
 }
 

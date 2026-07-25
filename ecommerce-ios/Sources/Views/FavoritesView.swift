@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct FavoritesView: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     @State private var favorites: [FavoriteProduct] = []
     @State private var isLoading = true
     @State private var toast: String? = nil
-    @Environment(\.dismiss) private var dismiss
+    @State private var favoriteToRemove: FavoriteProduct?
 
-    private let shopAccentColor = DesignSystem.Colors.accent
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12)
@@ -29,6 +29,23 @@ struct FavoritesView: View {
         .navigationTitle("我的收藏")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(product: product)
+        }
+        .alert("取消收藏", isPresented: Binding(
+            get: { favoriteToRemove != nil },
+            set: { if !$0 { favoriteToRemove = nil } }
+        )) {
+            Button("保留", role: .cancel) { favoriteToRemove = nil }
+            Button("取消收藏", role: .destructive) {
+                if let product = favoriteToRemove {
+                    Task { await removeFavorite(product) }
+                }
+                favoriteToRemove = nil
+            }
+        } message: {
+            Text("确定要从收藏中移除这个商品吗？")
+        }
         .toast($toast, bottomPadding: 80)
         .task {
             do {
@@ -61,7 +78,7 @@ struct FavoritesView: View {
                 ForEach(favorites) { product in
                     FavoriteCard(
                         product: product,
-                        onRemove: { Task { await removeFavorite(product) } }
+                        onRemove: { favoriteToRemove = product }
                     )
                 }
             }
@@ -88,6 +105,16 @@ struct FavoritesView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Color(.secondaryLabel))
 
+            Button(action: { appNavigation.selectedTab = .category }) {
+                Text("去逛逛")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .frame(height: 42)
+                    .background(DesignSystem.Colors.accent)
+                    .clipShape(Capsule())
+            }
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -110,57 +137,66 @@ struct FavoriteCard: View {
     let onRemove: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: product.imageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .aspectRatio(3/4, contentMode: .fill)
-                        .clipped()
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(hex: "F8F8F8"))
+        ZStack(alignment: .topTrailing) {
+            NavigationLink(value: product.asProduct) {
+                VStack(alignment: .leading, spacing: 0) {
+                    productImage
+                    productInfo
                 }
-
-                Button(action: onRemove) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.black.opacity(0.4))
-                            .frame(width: 28, height: 28)
-
-                        Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white)
-                    }
-                }
-                .padding(8)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .background(Color(hex: "F8F8F8"))
+            .buttonStyle(.plain)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color(hex: "1A1A1A"))
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+            Button(action: onRemove) {
+                ZStack {
+                    Circle()
+                        .fill(Color.black.opacity(0.4))
+                        .frame(width: 28, height: 28)
 
-                HStack {
-                    Text(product.price.rmbText)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(Color(hex: "FF6B4A"))
-
-                    Spacer()
-
-                    Text("已售 \(product.sales)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color(hex: "999999"))
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
                 }
             }
-            .padding(10)
+            .padding(8)
         }
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var productImage: some View {
+        AsyncImage(url: product.imageURL) { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .clipped()
+        } placeholder: {
+            Rectangle()
+                .fill(Color(hex: "F8F8F8"))
+        }
+        .aspectRatio(3/4, contentMode: .fit)
+    }
+
+    private var productInfo: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(product.name)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color(hex: "1A1A1A"))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack {
+                Text(product.price.rmbText)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Color(hex: "FF6B4A"))
+
+                Spacer()
+
+                Text("已售 \(product.sales)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(hex: "999999"))
+            }
+        }
+        .padding(10)
     }
 }
 
@@ -168,4 +204,5 @@ struct FavoriteCard: View {
     NavigationStack {
         FavoritesView()
     }
+    .environmentObject(AppNavigation())
 }

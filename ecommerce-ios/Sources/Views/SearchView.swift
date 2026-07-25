@@ -13,6 +13,7 @@ struct SearchView: View {
     @State private var isLoadingHotTags = false
     @State private var hotTags: [String] = []
     @State private var searchError: String? = nil
+    @State private var showClearHistoryConfirm = false
 
 
     private let columns = [
@@ -56,6 +57,14 @@ struct SearchView: View {
         }
         .task {
             await loadHotTags()
+        }
+        .alert("清空搜索历史", isPresented: $showClearHistoryConfirm) {
+            Button("取消", role: .cancel) { }
+            Button("清空", role: .destructive) {
+                clearAllHistory()
+            }
+        } message: {
+            Text("确定要清空全部搜索记录吗？")
         }
     }
 
@@ -215,9 +224,15 @@ struct SearchView: View {
                                 .foregroundStyle(Color(.systemGray4))
                                 .padding(4)
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        searchText = term
+                        performSearch()
+                    }
 
                     Divider()
                         .padding(.leading, 36)
@@ -225,7 +240,7 @@ struct SearchView: View {
             }
 
             // Clear History Button
-            Button(action: clearAllHistory) {
+            Button(action: { showClearHistoryConfirm = true }) {
                 Text("清空搜索历史")
                     .font(.system(size: 13))
                     .foregroundStyle(Color(.secondaryLabel))
@@ -255,7 +270,12 @@ struct SearchView: View {
                 AppEmptyState(
                     systemImage: "magnifyingglass",
                     title: "未找到相关商品",
-                    message: "换个关键词试试"
+                    message: "换个关键词试试",
+                    actionTitle: "返回搜索",
+                    action: {
+                        showResults = false
+                        searchResults = []
+                    }
                 )
                 .padding(.top, 96)
             } else {

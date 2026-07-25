@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CouponView: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     @StateObject private var viewModel = CouponViewModel()
 
 
@@ -62,6 +63,16 @@ struct CouponView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Color(.secondaryLabel))
 
+            Button(action: { appNavigation.selectedTab = .category }) {
+                Text("去逛逛")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .frame(height: 42)
+                    .background(DesignSystem.Colors.accent)
+                    .clipShape(Capsule())
+            }
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -71,6 +82,7 @@ struct CouponView: View {
 // MARK: - Coupon Card
 struct CouponCard: View {
     @EnvironmentObject private var appNavigation: AppNavigation
+    @Environment(\.dismiss) private var dismiss
     let coupon: Coupon
 
     private let gradientColors = [Color(hex: "FF6B4A"), Color(hex: "FF8E6B")]
@@ -126,7 +138,10 @@ struct CouponCard: View {
                     .padding(.top, 6)
 
                 if coupon.status == .available {
-                    Button(action: { appNavigation.selectedTab = .cart }) {
+                    Button(action: {
+                        appNavigation.selectedTab = .cart
+                        dismiss()
+                    }) {
                         Text("立即使用")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(.white)

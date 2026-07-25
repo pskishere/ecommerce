@@ -5,6 +5,7 @@ struct AddressView: View {
     @State private var isLoading = true
     @State private var showingAddAddress = false
     @State private var editingAddress: Address?
+    @State private var deletingAddress: Address?
     @State private var toast: String? = nil
 
     var body: some View {
@@ -49,6 +50,20 @@ struct AddressView: View {
                 Task { await loadAddresses() }
             })
         }
+        .alert("删除地址", isPresented: Binding(
+            get: { deletingAddress != nil },
+            set: { if !$0 { deletingAddress = nil } }
+        )) {
+            Button("取消", role: .cancel) { deletingAddress = nil }
+            Button("删除", role: .destructive) {
+                if let address = deletingAddress {
+                    Task { await deleteAddress(address) }
+                }
+                deletingAddress = nil
+            }
+        } message: {
+            Text("确定要删除这个收货地址吗？")
+        }
         .task {
             await loadAddresses()
         }
@@ -82,7 +97,7 @@ struct AddressView: View {
                         isDefault: address.isDefault,
                         onSetDefault: { Task { await setDefault(address) } },
                         onEdit: { editingAddress = address },
-                        onDelete: { Task { await deleteAddress(address) } }
+                        onDelete: { deletingAddress = address }
                     )
                 }
             }
@@ -122,7 +137,7 @@ struct AddressView: View {
         do {
             addresses = try await Address.getAddresses()
         } catch {
-            toast = "加载地址失败"
+            toast = userFacingErrorMessage(error, fallback: "加载地址失败")
         }
         isLoading = false
     }
@@ -133,7 +148,7 @@ struct AddressView: View {
             addresses = try await Address.getAddresses()
             toast = "已设为默认地址"
         } catch {
-            toast = "设置失败，请重试"
+            toast = userFacingErrorMessage(error, fallback: "设置失败，请重试")
         }
     }
 
@@ -147,7 +162,7 @@ struct AddressView: View {
             addresses = try await Address.getAddresses()
             toast = "已删除地址"
         } catch {
-            toast = "删除失败，请重试"
+            toast = userFacingErrorMessage(error, fallback: "删除失败，请重试")
         }
     }
 }

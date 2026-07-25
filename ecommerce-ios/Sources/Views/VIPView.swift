@@ -2,6 +2,8 @@ import SwiftUI
 
 struct VIPView: View {
     @StateObject private var viewModel = VIPViewModel()
+    @State private var showCoupons = false
+    @State private var showShop = false
 
 
     var body: some View {
@@ -21,6 +23,12 @@ struct VIPView: View {
         .navigationTitle("会员中心")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .navigationDestination(isPresented: $showCoupons) {
+            CouponView()
+        }
+        .navigationDestination(isPresented: $showShop) {
+            ShopView()
+        }
         .toast($viewModel.errorMessage, bottomPadding: 80)
         .task { await viewModel.load() }
     }
@@ -129,7 +137,10 @@ struct VIPView: View {
     private var privilegesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(viewModel.privilegeRows.enumerated()), id: \.element.title) { index, privilege in
-                privilegeRow(privilege)
+                Button(action: { handlePrivilege(privilege) }) {
+                    privilegeRow(privilege)
+                }
+                .buttonStyle(.plain)
 
                 if index < viewModel.privilegeRows.count - 1 {
                     Rectangle()
@@ -144,6 +155,16 @@ struct VIPView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal, 12)
         .padding(.bottom, 10)
+    }
+
+    private func handlePrivilege(_ privilege: VIPActionRow) {
+        if privilege.title.contains("优惠券") {
+            showCoupons = true
+        } else if privilege.title.contains("商品") {
+            showShop = true
+        } else {
+            viewModel.errorMessage = "\(privilege.title)权益已生效"
+        }
     }
 
     private func privilegeRow(_ privilege: VIPActionRow) -> some View {

@@ -3,10 +3,12 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var authManager: LoginView
-    @State private var pushNotificationsEnabled = true
-    @State private var smsNotificationsEnabled = false
+    @AppStorage("push_notifications_enabled") private var pushNotificationsEnabled = true
+    @AppStorage("sms_notifications_enabled") private var smsNotificationsEnabled = false
     @State private var showProfileInfo = false
     @State private var showNotifications = false
+    @State private var selectedDetail: SettingsDetail?
+    @State private var showLogoutConfirm = false
     @State private var settingsMessage: String?
 
 
@@ -48,6 +50,18 @@ struct SettingsView: View {
         .navigationDestination(isPresented: $showNotifications) {
             NotificationsView()
         }
+        .navigationDestination(item: $selectedDetail) { detail in
+            SettingsDetailView(detail: detail)
+        }
+        .confirmationDialog("退出登录", isPresented: $showLogoutConfirm, titleVisibility: .visible) {
+            Button("退出登录", role: .destructive) {
+                authManager.logout()
+                dismiss()
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("退出后本机登录状态会被清除。")
+        }
         .alert("提示", isPresented: Binding(
             get: { settingsMessage != nil },
             set: { if !$0 { settingsMessage = nil } }
@@ -62,7 +76,7 @@ struct SettingsView: View {
     private var section1: some View {
         VStack(spacing: 0) {
             settingsItemRow(icon: "person.fill", title: "个人资料") { showProfileInfo = true }
-            settingsItemRow(icon: "lock.fill", title: "账号安全") { settingsMessage = "账号安全正常" }
+            settingsItemRow(icon: "lock.fill", title: "账号安全") { selectedDetail = .accountSecurity }
             settingsItemRow(icon: "bell.fill", title: "消息通知", valueText: "接收") { showNotifications = true }
         }
         .background(Color.white)
@@ -71,9 +85,9 @@ struct SettingsView: View {
     // MARK: - Section 2: General
     private var section2: some View {
         VStack(spacing: 0) {
-            settingsItemRow(icon: "gear", title: "通用设置") { settingsMessage = "通用设置已同步" }
-            settingsItemRow(icon: "info.circle", title: "关于我们") { settingsMessage = "潮流好物 v1.0.0" }
-            settingsItemRow(icon: "questionmark.circle", title: "帮助与反馈") { settingsMessage = "客服已收到反馈入口" }
+            settingsItemRow(icon: "gear", title: "通用设置") { selectedDetail = .general }
+            settingsItemRow(icon: "info.circle", title: "关于我们") { selectedDetail = .about }
+            settingsItemRow(icon: "questionmark.circle", title: "帮助与反馈") { selectedDetail = .help }
         }
         .background(Color.white)
     }
@@ -83,7 +97,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             toggleSettingsRow(icon: "bell.fill", title: "推送通知", isOn: $pushNotificationsEnabled)
             toggleSettingsRow(icon: "envelope.fill", title: "短信通知", isOn: $smsNotificationsEnabled)
-            settingsItemRow(icon: "person.2.fill", title: "第三方账号") { settingsMessage = "暂无绑定的第三方账号" }
+            settingsItemRow(icon: "person.2.fill", title: "第三方账号") { selectedDetail = .thirdParty }
         }
         .background(Color.white)
     }
@@ -142,10 +156,7 @@ struct SettingsView: View {
 
     // MARK: - Logout Button
     private var logoutButton: some View {
-        Button(action: {
-            authManager.logout()
-            dismiss()
-        }) {
+        Button(action: { showLogoutConfirm = true }) {
             Text("退出登录")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(DesignSystem.Colors.accent)
@@ -163,6 +174,92 @@ struct SettingsView: View {
             .font(.system(size: 12))
             .foregroundStyle(Color(.systemGray3))
             .padding(.top, 10)
+    }
+}
+
+private enum SettingsDetail: String, Identifiable {
+    case accountSecurity
+    case general
+    case about
+    case help
+    case thirdParty
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .accountSecurity: return "账号安全"
+        case .general: return "通用设置"
+        case .about: return "关于我们"
+        case .help: return "帮助与反馈"
+        case .thirdParty: return "第三方账号"
+        }
+    }
+
+    var rows: [(icon: String, title: String, detail: String)] {
+        switch self {
+        case .accountSecurity:
+            return [
+                ("checkmark.shield", "登录保护", "已开启本机 Token 登录校验"),
+                ("lock.rotation", "密码安全", "建议定期修改密码"),
+                ("iphone", "当前设备", "iOS 模拟器 / 本机调试环境")
+            ]
+        case .general:
+            return [
+                ("paintbrush", "主题模式", "跟随系统"),
+                ("globe", "语言", "简体中文"),
+                ("trash", "缓存", "图片和接口缓存由系统自动管理")
+            ]
+        case .about:
+            return [
+                ("bag", "潮流好物", "年轻人的购物主场"),
+                ("number", "版本", "1.0.0"),
+                ("doc.text", "服务说明", "购物车、订单、收藏、会员与通知流程已接入本地 API")
+            ]
+        case .help:
+            return [
+                ("message", "在线客服", "工作日 09:00-21:00"),
+                ("arrow.uturn.left", "售后规则", "订单详情页可提交售后申请"),
+                ("exclamationmark.bubble", "反馈入口", "问题会记录到本地演示流程")
+            ]
+        case .thirdParty:
+            return [
+                ("person.2", "微信", "暂未绑定"),
+                ("creditcard", "支付宝", "暂未绑定"),
+                ("apple.logo", "Apple", "暂未绑定")
+            ]
+        }
+    }
+}
+
+private struct SettingsDetailView: View {
+    let detail: SettingsDetail
+
+    var body: some View {
+        List {
+            ForEach(detail.rows, id: \.title) { row in
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: row.icon)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                        .frame(width: 28, height: 28)
+                        .background(DesignSystem.Colors.accentSoft)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(row.title)
+                            .font(.system(size: 15, weight: .semibold))
+                        Text(row.detail)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .navigationTitle(detail.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .hideTabBar()
     }
 }
 

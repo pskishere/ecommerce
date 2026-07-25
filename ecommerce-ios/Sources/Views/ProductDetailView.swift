@@ -4,6 +4,7 @@ struct ProductDetailView: View {
     let product: Product
     @EnvironmentObject private var cart: Cart
     @EnvironmentObject private var appNavigation: AppNavigation
+    @EnvironmentObject private var authManager: LoginView
     @Environment(\.dismiss) private var dismiss
 
     @State private var quantity: Int = 1
@@ -21,6 +22,7 @@ struct ProductDetailView: View {
     @State private var detailLoadError: String? = nil
     @State private var isAddingToCart = false
     @State private var showShop = false
+    @State private var showLogin = false
 
     private var canStartPurchase: Bool {
         product.isInStock && !isAddingToCart
@@ -55,6 +57,10 @@ struct ProductDetailView: View {
             .toast($addedToast, bottomPadding: 100)
             .navigationDestination(isPresented: $showShop) {
                 ShopView()
+            }
+            .sheet(isPresented: $showLogin) {
+                LoginFormView()
+                    .environmentObject(authManager)
             }
         }
         .sheet(isPresented: $showingSpecSheet) {
@@ -611,6 +617,11 @@ struct ProductDetailView: View {
 
     // MARK: - Actions
     private func addToCart(goToCart: Bool = false) {
+        guard authManager.isAuthenticated else {
+            showingSpecSheet = false
+            showLogin = true
+            return
+        }
         guard product.isInStock else {
             addedToast = "商品暂时无货"
             return
@@ -648,6 +659,11 @@ struct ProductDetailView: View {
     }
 
     private func buyNow() {
+        guard authManager.isAuthenticated else {
+            showingSpecSheet = false
+            showLogin = true
+            return
+        }
         guard product.isInStock else {
             addedToast = "商品暂时无货"
             return
@@ -668,6 +684,10 @@ struct ProductDetailView: View {
     }
 
     private func toggleFavorite() async {
+        guard authManager.isAuthenticated else {
+            showLogin = true
+            return
+        }
         if isFavorite, let id = favoriteId {
             do {
                 try await FavoriteProduct.removeFavorite(id: id)

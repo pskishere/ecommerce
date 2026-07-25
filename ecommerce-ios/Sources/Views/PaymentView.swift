@@ -6,11 +6,24 @@ struct PaymentView: View {
     var onPaid: ((Order) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedMethod = "wxpay"
+    @State private var selectedMethod: String
     @State private var phase: Phase = .selecting
     @State private var paidOrder: Order? = nil
+    @State private var errorMessage: String? = nil
 
     enum Phase { case selecting, processing, success, failed }
+
+    init(
+        order: Order,
+        initialMethod: String = "wxpay",
+        onComplete: (() -> Void)? = nil,
+        onPaid: ((Order) -> Void)? = nil
+    ) {
+        self.order = order
+        self.onComplete = onComplete
+        self.onPaid = onPaid
+        _selectedMethod = State(initialValue: initialMethod)
+    }
 
     private let methods: [(id: String, name: String, icon: String, tag: String?)] = [
         ("wxpay",  "微信支付",  "checkmark.circle.fill", "推荐"),
@@ -206,11 +219,16 @@ struct PaymentView: View {
                 .foregroundStyle(.red)
             Text("支付失败")
                 .font(.system(size: 22, weight: .bold))
-            Text("请检查网络后重试")
+            Text(errorMessage ?? "请检查网络后重试")
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 28)
             Spacer()
-            Button(action: { phase = .selecting }) {
+            Button(action: {
+                errorMessage = nil
+                phase = .selecting
+            }) {
                 Text("重新支付")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
@@ -228,6 +246,8 @@ struct PaymentView: View {
 
     // MARK: - Actions
     private func startPayment() {
+        guard phase == .selecting else { return }
+        errorMessage = nil
         phase = .processing
         Task {
             // Simulate network delay for realism
@@ -238,6 +258,7 @@ struct PaymentView: View {
                 onPaid?(updatedOrder)
                 phase = .success
             } catch {
+                errorMessage = userFacingErrorMessage(error, fallback: "支付失败，请稍后重试")
                 phase = .failed
             }
         }

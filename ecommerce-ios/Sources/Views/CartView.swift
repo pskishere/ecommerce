@@ -7,6 +7,8 @@ struct CartView: View {
     @State private var isEditMode = false
     @State private var toast: String? = nil
     @State private var swipedItemId: String?
+    @State private var showCoupons = false
+    @State private var showDeleteSelectedConfirm = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,6 +27,17 @@ struct CartView: View {
         .background(DesignSystem.Colors.pageBackground)
         .toast($toast, bottomPadding: 180)
         .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(isPresented: $showCoupons) {
+            CouponView()
+        }
+        .confirmationDialog("删除商品", isPresented: $showDeleteSelectedConfirm, titleVisibility: .visible) {
+            Button("确认删除", role: .destructive) {
+                deleteSelectedItems()
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("确定要删除已选中的商品吗？")
+        }
         .onChange(of: cart.errorMessage) { _, message in
             if let message {
                 toast = message
@@ -169,9 +182,16 @@ struct CartView: View {
 
                 Spacer()
 
-                Text("领券")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.accent)
+                Button(action: { showCoupons = true }) {
+                    Text("领券")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(DesignSystem.Colors.accentSoft)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -219,7 +239,7 @@ struct CartView: View {
 
                 if isEditMode {
                     // Delete button in edit mode
-                    Button(action: deleteSelectedItems) {
+                    Button(action: requestDeleteSelectedItems) {
                         Text("删除")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(DesignSystem.Colors.accent)
@@ -279,10 +299,6 @@ struct CartView: View {
 
     private func deleteSelectedItems() {
         let selected = cart.selectedItems
-        if selected.isEmpty {
-            toast = "请先选择商品"
-            return
-        }
         let count = selected.count
         isEditMode = false
         Task {
@@ -297,6 +313,14 @@ struct CartView: View {
                 toast = userFacingErrorMessage(error, fallback: "批量删除失败")
             }
         }
+    }
+
+    private func requestDeleteSelectedItems() {
+        guard !cart.selectedItems.isEmpty else {
+            toast = "请先选择商品"
+            return
+        }
+        showDeleteSelectedConfirm = true
     }
 
     private func toggleItemSelection(_ item: CartItem) {
@@ -490,37 +514,44 @@ struct CartItemRow: View {
                 H5CheckCircle(isChecked: item.isSelected)
             }
 
-            // Product image
-            AsyncImage(url: item.imageURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 88, height: 88)
-                    .clipped()
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.gray.opacity(0.1))
+            NavigationLink(destination: ProductDetailView(product: item.product)) {
+                AsyncImage(url: item.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 88, height: 88)
+                        .clipped()
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.1))
+                }
+                .frame(width: 88, height: 88)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            .frame(width: 88, height: 88)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .buttonStyle(.plain)
 
             // Product info
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.product.name)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+                NavigationLink(destination: ProductDetailView(product: item.product)) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.product.name)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
 
-                if let spec = item.spec, !spec.isEmpty {
-                    Text(spec)
-                        .font(.system(size: 11))
-                        .foregroundStyle(DesignSystem.Colors.gray2)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(DesignSystem.Colors.pageBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                        .lineLimit(1)
+                        if let spec = item.spec, !spec.isEmpty {
+                            Text(spec)
+                                .font(.system(size: 11))
+                                .foregroundStyle(DesignSystem.Colors.gray2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(DesignSystem.Colors.pageBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .lineLimit(1)
+                        }
+                    }
                 }
+                .buttonStyle(.plain)
 
                 HStack {
                     Text(item.displayPrice.rmbText)

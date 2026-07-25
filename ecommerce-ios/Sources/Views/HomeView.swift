@@ -370,6 +370,7 @@ struct FeaturedCard: View {
     HomeView()
         .environmentObject(Cart())
         .environmentObject(AppNavigation())
+        .environmentObject(LoginView.shared)
 }
 
 // MARK: - Hero Banner
@@ -626,14 +627,14 @@ struct HotRankingCard: View {
 
 // MARK: - Recommend Card
 struct RecommendCard: View {
+    @EnvironmentObject private var authManager: LoginView
     let product: Product
     let onSelect: () -> Void
     @State private var isFavorite = false
     @State private var favoriteId: String? = nil
     @State private var toast: String? = nil
-
-    private struct AddFavRequest: Encodable { let productId: String }
-    private struct AddFavResponse: Decodable { let id: String }
+    @State private var showLogin = false
+    @State private var isTogglingFavorite = false
 
     init(product: Product, onSelect: @escaping () -> Void = {}) {
         self.product = product
@@ -658,14 +659,23 @@ struct RecommendCard: View {
                 .onTapGesture(perform: onSelect)
 
                 Button(action: toggleFavorite) {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .font(.caption)
-                        .foregroundStyle(isFavorite ? .red : .gray)
-                        .padding(5)
-                        .background(Color(.systemBackground).opacity(0.9))
-                        .clipShape(Circle())
+                    ZStack {
+                        Circle()
+                            .fill(Color(.systemBackground).opacity(0.9))
+                            .frame(width: 28, height: 28)
+
+                        if isTogglingFavorite {
+                            ProgressView()
+                                .scaleEffect(0.55)
+                        } else {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .font(.caption)
+                                .foregroundStyle(isFavorite ? .red : .gray)
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
+                .disabled(isTogglingFavorite)
                 .padding(6)
             }
             .frame(height: 160)
@@ -703,19 +713,29 @@ struct RecommendCard: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
         .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
         .toast($toast, bottomPadding: 24)
+        .sheet(isPresented: $showLogin) {
+            LoginFormView()
+                .environmentObject(authManager)
+        }
+        .task {
+            await loadFavoriteState()
+        }
     }
 
     private func toggleFavorite() {
+        guard authManager.isAuthenticated else {
+            showLogin = true
+            return
+        }
+        guard !isTogglingFavorite else { return }
         if isFavorite, let favId = favoriteId {
             isFavorite = false
             favoriteId = nil
+            isTogglingFavorite = true
             Task {
+                defer { isTogglingFavorite = false }
                 do {
-                    try await APIClient.shared.requestNoData(
-                        endpoint: APIEndpoints.favoriteItem(favId),
-                        method: "DELETE",
-                        requiresAuth: true
-                    )
+                    try await FavoriteProduct.removeFavorite(id: favId)
                     toast = "已取消收藏"
                 } catch {
                     isFavorite = true
@@ -725,21 +745,29 @@ struct RecommendCard: View {
             }
         } else if !isFavorite {
             isFavorite = true
+            isTogglingFavorite = true
             Task {
+                defer { isTogglingFavorite = false }
                 do {
-                    let resp: AddFavResponse = try await APIClient.shared.request(
-                        endpoint: APIEndpoints.favorites,
-                        method: "POST",
-                        body: AddFavRequest(productId: product.id),
-                        requiresAuth: true
-                    )
-                    favoriteId = resp.id
+                    favoriteId = try await FavoriteProduct.addFavorite(productId: product.id)
                     toast = "已收藏"
                 } catch {
                     isFavorite = false
                     toast = userFacingErrorMessage(error, fallback: "收藏失败")
                 }
             }
+        }
+    }
+
+    private func loadFavoriteState() async {
+        guard authManager.isAuthenticated else { return }
+        do {
+            let state = try await FavoriteProduct.checkFavorite(productId: product.id)
+            isFavorite = state.isFavorited
+            favoriteId = state.favoriteId
+        } catch {
+            isFavorite = false
+            favoriteId = nil
         }
     }
 }
@@ -793,7 +821,10 @@ struct CategoryGridItem: View {
     @EnvironmentObject private var appNavigation: AppNavigation
 
     var body: some View {
-        Button(action: { appNavigation.selectedTab = .category }) {
+        Button(action: {
+            appNavigation.pendingCategoryId = category.id
+            appNavigation.selectedTab = .category
+        }) {
             VStack(spacing: 8) {
                 categoryIcon
                     .frame(width: 44, height: 44)

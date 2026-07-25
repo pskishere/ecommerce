@@ -144,6 +144,23 @@ struct FavoriteProduct: Identifiable, Codable {
         guard let image else { return nil }
         return URL(string: image)
     }
+
+    var asProduct: Product {
+        Product(
+            id: id,
+            name: name,
+            description: "",
+            price: price,
+            originalPrice: originalPrice,
+            image: image ?? "",
+            subcategoryRef: nil,
+            rating: 5,
+            reviewCount: 0,
+            salesCount: Int(sales.filter(\.isNumber)) ?? 0,
+            isInStock: true,
+            tag: ""
+        )
+    }
 }
 
 // MARK: - Browse History Item

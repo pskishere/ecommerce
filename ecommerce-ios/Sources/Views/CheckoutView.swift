@@ -13,6 +13,7 @@ struct CheckoutView: View {
     @State private var remarkText = ""
     @State private var showAddressSheet = false
     @State private var showCouponSheet = false
+    @State private var showAddressManager = false
     @State private var isLoading = true
     @State private var isSubmitting = false
     @State private var createdOrder: Order? = nil
@@ -82,7 +83,11 @@ struct CheckoutView: View {
         .sheet(isPresented: $showAddressSheet) {
             AddressSelectionSheet(
                 addresses: addresses,
-                selectedAddress: $selectedAddress
+                selectedAddress: $selectedAddress,
+                onOpenAddressManager: {
+                    showAddressSheet = false
+                    showAddressManager = true
+                }
             )
         }
         .sheet(isPresented: $showCouponSheet) {
@@ -95,6 +100,7 @@ struct CheckoutView: View {
             if let order = createdOrder {
                 PaymentView(
                     order: order,
+                    initialMethod: selectedPayment.id,
                     onComplete: {
                         Task { await cart.loadCart() }
                         showPayment = false
@@ -106,28 +112,16 @@ struct CheckoutView: View {
                 )
             }
         }
+        .navigationDestination(isPresented: $showAddressManager) {
+            AddressView()
+        }
         .task {
-            do {
-                addresses = try await Address.getAddresses()
-                selectedAddress = addresses.first { $0.isDefault } ?? addresses.first
-
-                let userCoupons = try await UserCoupon.getCoupons()
-                coupons = userCoupons.map { coupon in
-                    CheckoutCoupon(
-                        id: coupon.id,
-                        name: coupon.name,
-                        value: coupon.value,
-                        threshold: coupon.threshold,
-                        thresholdAmount: coupon.thresholdAmount,
-                        description: coupon.description,
-                        time: coupon.time,
-                        usable: cart.selectedTotalPrice >= Decimal(coupon.thresholdAmount)
-                    )
-                }
-            } catch {
-                toast = userFacingErrorMessage(error, fallback: "结算信息加载失败")
+            await loadCheckoutData()
+        }
+        .onChange(of: showAddressManager) { _, isShowing in
+            if !isShowing {
+                Task { await loadCheckoutData(showLoading: false) }
             }
-            isLoading = false
         }
     }
 
@@ -460,6 +454,44 @@ struct CheckoutView: View {
             }
         }
     }
+
+    private func loadCheckoutData(showLoading: Bool = true) async {
+        if showLoading {
+            isLoading = true
+        }
+        defer { isLoading = false }
+
+        do {
+            addresses = try await Address.getAddresses()
+            if let current = selectedAddress,
+               let refreshed = addresses.first(where: { $0.id == current.id }) {
+                selectedAddress = refreshed
+            } else {
+                selectedAddress = addresses.first { $0.isDefault } ?? addresses.first
+            }
+
+            let userCoupons = try await UserCoupon.getCoupons()
+            coupons = userCoupons.map { coupon in
+                CheckoutCoupon(
+                    id: coupon.id,
+                    name: coupon.name,
+                    value: coupon.value,
+                    threshold: coupon.threshold,
+                    thresholdAmount: coupon.thresholdAmount,
+                    description: coupon.description,
+                    time: coupon.time,
+                    usable: cart.selectedTotalPrice >= Decimal(coupon.thresholdAmount)
+                )
+            }
+
+            if let selectedCoupon,
+               !coupons.contains(where: { $0.id == selectedCoupon.id && $0.usable }) {
+                self.selectedCoupon = nil
+            }
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "结算信息加载失败")
+        }
+    }
 }
 
 private struct CheckoutSkeletonView: View {
@@ -538,6 +570,7 @@ private struct CheckoutSkeletonBlock: View {
 struct AddressSelectionSheet: View {
     let addresses: [Address]
     @Binding var selectedAddress: Address?
+    var onOpenAddressManager: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
 
 
@@ -548,7 +581,9 @@ struct AddressSelectionSheet: View {
                     AppEmptyState(
                         systemImage: "location",
                         title: "暂无收货地址",
-                        message: "请先在地址管理中添加收货地址"
+                        message: "请先在地址管理中添加收货地址",
+                        actionTitle: "新增地址",
+                        action: onOpenAddressManager
                     )
                     .padding(.top, 80)
                 } else {
@@ -564,10 +599,18 @@ struct AddressSelectionSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(Color(.secondaryLabel))
+                    HStack(spacing: 14) {
+                        Button(action: onOpenAddressManager) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(DesignSystem.Colors.accent)
+                        }
+
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
                     }
                 }
             }

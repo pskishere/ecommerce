@@ -4,6 +4,7 @@ struct NotificationsView: View {
     @State private var notifications: [UserNotification] = []
     @State private var selectedTab: String = "全部"
     @State private var isLoading = true
+    @State private var selectedNotification: UserNotification?
     @State private var toast: String? = nil
 
     private let tabs = ["全部", "订单", "优惠", "系统"]
@@ -59,6 +60,9 @@ struct NotificationsView: View {
         }
         .hideTabBar()
         .toast($toast, bottomPadding: 80)
+        .sheet(item: $selectedNotification) { notification in
+            NotificationDetailSheet(notification: notification)
+        }
         .task {
             do {
                 notifications = try await UserNotification.getNotifications()
@@ -89,6 +93,7 @@ struct NotificationsView: View {
             LazyVStack(spacing: 0) {
                 ForEach(filteredNotifications) { notification in
                     NotificationRow(notification: notification) {
+                        selectedNotification = notification
                         Task { await markAsRead(notification) }
                     }
                     Divider()
@@ -154,6 +159,94 @@ struct NotificationsView: View {
         } catch {
             toast = userFacingErrorMessage(error, fallback: "全部已读失败")
         }
+    }
+}
+
+private struct NotificationDetailSheet: View {
+    let notification: UserNotification
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var appNavigation: AppNavigation
+
+    private var notificationType: NotificationType {
+        switch notification.type {
+        case "logistics", "order": return .order
+        case "promo": return .promotion
+        default: return .system
+        }
+    }
+
+    private var actionTitle: String {
+        switch notificationType {
+        case .order: return "查看订单"
+        case .promotion: return "去使用"
+        case .system: return "知道了"
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(notificationType.color.opacity(0.12))
+                        .frame(width: 46, height: 46)
+                        .overlay(
+                            Image(systemName: notificationType.icon)
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundStyle(notificationType.color)
+                        )
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(notification.name)
+                            .font(.system(size: 17, weight: .bold))
+                        Text(notification.time)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text(notification.content)
+                    .font(.system(size: 15))
+                    .foregroundStyle(DesignSystem.Colors.dark)
+                    .lineSpacing(5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer()
+
+                Button(action: handleAction) {
+                    Text(actionTitle)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(DesignSystem.Colors.accent)
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(20)
+            .navigationTitle("消息详情")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func handleAction() {
+        switch notificationType {
+        case .order:
+            appNavigation.selectedTab = .profile
+        case .promotion:
+            appNavigation.selectedTab = .cart
+        case .system:
+            break
+        }
+        dismiss()
     }
 }
 

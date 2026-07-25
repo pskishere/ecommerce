@@ -84,12 +84,13 @@ struct ProfileInfoView: View {
     }
 
     private func saveProfile() async {
+        guard validateProfile() else { return }
         isSaving = true
         do {
             _ = try await User.updateProfile(
-                username: nickname,
-                email: email,
-                phone: phone,
+                username: nickname.trimmingCharacters(in: .whitespacesAndNewlines),
+                email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+                phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
                 gender: gender,
                 birthday: birthday == "未填写" ? "" : birthday,
                 avatar: avatarPayload
@@ -99,6 +100,28 @@ struct ProfileInfoView: View {
             toast = userFacingErrorMessage(error, fallback: "保存失败")
         }
         isSaving = false
+    }
+
+    private func validateProfile() -> Bool {
+        let trimmedName = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPhone = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedName.isEmpty {
+            toast = "请输入昵称"
+            return false
+        }
+        if !trimmedEmail.isEmpty,
+           trimmedEmail.range(of: #"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"#, options: [.regularExpression, .caseInsensitive]) == nil {
+            toast = "请输入正确的邮箱"
+            return false
+        }
+        if !trimmedPhone.isEmpty,
+           trimmedPhone.range(of: #"^1\d{10}$"#, options: .regularExpression) == nil {
+            toast = "请输入正确的手机号"
+            return false
+        }
+        return true
     }
 
     // MARK: - Avatar Section

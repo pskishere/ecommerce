@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct CategoryView: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
+    @EnvironmentObject private var authManager: LoginView
+    @EnvironmentObject private var cart: Cart
     @State private var categories: [Category] = []
     @State private var selectedCategoryIndex = 0
     @State private var categoryProducts: [String: [Product]] = [:]
@@ -8,7 +11,8 @@ struct CategoryView: View {
     @State private var categorySubcategoryIcons: [String: [String]] = [:]
     @State private var isLoading = true
     @State private var toast: String? = nil
-    @EnvironmentObject private var cart: Cart
+    @State private var showLogin = false
+    @State private var isAddingProductId: String?
     private let contentTopInset: CGFloat = 12
 
     var body: some View {
@@ -31,8 +35,15 @@ struct CategoryView: View {
         .background(DesignSystem.Colors.light)
         .toolbar(.hidden, for: .navigationBar)
         .toast($toast, bottomPadding: 96)
+        .sheet(isPresented: $showLogin) {
+            LoginFormView()
+                .environmentObject(authManager)
+        }
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(product: product)
+        }
+        .onChange(of: appNavigation.pendingCategoryId) { _, _ in
+            applyPendingCategorySelection()
         }
         .task {
             await loadData()
@@ -235,14 +246,24 @@ struct CategoryView: View {
                             .buttonStyle(.plain)
 
                             Button(action: { addProductToCart(product) }) {
-                                Image(systemName: "plus")
-                                    .font(.body)
-                                    .foregroundStyle(.white)
-                                    .frame(width: 32, height: 32)
-                                    .background(DesignSystem.Colors.accent)
-                                    .clipShape(Circle())
+                                ZStack {
+                                    Circle()
+                                        .fill(isAddingProductId == product.id ? DesignSystem.Colors.gray2 : DesignSystem.Colors.accent)
+                                        .frame(width: 32, height: 32)
+
+                                    if isAddingProductId == product.id {
+                                        ProgressView()
+                                            .tint(.white)
+                                            .scaleEffect(0.65)
+                                    } else {
+                                        Image(systemName: "plus")
+                                            .font(.body)
+                                            .foregroundStyle(.white)
+                                    }
+                                }
                             }
                             .buttonStyle(.plain)
+                            .disabled(isAddingProductId == product.id)
                             .padding(.trailing, 12)
                             .padding(.bottom, 12)
                         }
@@ -261,6 +282,7 @@ struct CategoryView: View {
             let allCategories = try await CategoryAPI.getCategories()
             categories = allCategories
             selectedCategoryIndex = min(selectedCategoryIndex, max(allCategories.count - 1, 0))
+            applyPendingCategorySelection()
 
             try await withThrowingTaskGroup(of: (String, [CategoryWithSubcategories]).self) { group in
                 for category in allCategories {
@@ -292,7 +314,14 @@ struct CategoryView: View {
     }
 
     private func addProductToCart(_ product: Product) {
+        guard authManager.isAuthenticated else {
+            showLogin = true
+            return
+        }
+        guard isAddingProductId == nil else { return }
+        isAddingProductId = product.id
         Task {
+            defer { isAddingProductId = nil }
             do {
                 try await cart.addToCart(product)
                 toast = "已加入购物车"
@@ -300,6 +329,15 @@ struct CategoryView: View {
                 toast = userFacingErrorMessage(error, fallback: "加入购物车失败")
             }
         }
+    }
+
+    private func applyPendingCategorySelection() {
+        guard let categoryId = appNavigation.pendingCategoryId,
+              let index = categories.firstIndex(where: { $0.id == categoryId }) else {
+            return
+        }
+        selectedCategoryIndex = index
+        appNavigation.pendingCategoryId = nil
     }
 }
 
@@ -538,4 +576,6 @@ private struct CategorySkeletonBlock: View {
 #Preview {
     CategoryView()
         .environmentObject(Cart())
+        .environmentObject(AppNavigation())
+        .environmentObject(LoginView.shared)
 }

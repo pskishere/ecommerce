@@ -6,6 +6,10 @@ struct OrderDetailView: View {
     @State private var toast: String? = nil
     @State private var showPayment = false
     @State private var showAfterSalePrompt = false
+    @State private var showCancelConfirm = false
+    @State private var showReceiptConfirm = false
+    @State private var showShop = false
+    @State private var isActing = false
     @State private var afterSaleReason = "商品不合适，需要售后处理"
 
     init(order: Order) {
@@ -49,6 +53,9 @@ struct OrderDetailView: View {
                 }
             )
         }
+        .navigationDestination(isPresented: $showShop) {
+            ShopView()
+        }
         .alert("申请售后", isPresented: $showAfterSalePrompt) {
             TextField("请输入售后原因", text: $afterSaleReason)
             Button("取消", role: .cancel) { }
@@ -57,6 +64,22 @@ struct OrderDetailView: View {
             }
         } message: {
             Text("提交后客服会尽快处理。")
+        }
+        .confirmationDialog("取消订单", isPresented: $showCancelConfirm, titleVisibility: .visible) {
+            Button("确认取消", role: .destructive) {
+                Task { await cancelOrder() }
+            }
+            Button("再想想", role: .cancel) { }
+        } message: {
+            Text("取消后订单将关闭。")
+        }
+        .confirmationDialog("确认收货", isPresented: $showReceiptConfirm, titleVisibility: .visible) {
+            Button("确认收货") {
+                Task { await confirmReceipt() }
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("请确认已经收到商品。")
         }
     }
 
@@ -171,18 +194,21 @@ struct OrderDetailView: View {
     private var productsSection: some View {
         VStack(spacing: 0) {
             // Store Header
-            HStack(spacing: 8) {
-                Image(systemName: "store")
-                    .font(.system(size: 14))
-                    .foregroundStyle(DesignSystem.Colors.accent)
-                Text(order.store)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color(hex: "1A1A1A"))
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: "CCCCCC"))
+            Button(action: { showShop = true }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "store")
+                        .font(.system(size: 14))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                    Text(order.store)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color(hex: "1A1A1A"))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(hex: "CCCCCC"))
+                }
             }
+            .buttonStyle(.plain)
             .padding(12)
             .background(Color(hex: "F8F8F8"))
 
@@ -198,22 +224,9 @@ struct OrderDetailView: View {
     }
 
     private func productRow(_ product: OrderProduct) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            // Product Image
-            NavigationLink(destination: ProductDetailView(product: Product(
-                id: product.productId,
-                name: product.name,
-                description: product.spec,
-                price: product.price,
-                originalPrice: nil,
-                image: product.image,
-                subcategoryRef: nil,
-                rating: 5,
-                reviewCount: 0,
-                salesCount: 0,
-                isInStock: true,
-                tag: ""
-            ))) {
+        NavigationLink(destination: ProductDetailView(product: detailProduct(for: product))) {
+            HStack(alignment: .top, spacing: 10) {
+                // Product Image
                 AsyncImage(url: product.imageURL) { image in
                     image
                         .resizable()
@@ -224,35 +237,52 @@ struct OrderDetailView: View {
                 }
                 .frame(width: 70, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-            .buttonStyle(.plain)
 
-            // Product Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(hex: "1A1A1A"))
-                    .lineLimit(2)
-
-                Text(product.spec)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: "999999"))
-                    .padding(.top, 2)
-
-                HStack {
-                    Text(product.formattedPrice)
-                        .font(.system(size: 14, weight: .bold))
+                // Product Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(product.name)
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(hex: "1A1A1A"))
+                        .lineLimit(2)
 
-                    Spacer()
-
-                    Text("x\(product.quantity)")
+                    Text(product.spec)
                         .font(.system(size: 12))
                         .foregroundStyle(Color(hex: "999999"))
+                        .padding(.top, 2)
+
+                    HStack {
+                        Text(product.formattedPrice)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(Color(hex: "1A1A1A"))
+
+                        Spacer()
+
+                        Text("x\(product.quantity)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color(hex: "999999"))
+                    }
                 }
             }
         }
+        .buttonStyle(.plain)
         .padding(12)
+    }
+
+    private func detailProduct(for product: OrderProduct) -> Product {
+        Product(
+            id: product.productId,
+            name: product.name,
+            description: product.spec,
+            price: product.price,
+            originalPrice: nil,
+            image: product.image,
+            subcategoryRef: nil,
+            rating: 5,
+            reviewCount: 0,
+            salesCount: 0,
+            isInStock: true,
+            tag: ""
+        )
     }
 
     // MARK: - Order Info Section
@@ -392,18 +422,8 @@ struct OrderDetailView: View {
     private var bottomBar: some View {
         HStack(spacing: 10) {
             if order.status == .pending {
-                Button(action: {
-                    Task {
-                        do {
-                            _ = try await Order.cancelOrder(id: order.id)
-                            toast = "已取消订单"
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
-                        } catch {
-                            toast = userFacingErrorMessage(error, fallback: "取消订单失败")
-                        }
-                    }
-                }) {
-                    Text("取消订单")
+                Button(action: { showCancelConfirm = true }) {
+                    Text(isActing ? "处理中" : "取消订单")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(hex: "FF3B30"))
                         .padding(.horizontal, 24)
@@ -415,6 +435,7 @@ struct OrderDetailView: View {
                                 .stroke(Color(hex: "FF3B30"), lineWidth: 1)
                         )
                 }
+                .disabled(isActing)
 
                 Button(action: { showPayment = true }) {
                     Text("去支付")
@@ -458,18 +479,8 @@ struct OrderDetailView: View {
                     }
                 }
 
-                Button(action: {
-                    Task {
-                        do {
-                            let updated = try await Order.confirmReceipt(id: order.id)
-                            order = updated
-                            toast = "已确认收货"
-                        } catch {
-                            toast = userFacingErrorMessage(error, fallback: "确认收货失败")
-                        }
-                    }
-                }) {
-                    Text("确认收货")
+                Button(action: { showReceiptConfirm = true }) {
+                    Text(isActing ? "处理中" : "确认收货")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 24)
@@ -477,9 +488,10 @@ struct OrderDetailView: View {
                         .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
+                .disabled(isActing)
             } else if order.status == .completed {
-                Button(action: buyAgain) {
-                    Text("再次购买")
+                Button(action: { Task { await buyAgain() } }) {
+                    Text(isActing ? "处理中" : "再次购买")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(hex: "666666"))
                         .padding(.horizontal, 24)
@@ -491,6 +503,7 @@ struct OrderDetailView: View {
                                 .stroke(Color(hex: "DDDDDD"), lineWidth: 1)
                         )
                 }
+                .disabled(isActing)
 
                 if order.afterSaleStatus == "none" {
                     Button(action: { showAfterSalePrompt = true }) {
@@ -533,6 +546,9 @@ struct OrderDetailView: View {
             return
         }
         Task {
+            guard !isActing else { return }
+            isActing = true
+            defer { isActing = false }
             do {
                 let updated = try await Order.requestAfterSale(id: order.id, reason: reason)
                 order = updated
@@ -543,14 +559,41 @@ struct OrderDetailView: View {
         }
     }
 
-    private func buyAgain() {
-        Task {
-            do {
-                let count = try await Order.buyAgain(id: order.id)
-                toast = count > 0 ? "已加入购物车" : "没有可加入购物车的商品"
-            } catch {
-                toast = userFacingErrorMessage(error, fallback: "再次购买失败")
-            }
+    private func cancelOrder() async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
+        do {
+            try await Order.cancelOrder(id: order.id)
+            toast = "已取消订单"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "取消订单失败")
+        }
+    }
+
+    private func confirmReceipt() async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
+        do {
+            let updated = try await Order.confirmReceipt(id: order.id)
+            order = updated
+            toast = "已确认收货"
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "确认收货失败")
+        }
+    }
+
+    private func buyAgain() async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
+        do {
+            let count = try await Order.buyAgain(id: order.id)
+            toast = count > 0 ? "已加入购物车" : "没有可加入购物车的商品"
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "再次购买失败")
         }
     }
 

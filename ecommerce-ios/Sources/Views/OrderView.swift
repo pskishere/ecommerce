@@ -6,6 +6,7 @@ final class OrderViewModel: ObservableObject {
     @Published var orders: [Order] = []
     @Published var selectedTab: OrderStatus = .all
     @Published var errorMessage: String? = nil
+    @Published var isLoading = false
 
     var selectedTabBinding: Binding<String> {
         Binding(
@@ -32,6 +33,8 @@ final class OrderViewModel: ObservableObject {
     }
 
     func loadOrders() async {
+        isLoading = true
+        defer { isLoading = false }
         do {
             orders = try await Order.getList()
             errorMessage = nil
@@ -47,6 +50,7 @@ final class OrderViewModel: ObservableObject {
 
 // MARK: - Order View
 struct OrderView: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     @StateObject private var viewModel = OrderViewModel()
     var initialStatus: OrderStatus = .all
 
@@ -56,7 +60,10 @@ struct OrderView: View {
             tabBar
 
             // Order List
-            if viewModel.filteredOrders.isEmpty {
+            if viewModel.isLoading && viewModel.orders.isEmpty {
+                AppInlineLoadingView(title: "订单加载中")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.filteredOrders.isEmpty {
                 emptyView
             } else {
                 orderList
@@ -110,6 +117,16 @@ struct OrderView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Color(.secondaryLabel))
 
+            Button(action: { appNavigation.selectedTab = .category }) {
+                Text("去逛逛")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .frame(height: 42)
+                    .background(DesignSystem.Colors.accent)
+                    .clipShape(Capsule())
+            }
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -123,6 +140,9 @@ struct OrderCard: View {
 
     @State private var toast: String? = nil
     @State private var showPayment = false
+    @State private var showCancelConfirm = false
+    @State private var showReceiptConfirm = false
+    @State private var isActing = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -133,6 +153,22 @@ struct OrderCard: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .toast($toast, bottomPadding: 16)
+        .confirmationDialog("取消订单", isPresented: $showCancelConfirm, titleVisibility: .visible) {
+            Button("确认取消", role: .destructive) {
+                Task { await cancelOrder() }
+            }
+            Button("再想想", role: .cancel) { }
+        } message: {
+            Text("取消后订单将关闭。")
+        }
+        .confirmationDialog("确认收货", isPresented: $showReceiptConfirm, titleVisibility: .visible) {
+            Button("确认收货") {
+                Task { await confirmReceipt() }
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("请确认已经收到商品。")
+        }
         .navigationDestination(isPresented: $showPayment) {
             PaymentView(
                 order: order,
@@ -263,18 +299,8 @@ struct OrderCard: View {
         switch order.status {
         case .pending:
             HStack(spacing: 8) {
-                Button(action: {
-                    Task {
-                        do {
-                            _ = try await Order.cancelOrder(id: order.id)
-                            toast = "已取消订单"
-                            onRefresh?()
-                        } catch {
-                            toast = userFacingErrorMessage(error, fallback: "取消订单失败")
-                        }
-                    }
-                }) {
-                    Text("取消")
+                Button(action: { showCancelConfirm = true }) {
+                    Text(isActing ? "处理中" : "取消")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Color(.secondaryLabel))
                         .padding(.horizontal, 12)
@@ -286,6 +312,7 @@ struct OrderCard: View {
                                 .stroke(Color(.separator), lineWidth: 1)
                         )
                 }
+                .disabled(isActing)
 
                 Button(action: {
                     showPayment = true
@@ -317,18 +344,8 @@ struct OrderCard: View {
                 }
                 .buttonStyle(.plain)
 
-                Button(action: {
-                    Task {
-                        do {
-                            _ = try await Order.confirmReceipt(id: order.id)
-                            toast = "已确认收货"
-                            onRefresh?()
-                        } catch {
-                            toast = userFacingErrorMessage(error, fallback: "确认收货失败")
-                        }
-                    }
-                }) {
-                    Text("确认收货")
+                Button(action: { showReceiptConfirm = true }) {
+                    Text(isActing ? "处理中" : "确认收货")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
@@ -336,21 +353,15 @@ struct OrderCard: View {
                         .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
+                .disabled(isActing)
             }
 
         case .completed:
             HStack(spacing: 8) {
                 Button(action: {
-                    Task {
-                        do {
-                            let count = try await Order.buyAgain(id: order.id)
-                            toast = count > 0 ? "已加入购物车" : "没有可加入购物车的商品"
-                        } catch {
-                            toast = userFacingErrorMessage(error, fallback: "再次购买失败")
-                        }
-                    }
+                    Task { await buyAgain() }
                 }) {
-                    Text("再次购买")
+                    Text(isActing ? "处理中" : "再次购买")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Color(.secondaryLabel))
                         .padding(.horizontal, 12)
@@ -362,6 +373,7 @@ struct OrderCard: View {
                                 .stroke(Color(.separator), lineWidth: 1)
                         )
                 }
+                .disabled(isActing)
 
                 NavigationLink(destination: ReviewView(product: reviewProduct)) {
                     Text("去评价")
@@ -397,9 +409,48 @@ struct OrderCard: View {
             tag: ""
         )
     }
+
+    private func cancelOrder() async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
+        do {
+            try await Order.cancelOrder(id: order.id)
+            toast = "已取消订单"
+            onRefresh?()
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "取消订单失败")
+        }
+    }
+
+    private func confirmReceipt() async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
+        do {
+            _ = try await Order.confirmReceipt(id: order.id)
+            toast = "已确认收货"
+            onRefresh?()
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "确认收货失败")
+        }
+    }
+
+    private func buyAgain() async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
+        do {
+            let count = try await Order.buyAgain(id: order.id)
+            toast = count > 0 ? "已加入购物车" : "没有可加入购物车的商品"
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "再次购买失败")
+        }
+    }
 }
 
 #Preview {
     OrderView()
         .environmentObject(Cart())
+        .environmentObject(AppNavigation())
 }

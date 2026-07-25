@@ -199,6 +199,7 @@ enum MainTab: String, CaseIterable {
 @MainActor
 final class AppNavigation: ObservableObject {
     @Published var selectedTab: MainTab
+    @Published var pendingCategoryId: String?
 
     init(selectedTab: MainTab = .home) {
         self.selectedTab = selectedTab

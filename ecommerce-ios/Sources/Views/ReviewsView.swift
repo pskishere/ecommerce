@@ -117,7 +117,7 @@ struct ReviewsView: View {
 // MARK: - Review Card
 struct ReviewCard: View {
     let review: ProductReview
-
+    @State private var previewImage: ReviewImagePreview?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -170,15 +170,33 @@ struct ReviewCard: View {
             if !review.images.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
-                        ForEach(review.images, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.gray.opacity(0.1))
+                        ForEach(review.images, id: \.self) { imageURL in
+                            Button(action: { previewImage = ReviewImagePreview(urlString: imageURL) }) {
+                                AsyncImage(url: URL(string: imageURL)) { phase in
+                                    switch phase {
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    case .failure:
+                                        Image(systemName: "photo")
+                                            .font(.system(size: 20))
+                                            .foregroundStyle(.secondary)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .background(Color.gray.opacity(0.1))
+                                    case .empty:
+                                        Rectangle()
+                                            .fill(Color.gray.opacity(0.1))
+                                            .shimmer()
+                                    @unknown default:
+                                        Rectangle()
+                                            .fill(Color.gray.opacity(0.1))
+                                    }
+                                }
                                 .frame(width: 70, height: 70)
-                                .overlay(
-                                    Image(systemName: "photo")
-                                        .font(.system(size: 20))
-                                        .foregroundStyle(.secondary)
-                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -220,6 +238,59 @@ struct ReviewCard: View {
         .padding(12)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .fullScreenCover(item: $previewImage) { item in
+            ReviewImagePreviewView(item: item)
+        }
+    }
+}
+
+struct ReviewImagePreview: Identifiable {
+    let id = UUID()
+    let urlString: String
+}
+
+private struct ReviewImagePreviewView: View {
+    let item: ReviewImagePreview
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+
+            AsyncImage(url: URL(string: item.urlString)) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                case .failure:
+                    VStack(spacing: 12) {
+                        Image(systemName: "photo")
+                            .font(.system(size: 42))
+                        Text("图片加载失败")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundStyle(.white.opacity(0.8))
+                case .empty:
+                    ProgressView()
+                        .tint(.white)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .padding(20)
+
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Color.white.opacity(0.18))
+                    .clipShape(Circle())
+            }
+            .padding(18)
+        }
     }
 }
 

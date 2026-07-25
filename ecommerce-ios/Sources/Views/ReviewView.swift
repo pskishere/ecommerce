@@ -10,6 +10,7 @@ struct ReviewView: View {
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var selectedImageData: [Data] = []
     @State private var toast: String?
+    @State private var isSubmitting = false
 
     let product: Product
 
@@ -41,6 +42,12 @@ struct ReviewView: View {
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
         .toast($toast, bottomPadding: 80)
+        .onChange(of: reviewText) { _, value in
+            if value.count > 500 {
+                reviewText = String(value.prefix(500))
+                toast = "评价最多500字"
+            }
+        }
         .onChange(of: selectedPhotoItems) { _, items in
             Task { await loadSelectedImages(items) }
         }
@@ -255,14 +262,22 @@ struct ReviewView: View {
             Divider()
 
             Button(action: submitReview) {
-                Text("提交评价")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.accent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Color(red: 1.0, green: 0.91, blue: 0.88))
-                    .clipShape(Capsule())
+                HStack(spacing: 8) {
+                    if isSubmitting {
+                        ProgressView()
+                            .scaleEffect(0.75)
+                            .tint(DesignSystem.Colors.accent)
+                    }
+                    Text(isSubmitting ? "提交中..." : "提交评价")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundStyle(DesignSystem.Colors.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color(red: 1.0, green: 0.91, blue: 0.88))
+                .clipShape(Capsule())
             }
+            .disabled(isSubmitting)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .background(Color(.systemBackground))
@@ -274,15 +289,18 @@ struct ReviewView: View {
             toast = "请填写评价内容"
             return
         }
+        guard !isSubmitting else { return }
+        isSubmitting = true
         let imagePayloads = selectedImageData.map { data in
             "data:image/jpeg;base64,\(data.base64EncodedString())"
         }
         Task {
+            defer { isSubmitting = false }
             do {
                 try await Product.createReview(
                     productId: product.id,
                     rating: rating,
-                    content: reviewText,
+                    content: reviewText.trimmingCharacters(in: .whitespacesAndNewlines),
                     isAnonymous: isAnonymous,
                     images: imagePayloads
                 )

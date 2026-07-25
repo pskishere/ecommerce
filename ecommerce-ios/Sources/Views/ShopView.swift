@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct ShopView: View {
+    @EnvironmentObject private var authManager: LoginView
     @State private var shopInfo: ShopInfo?
     @State private var products: [Product] = []
     @State private var selectedTab = "全部商品"
     @State private var isLoading = true
     @State private var isFollowing = UserDefaults.standard.bool(forKey: "shop_following")
     @State private var toast: String?
+    @State private var showLogin = false
 
     private let tabs = ["全部商品", "新品上架", "热卖宝贝"]
     private let columns = [
@@ -29,6 +31,10 @@ struct ShopView: View {
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
         .toast($toast, bottomPadding: 24)
+        .sheet(isPresented: $showLogin) {
+            LoginFormView()
+                .environmentObject(authManager)
+        }
         .task {
             await loadShop()
         }
@@ -209,6 +215,10 @@ struct ShopView: View {
     }
 
     private func toggleFollow() {
+        guard authManager.isAuthenticated else {
+            showLogin = true
+            return
+        }
         isFollowing.toggle()
         UserDefaults.standard.set(isFollowing, forKey: "shop_following")
         toast = isFollowing ? "关注成功" : "已取消关注"
@@ -332,4 +342,5 @@ private struct ShopProductGridSkeleton: View {
         ShopView()
     }
     .environmentObject(Cart())
+    .environmentObject(LoginView.shared)
 }

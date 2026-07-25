@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HistoryView: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     @State private var historyItems: [HistoryItem] = []
     @State private var isLoading = true
     @State private var showClearAlert = false
@@ -84,6 +85,16 @@ struct HistoryView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
 
+            Button(action: { appNavigation.selectedTab = .category }) {
+                Text("去逛逛")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .frame(height: 42)
+                    .background(DesignSystem.Colors.accent)
+                    .clipShape(Capsule())
+            }
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -116,8 +127,8 @@ struct HistoryCard: View {
 
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            NavigationLink(destination: ProductDetailView(product: product)) {
+        NavigationLink(destination: ProductDetailView(product: product)) {
+            VStack(alignment: .leading, spacing: 0) {
                 AsyncImage(url: product.imageURL) { image in
                     image
                         .resizable()
@@ -129,40 +140,41 @@ struct HistoryCard: View {
                         .fill(Color.gray.opacity(0.05))
                         .frame(height: 160)
                 }
-            }
-            .frame(height: 160)
+                .frame(height: 160)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Spacer()
-
-                HStack {
-                    Text(product.formattedPrice)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(DesignSystem.Colors.accent)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(product.name)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Spacer()
 
-                    Text(product.salesCountText)
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                }
+                    HStack {
+                        Text(product.formattedPrice)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(DesignSystem.Colors.accent)
 
-                if !time.isEmpty {
-                    Text(time)
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color(.tertiaryLabel))
-                        .lineLimit(1)
+                        Spacer()
+
+                        Text(product.salesCountText)
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if !time.isEmpty {
+                        Text(time)
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color(.tertiaryLabel))
+                            .lineLimit(1)
+                    }
                 }
+                .padding(8)
+                .frame(height: 76)
             }
-            .padding(8)
-            .frame(height: 76)
         }
+        .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -174,4 +186,5 @@ struct HistoryCard: View {
     NavigationStack {
         HistoryView()
     }
+    .environmentObject(AppNavigation())
 }
