@@ -70,6 +70,7 @@ enum APIEndpoints {
     static let homeHotRanks = "home/hot-ranks/"
     static let homeRecommends = "home/recommends/"
     static let homeNewArrivals = "home/new-arrivals/"
+    static let homePromotions = "home/promotions/"
 
     // Cart
     static let cart = "cart/"

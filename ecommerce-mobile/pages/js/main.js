@@ -236,7 +236,7 @@ async function loadProfileSection() {
 
 // ── 0. Global click delegation (binds immediately, before any async) ──
 document.addEventListener('click', (e) => {
-  const card = e.target.closest('.product-card, .flash-card, .hot-item, .cat-product-row')
+  const card = e.target.closest('.product-card, .flash-card, .hot-item, .cat-product-row, .new-arrival-card')
   if (!card) return
   const id = card.dataset.id
   if (!id) return
@@ -251,12 +251,14 @@ async function renderHomePage() {
     if (el) el.style.display = 'none'
   }
 
-  const [banners, cats, flashSales, hotRanks, recommends] = await Promise.all([
+  const [banners, cats, flashSales, hotRanks, recommends, newArrivals, promotions] = await Promise.all([
     api.home.getBanners().catch(() => []),
     api.home.getCategories().catch(() => []),
     api.home.getFlashSale().catch(() => []),
     api.home.getHotRank().catch(() => []),
     api.home.getRecommend().catch(() => []),
+    api.home.getNewArrival().catch(() => []),
+    api.home.getPromotions().catch(() => []),
   ])
 
   if (flashSales.length > 0 && flashSales[0].endTime) {
@@ -299,6 +301,30 @@ async function renderHomePage() {
     window.dispatchEvent(new Event('scroll'))
   }
 
+  // 活动会场
+  const promotionTrack = document.getElementById('promotionTrack')
+  if (promotionTrack) {
+    hideSkeleton('skeletonPromotion')
+    if (promotions.length > 0) {
+      promotionTrack.innerHTML = promotions.map(p => {
+        const href = p.link || 'coupon.html'
+        const image = p.img ? `<img src="${p.img}" alt="${p.title}" class="promotion-card__img">` : ''
+        return `
+          <a href="${href}" class="promotion-card">
+            ${image}
+            <div class="promotion-card__overlay"></div>
+            <div class="promotion-card__body">
+              <span class="promotion-card__title">${p.title || '优惠活动'}</span>
+              <span class="promotion-card__sub">${p.subtitle || '限时福利，立即领取'}</span>
+              <span class="promotion-card__cta">去领取</span>
+            </div>
+          </a>`
+      }).join('')
+    } else {
+      promotionTrack.innerHTML = '<div class="empty-tip">暂无活动</div>'
+    }
+  }
+
   // 限时抢购
   const flashTrack = document.getElementById('flashTrack')
   if (flashTrack) {
@@ -319,6 +345,31 @@ async function renderHomePage() {
         </div>`).join('')
     } else {
       flashTrack.innerHTML = '<div class="empty-tip">暂无秒杀商品</div>'
+    }
+  }
+
+  // 新品首发
+  const newArrivalTrack = document.getElementById('newArrivalTrack')
+  if (newArrivalTrack) {
+    hideSkeleton('skeletonNewArrival')
+    const allNewProducts = newArrivals.flatMap(na => na.products || [])
+    if (allNewProducts.length > 0) {
+      newArrivalTrack.innerHTML = allNewProducts.slice(0, 8).map((p) => `
+        <div class="new-arrival-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-img="${p.img}">
+          <div class="new-arrival-card__img-wrap">
+            <img src="${p.img}" alt="${p.name}" class="new-arrival-card__img">
+            <span class="new-arrival-card__tag">NEW</span>
+          </div>
+          <div class="new-arrival-card__body">
+            <span class="new-arrival-card__name">${p.name}</span>
+            <div class="new-arrival-card__meta">
+              <span class="new-arrival-card__price">¥${p.price}</span>
+              <span class="new-arrival-card__sales">${p.sales || 0}+</span>
+            </div>
+          </div>
+        </div>`).join('')
+    } else {
+      newArrivalTrack.innerHTML = '<div class="empty-tip">暂无新品</div>'
     }
   }
 

@@ -378,6 +378,13 @@ extension Product {
         return sections.flatMap { $0.products }
     }
 
+    static func getPromotions() async throws -> [HomePromotion] {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.homePromotions,
+            requiresAuth: false
+        )
+    }
+
     static func getRelatedProducts(for productId: String? = nil) async throws -> [Product] {
         var products: [Product] = try await APIClient.shared.request(
             endpoint: APIEndpoints.products,
@@ -421,6 +428,29 @@ struct NewArrivalSection: Codable {
     let id: String
     let title: String
     let products: [Product]
+}
+
+struct HomePromotion: Identifiable, Hashable, Codable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let image: String
+    let link: String
+
+    var imageURL: URL? { URL(string: image) }
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, subtitle, image, link
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? ""
+        image = try container.decodeIfPresent(String.self, forKey: .image) ?? ""
+        link = try container.decodeIfPresent(String.self, forKey: .link) ?? ""
+    }
 }
 
 // MARK: - Spec Models

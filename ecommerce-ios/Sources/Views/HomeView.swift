@@ -6,7 +6,10 @@ struct HomeView: View {
     @State private var flashSaleProducts: [Product] = []
     @State private var hotRankingProducts: [Product] = []
     @State private var recommendedProducts: [Product] = []
+    @State private var newArrivalProducts: [Product] = []
+    @State private var promotions: [HomePromotion] = []
     @State private var selectedProduct: Product?
+    @State private var showCoupons = false
     @State private var isLoading = true
     @State private var loadError: String? = nil
     @State private var toast: String? = nil
@@ -32,8 +35,14 @@ struct HomeView: View {
                         heroBanner
                     }
                     categoryGrid
+                    if !promotions.isEmpty {
+                        promotionSection
+                    }
                     if !flashSaleProducts.isEmpty {
                         flashSaleSection
+                    }
+                    if !newArrivalProducts.isEmpty {
+                        newArrivalSection
                     }
                     if !hotRankingProducts.isEmpty {
                         hotRankingsSection
@@ -49,6 +58,9 @@ struct HomeView: View {
         .navigationDestination(item: $selectedProduct) { product in
             ProductDetailView(product: product)
         }
+        .navigationDestination(isPresented: $showCoupons) {
+            CouponView()
+        }
         .toast($toast, bottomPadding: 96)
         .task {
             await loadData()
@@ -60,7 +72,9 @@ struct HomeView: View {
         banners.isEmpty &&
         flashSaleProducts.isEmpty &&
         hotRankingProducts.isEmpty &&
-        recommendedProducts.isEmpty
+        recommendedProducts.isEmpty &&
+        newArrivalProducts.isEmpty &&
+        promotions.isEmpty
     }
 
     // MARK: - Skeleton Loading Content
@@ -68,7 +82,9 @@ struct HomeView: View {
         VStack(spacing: DesignSystem.Spacing.md) {
             SkeletonBanner()
             SkeletonCategoryGrid()
+            SkeletonPromotionStrip()
             SkeletonFlashSale()
+            SkeletonNewArrival()
             SkeletonHotRanking()
             SkeletonRecommend()
         }
@@ -82,6 +98,47 @@ struct HomeView: View {
     // MARK: - Category Grid
     private var categoryGrid: some View {
         CategoryGridView()
+    }
+
+    // MARK: - Promotion Section
+    private var promotionSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "ticket.fill")
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                    Text("活动会场")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                }
+
+                Spacer()
+
+                Button(action: { showCoupons = true }) {
+                    HStack(spacing: 4) {
+                        Text("领券")
+                            .font(.subheadline)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(DesignSystem.Colors.accent)
+                }
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+            .padding(.top, DesignSystem.Spacing.sm)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(promotions) { promotion in
+                        Button(action: { openPromotion(promotion) }) {
+                            PromotionCard(promotion: promotion)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+            }
+        }
     }
 
     // MARK: - Flash Sale Section
@@ -173,6 +230,46 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - New Arrival Section
+    private var newArrivalSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Color(red: 0.18, green: 0.52, blue: 0.43))
+                    Text("新品首发")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                }
+
+                Spacer()
+
+                Button(action: { appNavigation.selectedTab = .category }) {
+                    HStack(spacing: 4) {
+                        Text("去发现")
+                            .font(.subheadline)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(Color(red: 0.18, green: 0.52, blue: 0.43))
+                }
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+            .padding(.vertical, DesignSystem.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(newArrivalProducts.prefix(8)) { product in
+                        productTapArea(product) {
+                            NewArrivalCard(product: product)
+                        }
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+            }
+        }
+    }
+
     // MARK: - Recommend Section
     private var recommendSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
@@ -215,11 +312,15 @@ struct HomeView: View {
             async let flashTask = Product.getFlashSaleProducts()
             async let hotTask = Product.getHotRankingProducts()
             async let recommendTask = Product.getRecommendProducts()
+            async let newArrivalTask = Product.getNewArrivalProducts()
+            async let promotionTask = Product.getPromotions()
 
             banners = try await bannersTask
             flashSaleProducts = try await flashTask
             hotRankingProducts = try await hotTask
             recommendedProducts = try await recommendTask
+            newArrivalProducts = try await newArrivalTask
+            promotions = try await promotionTask
         } catch {
             let message = userFacingErrorMessage(error, fallback: "首页数据加载失败")
             loadError = message
@@ -237,6 +338,17 @@ struct HomeView: View {
             .onTapGesture {
                 selectedProduct = product
             }
+    }
+
+    private func openPromotion(_ promotion: HomePromotion) {
+        let link = promotion.link.lowercased()
+        if link.contains("coupon") {
+            showCoupons = true
+        } else if link.contains("category") {
+            appNavigation.selectedTab = .category
+        } else {
+            showCoupons = true
+        }
     }
 }
 
@@ -363,6 +475,131 @@ struct FeaturedCard: View {
             }
         }
         .padding(DesignSystem.Spacing.sm)
+    }
+}
+
+// MARK: - Promotion Card
+struct PromotionCard: View {
+    let promotion: HomePromotion
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            AsyncImage(url: promotion.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                LinearGradient(
+                    colors: [
+                        DesignSystem.Colors.accent.opacity(0.18),
+                        Color(red: 0.18, green: 0.52, blue: 0.43).opacity(0.18)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+            .frame(width: 260, height: 92)
+            .clipped()
+
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.52),
+                    Color.black.opacity(0.18),
+                    Color.black.opacity(0.02)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text(promotion.title.isEmpty ? "优惠活动" : promotion.title)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                Text(promotion.subtitle.isEmpty ? "限时福利，立即领取" : promotion.subtitle)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(1)
+
+                Text("去领取")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(DesignSystem.Colors.accent)
+                    .padding(.horizontal, 10)
+                    .frame(height: 24)
+                    .background(Color.white)
+                    .clipShape(Capsule())
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+        }
+        .frame(width: 260, height: 92)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg))
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+    }
+}
+
+// MARK: - New Arrival Card
+struct NewArrivalCard: View {
+    let product: Product
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 138, height: 150)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.08))
+                        .frame(width: 138, height: 150)
+                }
+
+                Text("NEW")
+                    .font(.caption2)
+                    .fontWeight(.black)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(Color(red: 0.18, green: 0.52, blue: 0.43))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .padding(8)
+            }
+            .frame(width: 138, height: 150)
+            .background(Color(.secondarySystemBackground))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(product.name)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color(.label))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(product.formattedPrice)
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(DesignSystem.Colors.accent)
+
+                    Spacer(minLength: 4)
+
+                    Text(product.formattedSalesCount)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(DesignSystem.Spacing.sm)
+            .frame(width: 138, height: 76, alignment: .topLeading)
+        }
+        .frame(width: 138)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
+        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -914,6 +1151,31 @@ struct SkeletonCategoryGrid: View {
     }
 }
 
+struct SkeletonPromotionStrip: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 82, height: 20)
+                Spacer()
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(0..<2, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.lg)
+                            .fill(Color.gray.opacity(0.15))
+                            .frame(width: 260, height: 92)
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+            }
+        }
+    }
+}
+
 struct SkeletonFlashSale: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
@@ -939,6 +1201,43 @@ struct SkeletonFlashSale: View {
                                 .fill(Color.gray.opacity(0.15))
                                 .frame(width: 40, height: 12)
                         }
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
+            }
+        }
+    }
+}
+
+struct SkeletonNewArrival: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 82, height: 20)
+                Spacer()
+            }
+            .padding(.horizontal, DesignSystem.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        VStack(alignment: .leading, spacing: 0) {
+                            RoundedRectangle(cornerRadius: DesignSystem.Radius.md)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(width: 138, height: 150)
+                            VStack(alignment: .leading, spacing: 6) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.gray.opacity(0.15))
+                                    .frame(width: 112, height: 14)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.gray.opacity(0.15))
+                                    .frame(width: 72, height: 16)
+                            }
+                            .padding(DesignSystem.Spacing.sm)
+                        }
+                        .frame(width: 138)
                     }
                 }
                 .padding(.horizontal, DesignSystem.Spacing.md)
