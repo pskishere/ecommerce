@@ -96,6 +96,7 @@ struct H5SearchNav: View {
     let placeholder: String
     let searchDestination: SearchView
     let trailing: AnyView
+    @State private var isShowingSearch = false
 
     init(placeholder: String = "搜索", searchDestination: SearchView = SearchView()) {
         self.placeholder = placeholder
@@ -115,7 +116,7 @@ struct H5SearchNav: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            NavigationLink(destination: searchDestination) {
+            Button(action: { isShowingSearch = true }) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 16, weight: .medium))
@@ -135,6 +136,9 @@ struct H5SearchNav: View {
             .buttonStyle(.plain)
 
             trailing
+        }
+        .navigationDestination(isPresented: $isShowingSearch) {
+            searchDestination
         }
         .padding(.horizontal, 16)
         .frame(height: 52)
