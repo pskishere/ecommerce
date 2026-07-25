@@ -36,6 +36,7 @@ final class LoginView: ObservableObject {
 
 struct LoginFormView: View {
     @EnvironmentObject private var authManager: LoginView
+    @Environment(\.dismiss) private var dismiss
     @State private var username = "testuser"
     @State private var password = "iole"
     @State private var isLoading = false
@@ -216,18 +217,19 @@ struct LoginFormView: View {
 
     private func performLogin() {
         guard !isLoginDisabled else { return }
+        let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         isLoading = true
+        errorMessage = nil
         showError = false
+        focusedField = nil
 
         Task {
             do {
-                let resp = try await APIClient.shared.login(username: username, password: password)
-                LoginView.shared.login(token: resp.token, userType: resp.userType)
-            } catch let error as APIError {
-                errorMessage = error.errorDescription
-                showError = true
+                let resp = try await APIClient.shared.login(username: trimmedUsername, password: password)
+                authManager.login(token: resp.token, userType: resp.userType)
+                dismiss()
             } catch {
-                errorMessage = "登录失败"
+                errorMessage = userFacingErrorMessage(error, fallback: "登录失败")
                 showError = true
             }
             isLoading = false

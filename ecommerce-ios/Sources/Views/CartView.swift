@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CartView: View {
     @EnvironmentObject private var cart: Cart
+    @EnvironmentObject private var appNavigation: AppNavigation
     @Binding var showCheckout: Bool
     @State private var isEditMode = false
     @State private var toast: String? = nil
@@ -12,7 +13,9 @@ struct CartView: View {
             cartHeader
 
             Group {
-                if cart.isEmpty {
+                if cart.isLoading && cart.items.isEmpty {
+                    CartSkeletonView()
+                } else if cart.isEmpty {
                     emptyState
                 } else {
                     cartContent
@@ -80,6 +83,18 @@ struct CartView: View {
                 .font(.system(size: 13, weight: .regular))
                 .foregroundStyle(.gray)
 
+            Button(action: { appNavigation.selectedTab = .category }) {
+                Text("去逛逛")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .frame(height: 42)
+                    .background(DesignSystem.Colors.accent)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(TactileButtonStyle())
+            .padding(.top, 4)
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -99,21 +114,21 @@ struct CartView: View {
                                 item: item,
                                 isSwiped: swipedItemId == item.id,
                                 onSwipe: { swipedItemId = item.id },
-	                                onDelete: {
-	                                    removeItem(item)
-	                                    swipedItemId = nil
-	                                },
-	                                onToggleSelection: {
-	                                    toggleItemSelection(item)
-	                                },
-	                                onDecrement: {
-	                                    decrementItem(item)
-	                                },
-	                                onIncrement: {
-	                                    incrementItem(item)
-	                                },
-	                                onDismiss: { swipedItemId = nil }
-	                            )
+                                onDelete: {
+                                    removeItem(item)
+                                    swipedItemId = nil
+                                },
+                                onToggleSelection: {
+                                    toggleItemSelection(item)
+                                },
+                                onDecrement: {
+                                    decrementItem(item)
+                                },
+                                onIncrement: {
+                                    incrementItem(item)
+                                },
+                                onDismiss: { swipedItemId = nil }
+                            )
                             .padding(.horizontal, 16)
 
                             if item.id != cart.items.last?.id {
@@ -227,7 +242,7 @@ struct CartView: View {
                             .background(cart.hasSelectedItems ? DesignSystem.Colors.accent : DesignSystem.Colors.gray2)
                             .clipShape(Capsule())
                     }
-                    .disabled(!cart.hasSelectedItems)
+                    .disabled(!cart.hasSelectedItems || cart.isLoading)
                 }
             }
             .padding(.horizontal, 16)
@@ -316,6 +331,66 @@ struct CartView: View {
                 toast = userFacingErrorMessage(error, fallback: "数量更新失败")
             }
         }
+    }
+}
+
+private struct CartSkeletonView: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 10) {
+                            SkeletonView(width: 22, height: 22)
+                                .clipShape(Circle())
+                            SkeletonView(width: 120, height: 16)
+                            Spacer()
+                            SkeletonView(width: 34, height: 14)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+
+                        ForEach(0..<4, id: \.self) { _ in
+                            HStack(spacing: 12) {
+                                SkeletonView(width: 22, height: 22)
+                                    .clipShape(Circle())
+                                SkeletonView(width: 88, height: 88)
+                                VStack(alignment: .leading, spacing: 10) {
+                                    SkeletonView(height: 15)
+                                    SkeletonView(width: 96, height: 14)
+                                    Spacer()
+                                    HStack {
+                                        SkeletonView(width: 68, height: 18)
+                                        Spacer()
+                                        SkeletonView(width: 96, height: 32)
+                                    }
+                                }
+                                .frame(height: 88)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                        }
+                    }
+                    .background(Color.white)
+                    .padding(.top, 12)
+                    Spacer(minLength: 160)
+                }
+            }
+
+            VStack(spacing: 0) {
+                Divider()
+                HStack {
+                    SkeletonView(width: 64, height: 20)
+                    Spacer()
+                    SkeletonView(width: 88, height: 24)
+                    SkeletonView(width: 104, height: 44)
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 60)
+                .background(Color.white.opacity(0.97))
+            }
+        }
+        .background(DesignSystem.Colors.pageBackground)
     }
 }
 

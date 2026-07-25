@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var recommendedProducts: [Product] = []
     @State private var selectedProduct: Product?
     @State private var isLoading = true
+    @State private var loadError: String? = nil
     @State private var toast: String? = nil
 
     var body: some View {
@@ -15,6 +16,17 @@ struct HomeView: View {
             VStack(spacing: DesignSystem.Spacing.md) {
                 if isLoading {
                     skeletonContent
+                } else if shouldShowErrorState {
+                    AppEmptyState(
+                        systemImage: "wifi.exclamationmark",
+                        title: "首页加载失败",
+                        message: loadError ?? "请检查网络后重试",
+                        actionTitle: "重试",
+                        action: {
+                            Task { await loadData() }
+                        }
+                    )
+                    .padding(.top, 120)
                 } else {
                     if !banners.isEmpty {
                         heroBanner
@@ -41,6 +53,14 @@ struct HomeView: View {
         .task {
             await loadData()
         }
+    }
+
+    private var shouldShowErrorState: Bool {
+        loadError != nil &&
+        banners.isEmpty &&
+        flashSaleProducts.isEmpty &&
+        hotRankingProducts.isEmpty &&
+        recommendedProducts.isEmpty
     }
 
     // MARK: - Skeleton Loading Content
@@ -189,6 +209,7 @@ struct HomeView: View {
     // MARK: - Data Loading
     private func loadData() async {
         isLoading = true
+        loadError = nil
         do {
             async let bannersTask = Product.getBanners()
             async let flashTask = Product.getFlashSaleProducts()
@@ -200,7 +221,9 @@ struct HomeView: View {
             hotRankingProducts = try await hotTask
             recommendedProducts = try await recommendTask
         } catch {
-            toast = userFacingErrorMessage(error, fallback: "首页数据加载失败")
+            let message = userFacingErrorMessage(error, fallback: "首页数据加载失败")
+            loadError = message
+            toast = message
         }
         isLoading = false
     }
@@ -755,9 +778,11 @@ struct CategoryGridView: View {
                 let remoteCategories = try await CategoryAPI.getCategories()
                 if !remoteCategories.isEmpty {
                     categories = remoteCategories
+                } else {
+                    categories = Category.all
                 }
             } catch {
-                categories = []
+                categories = Category.all
             }
         }
     }

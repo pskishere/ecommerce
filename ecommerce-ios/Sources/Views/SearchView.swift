@@ -10,6 +10,7 @@ struct SearchView: View {
     @State private var isSearching = false
     @State private var didRunInitialSearch = false
     @State private var didLoadHotTags = false
+    @State private var isLoadingHotTags = false
     @State private var hotTags: [String] = []
     @State private var searchError: String? = nil
 
@@ -37,6 +38,13 @@ struct SearchView: View {
         .background(Color.white)
         .toolbar(.hidden, for: .navigationBar)
         .hideTabBar()
+        .onChange(of: searchText) { _, value in
+            if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                showResults = false
+                searchResults = []
+                searchError = nil
+            }
+        }
         .onAppear {
             loadHistory()
             if !didRunInitialSearch,
@@ -79,6 +87,9 @@ struct SearchView: View {
                 if !searchText.isEmpty {
                     Button(action: {
                         searchText = ""
+                        showResults = false
+                        searchResults = []
+                        searchError = nil
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 12))
@@ -137,13 +148,21 @@ struct SearchView: View {
                 .foregroundStyle(Color(.label))
                 .padding(.horizontal, 12)
 
-            if hotTags.isEmpty {
+            if isLoadingHotTags {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 8)], spacing: 8) {
+                    ForEach(0..<8, id: \.self) { index in
+                        SkeletonView(width: index % 3 == 0 ? 92 : 70, height: 32)
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(.horizontal, 12)
+            } else if hotTags.isEmpty {
                 Text("暂无热门搜索")
                     .font(.system(size: 13))
                     .foregroundStyle(Color(.secondaryLabel))
                     .padding(.horizontal, 12)
             } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 70, maximum: .infinity), spacing: 8)], spacing: 8) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 8)], spacing: 8) {
                     ForEach(hotTags, id: \.self) { tag in
                         Button(action: {
                             searchText = tag
@@ -221,20 +240,24 @@ struct SearchView: View {
     private var searchResultsView: some View {
         ScrollView {
             if isSearching {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 40)
+                SearchResultsSkeleton()
+                    .padding(12)
             } else if let searchError {
-                Text(searchError)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
+                AppEmptyState(
+                    systemImage: "wifi.exclamationmark",
+                    title: "搜索失败",
+                    message: searchError,
+                    actionTitle: "重试",
+                    action: performSearch
+                )
+                .padding(.top, 96)
             } else if searchResults.isEmpty {
-                Text("未找到相关商品")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
+                AppEmptyState(
+                    systemImage: "magnifyingglass",
+                    title: "未找到相关商品",
+                    message: "换个关键词试试"
+                )
+                .padding(.top, 96)
             } else {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(searchResults) { product in
@@ -280,8 +303,13 @@ struct SearchView: View {
 
     // MARK: - Actions
     private func performSearch() {
-        let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            showResults = false
+            searchResults = []
+            searchError = nil
+            return
+        }
 
         addToHistory(query)
         showResults = true
@@ -301,6 +329,8 @@ struct SearchView: View {
     private func loadHotTags() async {
         guard !didLoadHotTags else { return }
         didLoadHotTags = true
+        isLoadingHotTags = true
+        defer { isLoadingHotTags = false }
 
         do {
             async let categoriesTask = CategoryAPI.getCategories()
@@ -367,6 +397,30 @@ struct SearchView: View {
 
     private func saveHistory() {
         UserDefaults.standard.set(searchHistory, forKey: "searchHistory")
+    }
+}
+
+private struct SearchResultsSkeleton: View {
+    private let columns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 10) {
+            ForEach(0..<6, id: \.self) { _ in
+                VStack(alignment: .leading, spacing: 0) {
+                    SkeletonView(height: 150)
+                    VStack(alignment: .leading, spacing: 8) {
+                        SkeletonView(height: 14)
+                        SkeletonView(width: 96, height: 14)
+                        SkeletonView(width: 68, height: 18)
+                    }
+                    .padding(10)
+                }
+                .background(Color(.secondarySystemBackground))
+            }
+        }
     }
 }
 

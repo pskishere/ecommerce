@@ -17,8 +17,12 @@ enum APIError: Error, LocalizedError {
             return "未授权，请重新登录"
         case .serverError(_, let message):
             return message
-        case .decodingError:
+        case .decodingError(let error):
+            #if DEBUG
+            return "数据解析错误: \(error.localizedDescription)"
+            #else
             return "数据解析错误"
+            #endif
         case .unknown:
             return "未知错误"
         }
@@ -119,13 +123,21 @@ enum APIEndpoints {
     static let shopInfo = "shop/"
 }
 
+enum APIEncoding {
+    static func queryValue(_ value: String) -> String {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: ":#[]@!$&'()*+,;=")
+        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
+    }
+}
+
 // MARK: - API Client
 
 @MainActor
 final class APIClient {
     static let shared = APIClient()
 
-    // TODO: 部署时改为生产环境地址
+    // Debug targets the local Django API; release targets the hosted API.
     private let baseURL: String
 
     private let session: URLSession
@@ -228,18 +240,58 @@ final class APIClient {
             case 401:
                 throw APIError.unauthorized
             default:
-                if let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let code = dict["code"] as? Int,
-                   let msg = dict["msg"] as? String {
-                    throw APIError.serverError(code: code, message: msg)
-                }
-                throw APIError.serverError(code: httpResponse.statusCode, message: "服务器错误")
+                let message = serverErrorMessage(from: data) ?? "服务器错误"
+                throw APIError.serverError(code: httpResponse.statusCode, message: message)
             }
         } catch let error as APIError {
             throw error
         } catch {
             throw APIError.networkError(error)
         }
+    }
+
+    private func serverErrorMessage(from data: Data) -> String? {
+        guard let object = try? JSONSerialization.jsonObject(with: data) else {
+            return nil
+        }
+        return extractMessage(from: object)
+    }
+
+    private func extractMessage(from object: Any) -> String? {
+        if let message = object as? String {
+            let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+
+        if let messages = object as? [String] {
+            return messages
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .first { !$0.isEmpty }
+        }
+
+        if let dict = object as? [String: Any] {
+            for key in ["msg", "message", "detail", "error"] {
+                if let message = extractMessage(from: dict[key] as Any) {
+                    return message
+                }
+            }
+
+            for (_, value) in dict {
+                if let message = extractMessage(from: value) {
+                    return message
+                }
+            }
+        }
+
+        if let list = object as? [Any] {
+            for value in list {
+                if let message = extractMessage(from: value) {
+                    return message
+                }
+            }
+        }
+
+        return nil
     }
 
     // MARK: - Generic Request with Envelope

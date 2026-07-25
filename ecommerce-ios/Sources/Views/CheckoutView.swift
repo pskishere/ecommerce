@@ -52,17 +52,21 @@ struct CheckoutView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: 10) {
-                    addressSection
-                    orderItemsSection
-                    couponSection
-                    paymentSection
-                    remarkSection
-                    priceSummarySection
-                    Spacer(minLength: 80)
+            if isLoading {
+                CheckoutSkeletonView()
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        addressSection
+                        orderItemsSection
+                        couponSection
+                        paymentSection
+                        remarkSection
+                        priceSummarySection
+                        Spacer(minLength: 80)
+                    }
+                    .padding(.top, 8)
                 }
-                .padding(.top, 8)
             }
         }
         .background(DesignSystem.Colors.pageBackground)
@@ -71,7 +75,9 @@ struct CheckoutView: View {
         .hideTabBar()
         .toast($toast, bottomPadding: 100)
         .overlay(alignment: .bottom) {
-            bottomBar
+            if !isLoading {
+                bottomBar
+            }
         }
         .sheet(isPresented: $showAddressSheet) {
             AddressSelectionSheet(
@@ -427,9 +433,18 @@ struct CheckoutView: View {
     }
 
     private func submitOrder() {
-        guard let address = selectedAddress else { return }
+        guard !cart.selectedItems.isEmpty else {
+            toast = "请选择要结算的商品"
+            return
+        }
+        guard let address = selectedAddress else {
+            toast = "请选择收货地址"
+            return
+        }
+        guard !isSubmitting else { return }
         isSubmitting = true
         Task {
+            defer { isSubmitting = false }
             do {
                 let cartItemIds = cart.selectedItems.map { $0.id }
                 let order = try await Order.createOrder(
@@ -441,10 +456,81 @@ struct CheckoutView: View {
                 createdOrder = order
                 showPayment = true
             } catch {
-                print("Order creation failed: \(error)")
+                toast = userFacingErrorMessage(error, fallback: "订单提交失败")
             }
-            isSubmitting = false
         }
+    }
+}
+
+private struct CheckoutSkeletonView: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+                CheckoutSkeletonBlock(rows: [
+                    (180, 18),
+                    (260, 14),
+                    (220, 14)
+                ], leadingIcon: true)
+
+                VStack(spacing: 0) {
+                    HStack(spacing: 10) {
+                        SkeletonView(width: 18, height: 18)
+                        SkeletonView(width: 126, height: 16)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+
+                    ForEach(0..<2, id: \.self) { _ in
+                        HStack(alignment: .top, spacing: 12) {
+                            SkeletonView(width: 72, height: 72)
+                            VStack(alignment: .leading, spacing: 10) {
+                                SkeletonView(height: 14)
+                                SkeletonView(width: 120, height: 14)
+                                Spacer()
+                                HStack {
+                                    SkeletonView(width: 72, height: 18)
+                                    Spacer()
+                                    SkeletonView(width: 28, height: 14)
+                                }
+                            }
+                            .frame(height: 72)
+                        }
+                        .padding(12)
+                    }
+                }
+                .background(Color.white)
+
+                CheckoutSkeletonBlock(rows: [(96, 16)], leadingIcon: true)
+                CheckoutSkeletonBlock(rows: [(120, 16), (180, 14), (160, 14)], leadingIcon: false)
+                CheckoutSkeletonBlock(rows: [(220, 16)], leadingIcon: false)
+                CheckoutSkeletonBlock(rows: [(160, 16), (130, 16), (190, 18)], leadingIcon: false)
+                Spacer(minLength: 90)
+            }
+            .padding(.top, 8)
+        }
+    }
+}
+
+private struct CheckoutSkeletonBlock: View {
+    let rows: [(CGFloat, CGFloat)]
+    var leadingIcon: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            if leadingIcon {
+                SkeletonView(width: 36, height: 36)
+                    .clipShape(Circle())
+            }
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    SkeletonView(width: row.0, height: row.1)
+                }
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(Color.white)
     }
 }
 
@@ -458,12 +544,21 @@ struct AddressSelectionSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(addresses) { address in
-                        addressItem(address)
+                if addresses.isEmpty {
+                    AppEmptyState(
+                        systemImage: "location",
+                        title: "暂无收货地址",
+                        message: "请先在地址管理中添加收货地址"
+                    )
+                    .padding(.top, 80)
+                } else {
+                    VStack(spacing: 10) {
+                        ForEach(addresses) { address in
+                            addressItem(address)
+                        }
                     }
+                    .padding(16)
                 }
-                .padding(16)
             }
             .navigationTitle("选择收货地址")
             .navigationBarTitleDisplayMode(.inline)

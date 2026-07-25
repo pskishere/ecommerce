@@ -11,16 +11,14 @@ struct CategoryView: View {
     @EnvironmentObject private var cart: Cart
     private let contentTopInset: CGFloat = 12
 
-    private var shouldShowSkeleton: Bool {
-        isLoading || categories.isEmpty
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             H5SearchNav(placeholder: "搜索商品")
 
-            if shouldShowSkeleton {
+            if isLoading {
                 categorySkeletonLayout
+            } else if categories.isEmpty {
+                categoryEmptyState
             } else {
                 HStack(spacing: 0) {
                     categorySidebar
@@ -39,6 +37,20 @@ struct CategoryView: View {
         .task {
             await loadData()
         }
+    }
+
+    private var categoryEmptyState: some View {
+        AppEmptyState(
+            systemImage: "square.grid.2x2",
+            title: "分类加载失败",
+            message: "暂时没有拿到分类数据，请稍后重试",
+            actionTitle: "重试",
+            action: {
+                Task { await loadData() }
+            }
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.white)
     }
 
     // MARK: - Category Sidebar
@@ -243,8 +255,12 @@ struct CategoryView: View {
     private func loadData() async {
         isLoading = true
         do {
+            categoryProducts = [:]
+            categorySubcategories = [:]
+            categorySubcategoryIcons = [:]
             let allCategories = try await CategoryAPI.getCategories()
             categories = allCategories
+            selectedCategoryIndex = min(selectedCategoryIndex, max(allCategories.count - 1, 0))
 
             try await withThrowingTaskGroup(of: (String, [CategoryWithSubcategories]).self) { group in
                 for category in allCategories {

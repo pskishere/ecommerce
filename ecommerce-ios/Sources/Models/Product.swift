@@ -314,7 +314,7 @@ extension Product {
     }
 
     static func searchProducts(query: String) async throws -> [Product] {
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        let encoded = APIEncoding.queryValue(query)
         return try await APIClient.shared.request(
             endpoint: APIEndpoints.searchProducts(q: encoded),
             requiresAuth: false
@@ -743,7 +743,7 @@ extension Product {
     }
 
     static func getSpecAvailable(productId: String, selectedIds: [String]) async throws -> [SpecAvailableResponse] {
-        let selectedStr = selectedIds.joined(separator: ",")
+        let selectedStr = APIEncoding.queryValue(selectedIds.joined(separator: ","))
         let endpoint = "\(APIEndpoints.product(productId))/spec-available/?selected=\(selectedStr)"
         return try await APIClient.shared.request(
             endpoint: endpoint,

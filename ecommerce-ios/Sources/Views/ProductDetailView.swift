@@ -22,6 +22,9 @@ struct ProductDetailView: View {
     @State private var isAddingToCart = false
     @State private var showShop = false
 
+    private var canStartPurchase: Bool {
+        product.isInStock && !isAddingToCart
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -558,15 +561,29 @@ struct ProductDetailView: View {
 
             // Action buttons
             HStack(spacing: 10) {
-                Button(action: { showingSpecSheet = true }) {
-                    Text("加入购物车")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(Color.black)
-                        .clipShape(Capsule())
+                Button(action: {
+                    guard product.isInStock else {
+                        addedToast = "商品暂时无货"
+                        return
+                    }
+                    showingSpecSheet = true
+                }) {
+                    HStack(spacing: 6) {
+                        if isAddingToCart {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.75)
+                        }
+                        Text("加入购物车")
+                            .font(.system(size: 15, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+                    .background(canStartPurchase ? Color.black : DesignSystem.Colors.gray2)
+                    .clipShape(Capsule())
                 }
+                .disabled(isAddingToCart)
 
                 Button(action: { buyNow() }) {
                     Text("立即购买")
@@ -574,9 +591,10 @@ struct ProductDetailView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
-                        .background(DesignSystem.Colors.accent)
+                        .background(canStartPurchase ? DesignSystem.Colors.accent : DesignSystem.Colors.gray2)
                         .clipShape(Capsule())
                 }
+                .disabled(isAddingToCart)
             }
             .padding(.leading, 6)
         }
@@ -593,12 +611,20 @@ struct ProductDetailView: View {
 
     // MARK: - Actions
     private func addToCart(goToCart: Bool = false) {
+        guard product.isInStock else {
+            addedToast = "商品暂时无货"
+            return
+        }
         guard let detail = productDetail else {
             addedToast = detailLoadError ?? "规格加载中，请稍后"
             return
         }
         if !detail.specGroups.isEmpty && selectedSKU == nil {
             showingSpecSheet = true
+            return
+        }
+        if let selectedSKU, selectedSKU.stock <= 0 {
+            addedToast = "该规格暂无库存"
             return
         }
 
@@ -622,6 +648,10 @@ struct ProductDetailView: View {
     }
 
     private func buyNow() {
+        guard product.isInStock else {
+            addedToast = "商品暂时无货"
+            return
+        }
         guard let detail = productDetail else { return }
         if !detail.specGroups.isEmpty && selectedSKU == nil {
             showingSpecSheet = true
@@ -929,9 +959,10 @@ struct SpecSheetView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(Color.black)
+                        .background(canSubmit ? Color.black : DesignSystem.Colors.gray2)
                         .clipShape(Capsule())
                 }
+                .disabled(!canSubmit)
 
                 Button(action: {
                     onBuyNow()
@@ -941,13 +972,25 @@ struct SpecSheetView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(DesignSystem.Colors.accent)
+                        .background(canSubmit ? DesignSystem.Colors.accent : DesignSystem.Colors.gray2)
                         .clipShape(Capsule())
                 }
+                .disabled(!canSubmit)
             }
             .padding(14)
             .padding(.bottom, 14)
         }
+    }
+
+    private var canSubmit: Bool {
+        if productDetail.specGroups.isEmpty {
+            return productDetail.isInStock
+        }
+        guard selectedSpecs.count == productDetail.specGroups.count,
+              let selectedSKU else {
+            return false
+        }
+        return selectedSKU.stock > 0
     }
 
     private var formattedPrice: String {

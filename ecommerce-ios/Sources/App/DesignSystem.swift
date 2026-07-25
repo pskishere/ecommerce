@@ -368,6 +368,69 @@ struct BadgeView: View {
     }
 }
 
+// MARK: - Shared State Views
+struct AppEmptyState: View {
+    let systemImage: String
+    let title: String
+    let message: String
+    var actionTitle: String? = nil
+    var action: (() -> Void)? = nil
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 44, weight: .regular))
+                .foregroundStyle(DesignSystem.Colors.gray2.opacity(0.55))
+                .frame(width: 72, height: 72)
+                .background(Color.white.opacity(0.72))
+                .clipShape(Circle())
+
+            Text(title)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(DesignSystem.Colors.dark)
+
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Colors.gray2)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let actionTitle, let action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 22)
+                        .frame(height: 40)
+                        .background(DesignSystem.Colors.accent)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(TactileButtonStyle())
+                .padding(.top, 4)
+            }
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct AppInlineLoadingView: View {
+    var title: String = "加载中"
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .scaleEffect(0.85)
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(DesignSystem.Colors.gray2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+    }
+}
+
 // MARK: - Skeleton Loading View
 struct SkeletonView: View {
     let width: CGFloat?
