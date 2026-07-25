@@ -14,6 +14,7 @@ export function initProductSheet() {
   const sheetBuyBtn = document.getElementById('sheetBuyBtn')
 
   let currentProduct = null
+  let currentFavoriteId = null
   let qty = 1
 
   // Clickable cards → go to detail page
@@ -43,30 +44,38 @@ export function initProductSheet() {
   })
 
   sheetFavBtn?.addEventListener('click', () => {
-    if (!currentProduct) return
+    if (!currentProduct?.id) return
     const isFaved = sheetFavBtn.classList.toggle('faved')
     const svg = sheetFavBtn.querySelector('svg')
     if (isFaved) {
       svg.setAttribute('fill', 'currentColor')
-      api.favorite.add(currentProduct)
+      api.favorite.add(currentProduct.id)
+        .then(res => { if (res?.id) currentFavoriteId = res.id })
+        .catch(() => showToast('操作失败'))
       showToast('已添加到收藏')
     } else {
       svg.setAttribute('fill', 'none')
-      api.favorite.remove(currentProduct.id)
+      const remove = currentFavoriteId
+        ? Promise.resolve(currentFavoriteId)
+        : api.favorite.check(currentProduct.id).then(res => res?.favorite_id || res?.favoriteId)
+      remove
+        .then(id => id ? api.favorite.remove(id) : null)
+        .catch(() => showToast('操作失败'))
+      currentFavoriteId = null
       showToast('已取消收藏')
     }
   })
 
-  sheetCartBtn?.addEventListener('click', () => {
-    if (!currentProduct) return
-    api.cart.addItem({ ...currentProduct, qty })
+  sheetCartBtn?.addEventListener('click', async () => {
+    if (!currentProduct?.id) return
+    await api.cart.addItem({ id: currentProduct.id, qty }).catch(() => showToast('加入失败'))
     closeSheet()
     showToast(`已加入购物车 ×${qty}`)
   })
 
-  sheetBuyBtn?.addEventListener('click', () => {
-    if (!currentProduct) return
-    api.cart.addItem({ ...currentProduct, qty })
+  sheetBuyBtn?.addEventListener('click', async () => {
+    if (!currentProduct?.id) return
+    await api.cart.addItem({ id: currentProduct.id, qty }).catch(() => showToast('加入失败'))
     closeSheet()
     setTimeout(() => { openCartDrawer() }, 300)
   })

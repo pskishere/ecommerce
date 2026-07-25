@@ -1,20 +1,28 @@
 import SwiftUI
 
 struct SearchView: View {
+    private let initialQuery: String?
+    @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var searchHistory: [String] = []
     @State private var showResults = false
     @State private var searchResults: [Product] = []
     @State private var isSearching = false
+    @State private var didRunInitialSearch = false
+    @State private var didLoadHotTags = false
+    @State private var hotTags: [String] = []
+    @State private var searchError: String? = nil
 
-    private let accentColor = DesignSystem.Colors.accent
-
-    private let hotTags = ["T恤", "运动鞋", "防晒霜", "蓝牙耳机", "帆布包", "保湿面霜", "腕表", "咖啡杯"]
 
     private let columns = [
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10)
     ]
+
+    init(initialQuery: String? = nil) {
+        self.initialQuery = initialQuery
+        _searchText = State(initialValue: initialQuery ?? "")
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,16 +35,34 @@ struct SearchView: View {
             }
         }
         .background(Color.white)
-        .navigationTitle("搜索")
+        .toolbar(.hidden, for: .navigationBar)
         .hideTabBar()
         .onAppear {
             loadHistory()
+            if !didRunInitialSearch,
+               let initialQuery,
+               !initialQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                didRunInitialSearch = true
+                performSearch()
+            }
+        }
+        .task {
+            await loadHotTags()
         }
     }
 
     // MARK: - Search Header
     private var searchHeader: some View {
         HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Color(.label))
+                    .frame(width: 34, height: 38)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
             // Search Box
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
@@ -69,7 +95,7 @@ struct SearchView: View {
             Button(action: performSearch) {
                 Text("搜索")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
                     .padding(.horizontal, 14)
                     .frame(height: 38)
                     .background(Color(red: 1.0, green: 0.94, blue: 0.92))
@@ -79,6 +105,12 @@ struct SearchView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(Color.white)
+        .overlay(
+            Rectangle()
+                .fill(DesignSystem.Colors.separator)
+                .frame(height: 0.5),
+            alignment: .bottom
+        )
     }
 
     // MARK: - Search Content (Hot Tags + History)
@@ -105,23 +137,30 @@ struct SearchView: View {
                 .foregroundStyle(Color(.label))
                 .padding(.horizontal, 12)
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 70, maximum: .infinity), spacing: 8)], spacing: 8) {
-                ForEach(hotTags, id: \.self) { tag in
-                    Button(action: {
-                        searchText = tag
-                        performSearch()
-                    }) {
-                        Text(tag)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Color(.label))
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 8)
-                            .background(Color(.systemGray6))
-                            .clipShape(Capsule())
+            if hotTags.isEmpty {
+                Text("暂无热门搜索")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .padding(.horizontal, 12)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 70, maximum: .infinity), spacing: 8)], spacing: 8) {
+                    ForEach(hotTags, id: \.self) { tag in
+                        Button(action: {
+                            searchText = tag
+                            performSearch()
+                        }) {
+                            Text(tag)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color(.label))
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemGray6))
+                                .clipShape(Capsule())
+                        }
                     }
                 }
+                .padding(.horizontal, 12)
             }
-            .padding(.horizontal, 12)
         }
         .padding(.vertical, 16)
     }
@@ -185,6 +224,12 @@ struct SearchView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.top, 40)
+            } else if let searchError {
+                Text(searchError)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
             } else if searchResults.isEmpty {
                 Text("未找到相关商品")
                     .foregroundStyle(.secondary)
@@ -226,7 +271,7 @@ struct SearchView: View {
 
                 Text(product.formattedPrice)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
             }
             .padding(10)
         }
@@ -242,13 +287,58 @@ struct SearchView: View {
         showResults = true
         Task {
             isSearching = true
+            searchError = nil
             do {
                 searchResults = try await Product.searchProducts(query: query)
             } catch {
-                print("Search failed: \(error)")
+                searchError = userFacingErrorMessage(error, fallback: "搜索失败，请稍后重试")
                 searchResults = []
             }
             isSearching = false
+        }
+    }
+
+    private func loadHotTags() async {
+        guard !didLoadHotTags else { return }
+        didLoadHotTags = true
+
+        do {
+            async let categoriesTask = CategoryAPI.getCategories()
+            async let productsTask = Product.getProducts()
+            let categories = try await categoriesTask
+            let products = try await productsTask
+
+            var tags: [String] = []
+            func appendTag(_ raw: String?) {
+                let value = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                guard !value.isEmpty, !tags.contains(value) else { return }
+                tags.append(value)
+            }
+
+            for product in products.sorted(by: { $0.salesCount > $1.salesCount }) {
+                appendTag(product.subcategoryRef?.name)
+                if tags.count >= 10 { break }
+            }
+
+            for category in categories {
+                appendTag(category.name)
+                for subcategory in category.subcategories {
+                    appendTag(subcategory)
+                    if tags.count >= 10 { break }
+                }
+                if tags.count >= 10 { break }
+            }
+
+            if tags.count < 6 {
+                for product in products.sorted(by: { $0.salesCount > $1.salesCount }) {
+                    appendTag(product.name)
+                    if tags.count >= 10 { break }
+                }
+            }
+
+            hotTags = Array(tags.prefix(10))
+        } catch {
+            hotTags = []
         }
     }
 
@@ -258,18 +348,25 @@ struct SearchView: View {
         if searchHistory.count > 20 {
             searchHistory = Array(searchHistory.prefix(20))
         }
+        saveHistory()
     }
 
     private func deleteHistory(_ term: String) {
         searchHistory.removeAll { $0 == term }
+        saveHistory()
     }
 
     private func clearAllHistory() {
         searchHistory.removeAll()
+        saveHistory()
     }
 
     private func loadHistory() {
-        // In real app, load from UserDefaults
+        searchHistory = UserDefaults.standard.stringArray(forKey: "searchHistory") ?? []
+    }
+
+    private func saveHistory() {
+        UserDefaults.standard.set(searchHistory, forKey: "searchHistory")
     }
 }
 

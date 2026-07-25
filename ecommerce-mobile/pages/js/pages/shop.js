@@ -1,11 +1,11 @@
 /* ── Shop Page ── */
-import { api } from '../data/api.js'
+import { api, BASE_URL } from '../data/api.js'
 import { showToast } from '../components/toast.js'
 import { createContentTab } from '../components/content-tab.js'
 
 let shopInfo = {}
 let currentTab = 'products'
-let isFollowing = false
+let isFollowing = localStorage.getItem('shop_following') === '1'
 
 async function loadShop() {
   const info = await api.shop.getInfo()
@@ -17,10 +17,21 @@ async function loadShop() {
 function renderShopHeader() {
   const nameEl = document.getElementById('shopName')
   const descEl = document.getElementById('shopDesc')
-  const scoreEl = document.getElementById('shopScore')
+  const scoreEl = document.getElementById('statScore')
+  const productCountEl = document.getElementById('statProducts')
+  const salesEl = document.getElementById('statSales')
+  const fansEl = document.getElementById('statFans')
+  const bannerEl = document.getElementById('shopBannerImg')
+  const logoEl = document.getElementById('shopLogoImg')
   if (nameEl) nameEl.textContent = shopInfo.name
   if (descEl) descEl.textContent = shopInfo.desc
   if (scoreEl) scoreEl.textContent = shopInfo.score
+  if (productCountEl) productCountEl.textContent = shopInfo.productCount
+  if (salesEl) salesEl.textContent = shopInfo.sales
+  if (fansEl) fansEl.textContent = shopInfo.fans
+  if (bannerEl) bannerEl.src = `${BASE_URL}/media/uploads/banner-1-summer-1710.webp`
+  if (logoEl) logoEl.src = `${BASE_URL}/media/uploads/product-01-watch.webp`
+  renderFollowState(false)
 }
 
 function renderProducts(tab) {
@@ -78,22 +89,50 @@ createContentTab({
   onChange: (tab) => renderProducts(tab),
 })
 
-function toggleFollow() {
-  isFollowing = !isFollowing
+function renderFollowState(showFeedback = true) {
   const btn = document.getElementById('followBtn')
+  if (!btn) return
   if (isFollowing) {
     btn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF6B4A" stroke="#FF6B4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       已关注`
-    showToast('关注成功')
+    if (showFeedback) showToast('关注成功')
   } else {
     btn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.0 0 0 0 0-7.78z"/></svg>
       关注`
-    showToast('已取消关注')
+    if (showFeedback) showToast('已取消关注')
   }
 }
 
+function toggleFollow() {
+  isFollowing = !isFollowing
+  localStorage.setItem('shop_following', isFollowing ? '1' : '0')
+  renderFollowState(true)
+}
+
+async function shareShop() {
+  const title = shopInfo.name || '潮流好物'
+  const text = shopInfo.desc || '专注年轻人的购物主场'
+  const url = location.href
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text, url })
+      return
+    }
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+      showToast('店铺链接已复制')
+      return
+    }
+  } catch (e) {
+    if (e?.name === 'AbortError') return
+  }
+  showToast('当前环境不支持分享')
+}
+
 document.getElementById('followBtn')?.addEventListener('click', toggleFollow)
+window.shareShop = shareShop
 
 loadShop()

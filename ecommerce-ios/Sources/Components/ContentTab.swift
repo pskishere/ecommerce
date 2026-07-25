@@ -19,10 +19,11 @@ struct ContentTab: View {
                 tabButton(tab)
             }
         }
-        .background(Color(.systemBackground))
+        .frame(height: 52)
+        .background(Color.white)
         .overlay(
             Rectangle()
-                .fill(Color(.separator))
+                .fill(DesignSystem.Colors.separator)
                 .frame(height: 0.5),
             alignment: .bottom
         )
@@ -34,11 +35,11 @@ struct ContentTab: View {
                 selectedTab = tab.value
             }
         }) {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 HStack(spacing: 4) {
                     Text(tab.label)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(selectedTab == tab.value ? accentColor : Color(.secondaryLabel))
+                        .font(.system(size: 14, weight: selectedTab == tab.value ? .semibold : .medium))
+                        .foregroundStyle(selectedTab == tab.value ? accentColor : DesignSystem.Colors.gray1)
 
                     if let count = tab.badgeCount, count > 0 {
                         Circle()
@@ -54,6 +55,7 @@ struct ContentTab: View {
                     .opacity(selectedTab == tab.value ? 1 : 0)
             }
             .frame(maxWidth: .infinity)
+            .frame(height: 52)
         }
         .buttonStyle(.plain)
     }

@@ -36,6 +36,7 @@ enum OrderStatus: String, CaseIterable, Codable, Hashable {
 // MARK: - OrderProduct Model
 struct OrderProduct: Identifiable, Hashable, Codable {
     let id: String
+    let productId: String
     let name: String
     let spec: String
     let price: Decimal
@@ -44,11 +45,13 @@ struct OrderProduct: Identifiable, Hashable, Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, spec, price, quantity, image
+        case productId = "product_id"
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
+        productId = try container.decodeIfPresent(String.self, forKey: .productId) ?? id
         name = try container.decode(String.self, forKey: .name)
         spec = try container.decode(String.self, forKey: .spec)
 
@@ -68,12 +71,13 @@ struct OrderProduct: Identifiable, Hashable, Codable {
             quantity = 0
         }
 
-        image = try container.decode(String.self, forKey: .image)
+        image = try container.decodeIfPresent(String.self, forKey: .image) ?? ""
     }
 
     // Manual initializer for previews/testing
     init(
         id: String,
+        productId: String? = nil,
         name: String,
         spec: String,
         price: Decimal,
@@ -81,6 +85,7 @@ struct OrderProduct: Identifiable, Hashable, Codable {
         image: String
     ) {
         self.id = id
+        self.productId = productId ?? id
         self.name = name
         self.spec = spec
         self.price = price
@@ -91,6 +96,7 @@ struct OrderProduct: Identifiable, Hashable, Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
+        try container.encode(productId, forKey: .productId)
         try container.encode(name, forKey: .name)
         try container.encode(spec, forKey: .spec)
         try container.encode("\(price)", forKey: .price)
@@ -99,7 +105,7 @@ struct OrderProduct: Identifiable, Hashable, Codable {
     }
 
     var formattedPrice: String {
-        "¥\(price)"
+        price.rmbText
     }
 
     var imageURL: URL? { URL(string: image) }
@@ -119,6 +125,15 @@ struct OrderAddress: Codable, Hashable {
     }
 }
 
+// MARK: - Order Logistics Model
+struct OrderLogisticsItem: Identifiable, Hashable, Codable {
+    let text: String
+    let time: String
+    let active: Bool
+
+    var id: String { "\(time)-\(text)" }
+}
+
 // MARK: - Order Model
 struct Order: Identifiable, Hashable, Codable {
     let id: String
@@ -132,6 +147,14 @@ struct Order: Identifiable, Hashable, Codable {
     let address: OrderAddress?
     let payTime: String?
     let createdAt: String
+    let shippedAt: String?
+    let carrier: String
+    let trackingNumber: String
+    let logistics: [OrderLogisticsItem]
+    let afterSaleStatus: String
+    let afterSaleStatusText: String
+    let afterSaleReason: String
+    let afterSaleAppliedAt: String?
     let products: [OrderProduct]
 
     enum CodingKeys: String, CodingKey {
@@ -140,6 +163,14 @@ struct Order: Identifiable, Hashable, Codable {
         case payment, freight, discount, address
         case payTime = "pay_time"
         case createdAt = "created_at"
+        case shippedAt = "shipped_at"
+        case carrier
+        case trackingNumber = "tracking_number"
+        case logistics
+        case afterSaleStatus = "after_sale_status"
+        case afterSaleStatusText = "after_sale_status_text"
+        case afterSaleReason = "after_sale_reason"
+        case afterSaleAppliedAt = "after_sale_applied_at"
         case products
         case statusText = "statusText"
     }
@@ -190,6 +221,14 @@ struct Order: Identifiable, Hashable, Codable {
         address = try container.decodeIfPresent(OrderAddress.self, forKey: .address)
         payTime = try container.decodeIfPresent(String.self, forKey: .payTime)
         createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        shippedAt = try container.decodeIfPresent(String.self, forKey: .shippedAt)
+        carrier = try container.decodeIfPresent(String.self, forKey: .carrier) ?? ""
+        trackingNumber = try container.decodeIfPresent(String.self, forKey: .trackingNumber) ?? ""
+        logistics = try container.decodeIfPresent([OrderLogisticsItem].self, forKey: .logistics) ?? []
+        afterSaleStatus = try container.decodeIfPresent(String.self, forKey: .afterSaleStatus) ?? "none"
+        afterSaleStatusText = try container.decodeIfPresent(String.self, forKey: .afterSaleStatusText) ?? "未申请"
+        afterSaleReason = try container.decodeIfPresent(String.self, forKey: .afterSaleReason) ?? ""
+        afterSaleAppliedAt = try container.decodeIfPresent(String.self, forKey: .afterSaleAppliedAt)
         products = try container.decode([OrderProduct].self, forKey: .products)
     }
 
@@ -198,7 +237,7 @@ struct Order: Identifiable, Hashable, Codable {
     }
 
     var formattedTotal: String {
-        "¥\(totalAmount)"
+        totalAmount.rmbText
     }
 
     // Manual initializer for previews/testing
@@ -214,6 +253,14 @@ struct Order: Identifiable, Hashable, Codable {
         address: OrderAddress?,
         payTime: String?,
         createdAt: String,
+        shippedAt: String? = nil,
+        carrier: String = "",
+        trackingNumber: String = "",
+        logistics: [OrderLogisticsItem] = [],
+        afterSaleStatus: String = "none",
+        afterSaleStatusText: String = "未申请",
+        afterSaleReason: String = "",
+        afterSaleAppliedAt: String? = nil,
         products: [OrderProduct]
     ) {
         self.id = id
@@ -227,6 +274,14 @@ struct Order: Identifiable, Hashable, Codable {
         self.address = address
         self.payTime = payTime
         self.createdAt = createdAt
+        self.shippedAt = shippedAt
+        self.carrier = carrier
+        self.trackingNumber = trackingNumber
+        self.logistics = logistics
+        self.afterSaleStatus = afterSaleStatus
+        self.afterSaleStatusText = afterSaleStatusText
+        self.afterSaleReason = afterSaleReason
+        self.afterSaleAppliedAt = afterSaleAppliedAt
         self.products = products
     }
 
@@ -242,6 +297,14 @@ struct Order: Identifiable, Hashable, Codable {
         try container.encodeIfPresent(address, forKey: .address)
         try container.encodeIfPresent(payTime, forKey: .payTime)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(shippedAt, forKey: .shippedAt)
+        try container.encode(carrier, forKey: .carrier)
+        try container.encode(trackingNumber, forKey: .trackingNumber)
+        try container.encode(logistics, forKey: .logistics)
+        try container.encode(afterSaleStatus, forKey: .afterSaleStatus)
+        try container.encode(afterSaleStatusText, forKey: .afterSaleStatusText)
+        try container.encode(afterSaleReason, forKey: .afterSaleReason)
+        try container.encodeIfPresent(afterSaleAppliedAt, forKey: .afterSaleAppliedAt)
         try container.encode(products, forKey: .products)
     }
 }
@@ -265,12 +328,72 @@ extension Order {
         try await APIClient.shared.requestNoData(endpoint: APIEndpoints.orderCancel(id), method: "PUT", requiresAuth: true)
     }
 
-    static func payOrder(id: String) async throws {
-        try await APIClient.shared.requestNoData(endpoint: APIEndpoints.orderPay(id), method: "PUT", requiresAuth: true)
+    static func payOrder(id: String, method: String = "wxpay") async throws -> Order {
+        struct PayRequest: Encodable { let paymentMethod: String }
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.orderPay(id),
+            method: "PUT",
+            body: PayRequest(paymentMethod: method),
+            requiresAuth: true
+        )
     }
 
-    static func confirmReceipt(id: String) async throws {
-        try await APIClient.shared.requestNoData(endpoint: APIEndpoints.orderConfirm(id), method: "PUT", requiresAuth: true)
+    static func shipOrder(id: String, carrier: String = "顺丰速运", trackingNumber: String = "") async throws -> Order {
+        struct ShipRequest: Encodable {
+            let carrier: String
+            let trackingNumber: String
+        }
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.orderShip(id),
+            method: "PUT",
+            body: ShipRequest(carrier: carrier, trackingNumber: trackingNumber),
+            requiresAuth: true
+        )
+    }
+
+    static func confirmReceipt(id: String) async throws -> Order {
+        return try await APIClient.shared.request(endpoint: APIEndpoints.orderConfirm(id), method: "PUT", requiresAuth: true)
+    }
+
+    static func requestAfterSale(id: String, reason: String) async throws -> Order {
+        struct RequestBody: Encodable { let reason: String }
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.orderAfterSale(id),
+            method: "POST",
+            body: RequestBody(reason: reason),
+            requiresAuth: true
+        )
+    }
+
+    static func buyAgain(id: String) async throws -> Int {
+        struct BuyAgainResponse: Decodable {
+            let addedCount: Int
+
+            enum CodingKeys: String, CodingKey {
+                case addedCount = "added_count"
+            }
+        }
+        let response: BuyAgainResponse = try await APIClient.shared.request(
+            endpoint: APIEndpoints.orderBuyAgain(id),
+            method: "POST",
+            requiresAuth: true
+        )
+        return response.addedCount
+    }
+
+    static func createOrder(cartItemIds: [String], addressId: String, couponId: String? = nil, remark: String = "") async throws -> Order {
+        struct CreateRequest: Encodable {
+            let cartItemIds: [String]
+            let addressId: String
+            let couponId: String?
+            let remark: String
+        }
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.orders,
+            method: "POST",
+            body: CreateRequest(cartItemIds: cartItemIds, addressId: addressId, couponId: couponId, remark: remark),
+            requiresAuth: true
+        )
     }
 }
 
@@ -279,7 +402,8 @@ struct CheckoutCoupon: Identifiable, Codable {
     let id: String
     let name: String
     let value: Decimal
-    let threshold: String  // Backend returns string like "满100元减20元"
+    let threshold: String
+    let thresholdAmount: Int
     let description: String
     let time: String
     var usable: Bool = true
@@ -294,7 +418,7 @@ struct PaymentMethod: Identifiable {
     let icon: String
     let color: Color
 
-    static let mockMethods: [PaymentMethod] = [
+    static let supportedMethods: [PaymentMethod] = [
         PaymentMethod(id: "wxpay", name: "微信支付", icon: "checkmark.circle.fill", color: .green),
         PaymentMethod(id: "alipay", name: "支付宝", icon: "creditcard.fill", color: .blue),
     ]

@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct HistoryView: View {
-    @State private var products: [Product] = []
+    @State private var historyItems: [HistoryItem] = []
     @State private var isLoading = true
     @State private var showClearAlert = false
+    @State private var toast: String? = nil
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12)
@@ -18,20 +18,21 @@ struct HistoryView: View {
             if isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if products.isEmpty {
+            } else if historyItems.isEmpty {
                 emptyView
             } else {
                 productGrid
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("浏览足迹")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($toast, bottomPadding: 80)
         .alert("清空浏览记录", isPresented: $showClearAlert) {
             Button("取消", role: .cancel) { }
             Button("清空", role: .destructive) {
-                products.removeAll()
+                Task { await clearHistory() }
             }
         } message: {
             Text("确定要清空所有浏览记录吗？")
@@ -43,7 +44,7 @@ struct HistoryView: View {
 
     private var headerBar: some View {
         HStack {
-            Text("\(products.count)件商品")
+            Text("\(historyItems.count)件商品")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
 
@@ -52,7 +53,7 @@ struct HistoryView: View {
             Button(action: { showClearAlert = true }) {
                 Text("清空")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
             }
         }
         .padding(.horizontal, 16)
@@ -63,8 +64,8 @@ struct HistoryView: View {
     private var productGrid: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(products) { product in
-                    HistoryCard(product: product)
+                ForEach(historyItems) { item in
+                    HistoryCard(product: item.product, time: item.displayTime)
                 }
             }
             .padding(12)
@@ -89,14 +90,30 @@ struct HistoryView: View {
     }
 
     private func loadHistory() async {
-        isLoading = false
+        defer { isLoading = false }
+        do {
+            historyItems = try await HistoryItem.getHistory()
+        } catch {
+            historyItems = []
+            toast = userFacingErrorMessage(error, fallback: "浏览足迹加载失败")
+        }
+    }
+
+    private func clearHistory() async {
+        do {
+            try await HistoryItem.clear()
+            historyItems.removeAll()
+            toast = "已清空"
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "清空失败")
+        }
     }
 }
 
 struct HistoryCard: View {
     let product: Product
+    let time: String
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -127,7 +144,7 @@ struct HistoryCard: View {
                 HStack {
                     Text(product.formattedPrice)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(DesignSystem.Colors.accent)
 
                     Spacer()
 
@@ -135,9 +152,16 @@ struct HistoryCard: View {
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                 }
+
+                if !time.isEmpty {
+                    Text(time)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color(.tertiaryLabel))
+                        .lineLimit(1)
+                }
             }
             .padding(8)
-            .frame(height: 60)
+            .frame(height: 76)
         }
         .frame(maxWidth: .infinity)
         .background(Color.white)

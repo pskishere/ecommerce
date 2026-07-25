@@ -16,9 +16,12 @@ router.register(r'cart', views.CartViewSet, basename='cart')
 router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'addresses', views.AddressViewSet, basename='address')
 router.register(r'favorites', views.FavoriteViewSet, basename='favorite')
+router.register(r'browse-history', views.BrowseHistoryViewSet, basename='browse-history')
 router.register(r'coupons', views.CouponViewSet, basename='coupon')
 router.register(r'notifications', views.NotificationViewSet, basename='notification')
 router.register(r'user', views.UserViewSet, basename='user')
+router.register(r'shop', views.ShopInfoViewSet, basename='shop')
+router.register(r'vip', views.VIPViewSet, basename='vip')
 
 urlpatterns = [
     path('h5/', include(router.urls)),

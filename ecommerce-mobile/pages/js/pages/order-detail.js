@@ -2,16 +2,40 @@
 import { showToast } from '../components/toast.js'
 import { api } from '../data/api.js'
 
+let currentOrderId = ''
+let currentOrder = null
+
+function reviewUrl(order) {
+  const product = order?.products?.[0]
+  const params = new URLSearchParams({ orderId: currentOrderId })
+  if (product?.productId) params.set('productId', product.productId)
+  return `review.html?${params.toString()}`
+}
+
+function storeReviewContext(order) {
+  const product = order?.products?.[0]
+  sessionStorage.setItem('reviewOrderId', currentOrderId)
+  if (product?.productId) sessionStorage.setItem('reviewProductId', product.productId)
+}
+
 async function loadOrderDetail() {
-  const id = sessionStorage.getItem('orderId')
+  // Support both ?id= URL param (from payment.html) and sessionStorage (from order.html)
+  const params = new URLSearchParams(location.search)
+  currentOrderId = params.get('id') || sessionStorage.getItem('orderId') || ''
   sessionStorage.removeItem('orderId')
-  if (!id) {
+  if (!currentOrderId) {
     showToast('订单不存在')
     return
   }
-  const detail = await api.order.getById(id)
-  document.getElementById('detailSkeleton')?.classList.add('loaded')
-  renderOrderDetail(detail)
+  try {
+    const detail = await api.order.getById(currentOrderId)
+    currentOrder = detail
+    document.getElementById('detailSkeleton')?.classList.add('loaded')
+    renderOrderDetail(detail)
+  } catch (e) {
+    showToast('加载订单失败')
+    console.error('loadOrderDetail error', e)
+  }
 }
 
 function renderOrderDetail(order) {
@@ -88,9 +112,21 @@ function renderOrderDetail(order) {
         <div class="info-row"><span class="info-label">订单编号</span><span class="info-value">${order.id} <span style="color:#FF6B4A;margin-left:8px" onclick="copyOrderId()">复制</span></span></div>
         ${order.createTime ? `<div class="info-row"><span class="info-label">下单时间</span><span class="info-value">${order.createTime}</span></div>` : ''}
         ${order.payTime ? `<div class="info-row"><span class="info-label">支付时间</span><span class="info-value">${order.payTime}</span></div>` : ''}
+        ${order.shippedTime ? `<div class="info-row"><span class="info-label">发货时间</span><span class="info-value">${order.shippedTime}</span></div>` : ''}
+        ${order.carrier ? `<div class="info-row"><span class="info-label">物流公司</span><span class="info-value">${order.carrier}</span></div>` : ''}
+        ${order.trackingNumber ? `<div class="info-row"><span class="info-label">物流单号</span><span class="info-value">${order.trackingNumber}</span></div>` : ''}
         <div class="info-row" style="border-bottom:none"><span class="info-label">实付金额</span><span class="info-value" style="color:#FF6B4A;font-weight:700;font-size:16px">¥${order.payment}</span></div>
       </div>
     </div>
+
+    ${order.afterSaleStatus && order.afterSaleStatus !== 'none' ? `
+    <div class="detail-section">
+      <div class="detail-section-header"><span class="detail-section-title">售后信息</span></div>
+      <div class="detail-section-body">
+        <div class="info-row"><span class="info-label">售后状态</span><span class="info-value">${order.afterSaleStatusText}</span></div>
+        <div class="info-row" style="border-bottom:none"><span class="info-label">申请原因</span><span class="info-value">${order.afterSaleReason || '-'}</span></div>
+      </div>
+    </div>` : ''}
 
     ${order.logistics?.length > 0 ? `
     <div class="detail-section">
@@ -116,50 +152,100 @@ function renderOrderDetail(order) {
       <button class="detail-btn detail-btn-primary" onclick="payOrder()">去支付</button>`
   } else if (order.status === 'shipped') {
     buttons = `
-      <button class="detail-btn detail-btn-outline" onclick="showToast('查看物流')">查看物流</button>
+      <button class="detail-btn detail-btn-outline" onclick="viewLogistics()">查看物流</button>
+      ${order.afterSaleStatus === 'none' ? '<button class="detail-btn detail-btn-outline" onclick="requestAfterSale()">申请售后</button>' : ''}
       <button class="detail-btn detail-btn-primary" onclick="confirmReceive()">确认收货</button>`
   } else if (order.status === 'completed') {
     buttons = `
-      <button class="detail-btn detail-btn-outline" onclick="showToast('再次购买')">再次购买</button>
-      <button class="detail-btn detail-btn-primary" onclick="location.href='review.html'">去评价</button>`
+      <button class="detail-btn detail-btn-outline" onclick="buyAgain()">再次购买</button>
+      ${order.afterSaleStatus === 'none' ? '<button class="detail-btn detail-btn-outline" onclick="requestAfterSale()">申请售后</button>' : ''}
+      <button class="detail-btn detail-btn-primary" onclick="reviewOrder()">去评价</button>`
   }
   detailBar.innerHTML = buttons
 }
 
 async function cancelOrder() {
-  const params = new URLSearchParams(location.search)
-  const id = params.get('id')
-  await api.order.cancel(id)
-  showToast('订单已取消')
-  setTimeout(() => history.back(), 1500)
+  try {
+    await api.order.cancel(currentOrderId)
+    showToast('订单已取消')
+    setTimeout(() => history.back(), 1500)
+  } catch (e) {
+    showToast('取消失败，请重试')
+  }
 }
 
-async function payOrder() {
-  const params = new URLSearchParams(location.search)
-  const id = params.get('id')
-  showToast('跳转支付...')
-  await api.order.pay(id)
-  showToast('支付成功')
-  setTimeout(() => history.back(), 1500)
+function payOrder() {
+  const amount = currentOrder?.payment ?? currentOrder?.total ?? '0.00'
+  sessionStorage.setItem('paymentOrderId', currentOrderId)
+  sessionStorage.setItem('paymentAmount', amount)
+  window.location.href = `payment.html?orderId=${currentOrderId}&amount=${amount}`
+}
+
+function reviewOrder() {
+  if (!currentOrder) return
+  storeReviewContext(currentOrder)
+  window.location.href = reviewUrl(currentOrder)
 }
 
 async function confirmReceive() {
-  const params = new URLSearchParams(location.search)
-  const id = params.get('id')
-  await api.order.confirmReceipt(id)
-  showToast('已确认收货')
-  setTimeout(() => history.back(), 1500)
+  try {
+    await api.order.confirmReceipt(currentOrderId)
+    showToast('已确认收货')
+    setTimeout(() => history.back(), 1500)
+  } catch (e) {
+    showToast('操作失败，请重试')
+  }
+}
+
+async function viewLogistics() {
+  try {
+    const result = await api.order.getLogistics(currentOrderId)
+    currentOrder = {
+      ...currentOrder,
+      carrier: result.carrier || currentOrder.carrier,
+      trackingNumber: result.tracking_number || currentOrder.trackingNumber,
+      logistics: result.items || currentOrder.logistics || [],
+    }
+    renderOrderDetail(currentOrder)
+    showToast(currentOrder.trackingNumber ? `运单号：${currentOrder.trackingNumber}` : '物流已更新')
+  } catch (e) {
+    showToast('物流加载失败')
+  }
+}
+
+async function requestAfterSale() {
+  const reason = prompt('请输入售后原因：', '商品不合适，需要售后处理')
+  if (!reason || !reason.trim()) return
+  try {
+    currentOrder = await api.order.requestAfterSale(currentOrderId, reason.trim())
+    renderOrderDetail(currentOrder)
+    showToast('售后申请已提交')
+  } catch (e) {
+    showToast('售后申请失败')
+  }
+}
+
+async function buyAgain() {
+  try {
+    await api.order.buyAgain(currentOrderId)
+    showToast('已加入购物车')
+    setTimeout(() => { window.location.href = 'cart.html' }, 800)
+  } catch (e) {
+    showToast('再次购买失败')
+  }
 }
 
 function copyOrderId() {
-  const params = new URLSearchParams(location.search)
-  const id = params.get('id') || 'ORDER20260327001'
-  navigator.clipboard.writeText(id).then(() => showToast('订单编号已复制'))
+  navigator.clipboard.writeText(currentOrderId).then(() => showToast('订单编号已复制'))
 }
 
 window.cancelOrder = cancelOrder
 window.payOrder = payOrder
 window.confirmReceive = confirmReceive
 window.copyOrderId = copyOrderId
+window.reviewOrder = reviewOrder
+window.viewLogistics = viewLogistics
+window.requestAfterSale = requestAfterSale
+window.buyAgain = buyAgain
 
 loadOrderDetail()

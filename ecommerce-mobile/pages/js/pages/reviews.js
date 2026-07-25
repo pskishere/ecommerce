@@ -6,7 +6,13 @@ let allReviews = []
 
 async function loadReviews() {
   const params = new URLSearchParams(location.search)
-  const productId = params.get('productId')
+  const productId = params.get('productId') || sessionStorage.getItem('productId')
+  if (!productId) {
+    allReviews = []
+    document.getElementById('reviewsSkeleton')?.classList.add('loaded')
+    renderReviews('all')
+    return
+  }
   allReviews = await api.product.getReviews(productId)
   document.getElementById('reviewsSkeleton')?.classList.add('loaded')
   renderReviews('all')
@@ -57,7 +63,7 @@ function renderReviews(currentTab) {
       ${review.images?.length > 0 ? `<div class="review-images">${review.images.map(img => `<div class="review-image"><img src="${img}" alt=""></div>`).join('')}</div>` : ''}
       <div class="review-footer">
         <div></div>
-        <div class="review-like ${review.isLiked ? 'active' : ''}" onclick="toggleLike(${review.id})">
+        <div class="review-like ${review.isLiked ? 'active' : ''}" onclick="toggleLike('${String(review.id).replace(/'/g, "\\'")}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="${review.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
           ${review.likeCount}
         </div>

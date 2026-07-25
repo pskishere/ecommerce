@@ -4,8 +4,8 @@ struct NotificationsView: View {
     @State private var notifications: [UserNotification] = []
     @State private var selectedTab: String = "全部"
     @State private var isLoading = true
+    @State private var toast: String? = nil
 
-    private let accentColor = DesignSystem.Colors.accent
     private let tabs = ["全部", "订单", "优惠", "系统"]
 
     private var filteredNotifications: [UserNotification] {
@@ -45,7 +45,7 @@ struct NotificationsView: View {
                 notificationList
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("消息通知")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -53,16 +53,17 @@ struct NotificationsView: View {
                 Button(action: { Task { await markAllAsRead() } }) {
                     Text("全部已读")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(DesignSystem.Colors.accent)
                 }
             }
         }
         .hideTabBar()
+        .toast($toast, bottomPadding: 80)
         .task {
             do {
                 notifications = try await UserNotification.getNotifications()
             } catch {
-                print("Failed to load notifications: \(error)")
+                toast = userFacingErrorMessage(error, fallback: "消息加载失败")
             }
             isLoading = false
         }
@@ -131,7 +132,7 @@ struct NotificationsView: View {
                 )
             }
         } catch {
-            print("Failed to mark as read: \(error)")
+            toast = userFacingErrorMessage(error, fallback: "已读操作失败")
         }
     }
 
@@ -149,8 +150,9 @@ struct NotificationsView: View {
                     isRead: true
                 )
             }
+            toast = "已全部标为已读"
         } catch {
-            print("Failed to mark all as read: \(error)")
+            toast = userFacingErrorMessage(error, fallback: "全部已读失败")
         }
     }
 }
@@ -160,7 +162,6 @@ struct NotificationRow: View {
     let notification: UserNotification
     let onTap: () -> Void
 
-    private let accentColor = DesignSystem.Colors.accent
 
     private var notificationType: NotificationType {
         switch notification.type {
@@ -193,7 +194,7 @@ struct NotificationRow: View {
 
                         if !notification.isRead {
                             Circle()
-                                .fill(accentColor)
+                                .fill(DesignSystem.Colors.accent)
                                 .frame(width: 8, height: 8)
                         }
                     }

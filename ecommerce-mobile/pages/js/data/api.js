@@ -1,5 +1,5 @@
 // API Configuration
-const BASE_URL = 'https://handsome-youth-production-98c5.up.railway.app'
+const BASE_URL = 'http://localhost:8080'
 
 const getToken = () => localStorage.getItem('token') || ''
 const setToken = (token) => localStorage.setItem('token', token)
@@ -67,6 +67,11 @@ const searchLS = {
 
 // ─── Mappers ───────────────────────────────────────────────
 
+const toNumber = (value, fallback = 0) => {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
 const mapProduct = (p) => ({
   id: p.id,
   name: p.name,
@@ -74,9 +79,9 @@ const mapProduct = (p) => ({
   original: p.original_price || p.originalPrice || p.price,
   img: imgUrl(p.image),
   desc: p.description || '',
-  rating: p.rating || 0,
-  reviewCount: p.review_count || p.reviewCount || 0,
-  sales: p.sales_count || p.salesCount || 0,
+  rating: toNumber(p.rating),
+  reviewCount: toNumber(p.review_count || p.reviewCount),
+  sales: toNumber(p.sales_count || p.salesCount),
   stock: p.is_in_stock ? 999 : 0,
   category: (p.subcategory && p.subcategory.name) || (p.category && p.category.name) || '',
   tag: p.tag || '',
@@ -149,36 +154,53 @@ const mapCartItem = (item) => ({
   cartId: item.id || '',
   id: (item.product && item.product.id) || item.productID || '',
   name: (item.product && item.product.name) || item.name || '',
-  price: (item.product && item.product.price) || item.price || 0,
-  original: (item.product && (item.product.original_price || item.product.originalPrice)) || item.price || 0,
+  price: item.unit_price || (item.product && item.product.price) || item.price || 0,
+  original: item.original_price || (item.product && (item.product.original_price || item.product.originalPrice)) || item.price || 0,
   qty: item.quantity || 1,
   selected: item.is_selected !== undefined ? item.is_selected : (item.isSelected !== undefined ? item.isSelected : true),
-  img: imgUrl(item.product && (item.product.image || item.product.imageName)),
-  skuId: item.skuId || null,
-  specValues: item.specValues || [],
+  img: imgUrl(item.image || (item.product && (item.product.image || item.product.imageName))),
+  skuId: item.sku_id || item.skuId || null,
+  spec: item.spec || '',
+  specValues: item.specValues || (item.spec ? [{ group: '规格', value: item.spec }] : []),
 })
 
-const mapOrderProduct = (p) => ({
-  name: p.name ?? '商品',
-  spec: p.spec ?? '',
-  price: Number(p.price) ?? 0,
-  qty: p.quantity ?? 1,
-  img: imgUrl(p.image ?? p.img ?? '')
-})
+const mapOrderProduct = (p) => {
+  const image = imgUrl(p.image ?? p.img ?? '')
+  const quantity = toNumber(p.quantity ?? p.qty, 1)
+  return {
+    id: p.id ?? '',
+    productId: p.product_id ?? p.productId ?? '',
+    name: p.name ?? '商品',
+    spec: p.spec ?? '',
+    price: toNumber(p.price),
+    quantity,
+    qty: quantity,
+    image,
+    img: image
+  }
+}
 
 const mapOrder = (o) => ({
-  id: o.order_number ?? '',
+  id: o.id ?? o.order_number ?? '',
   store: o.store ?? '潮流好物',
   status: o.status ?? 'pending',
-  statusText: o.statusText ?? '',
+  statusText: o.statusText ?? getStatusText(o.status),
   products: (o.products ?? o.items ?? []).map(mapOrderProduct),
   total: Number(o.total_amount ?? o.totalAmount ?? 0) || 0,
+  total_amount: Number(o.total_amount ?? o.totalAmount ?? 0) || 0,
   payment: Number(o.payment ?? o.total_amount ?? 0) || 0,
   freight: Number(o.freight ?? 0) || 0,
   discount: Number(o.discount ?? 0) || 0,
   address: o.address ?? null,
   payTime: o.pay_time ? new Date(o.pay_time).toLocaleString('zh-CN') : '',
   createTime: o.created_at ? new Date(o.created_at).toLocaleString('zh-CN') : '',
+  shippedTime: o.shipped_at ? new Date(o.shipped_at).toLocaleString('zh-CN') : '',
+  carrier: o.carrier || '',
+  trackingNumber: o.tracking_number || '',
+  logistics: o.logistics || [],
+  afterSaleStatus: o.after_sale_status || 'none',
+  afterSaleStatusText: o.after_sale_status_text || '',
+  afterSaleReason: o.after_sale_reason || '',
 })
 
 const getStatusText = (status) => ({
@@ -205,6 +227,8 @@ const mapCoupon = (c) => ({
   name: c.name,
   value: c.value,
   threshold: c.threshold,
+  thresholdAmount: Number(c.threshold_amount || 0),
+  status: c.status || 'available',
   desc: c.description || c.desc || '',
   time: c.time
 })
@@ -219,20 +243,32 @@ const mapNotification = (n) => ({
 })
 
 const mapFavorite = (f) => ({
-  id: f.id,
+  id: f.product_id || f.productId || f.id,
+  favoriteId: f.id,
   name: f.name,
   price: f.price,
-  originalPrice: f.original_price || f.originalPrice,
+  original: f.original_price || f.originalPrice || f.price,
+  originalPrice: f.original_price || f.originalPrice || f.price,
   img: imgUrl(f.image),
   sales: f.sales || ''
 })
+
+const mapHistory = (h) => {
+  const product = h.product || {}
+  const mapped = mapProduct(product)
+  return {
+    historyId: h.id,
+    viewedAt: h.time || h.viewed_at || '',
+    ...mapped,
+  }
+}
 
 
 const mapReview = (r) => ({
   id: r.id,
   userName: r.user_name || r.userName,
   userAvatar: imgUrl(r.user_avatar || r.userAvatar),
-  rating: r.rating,
+  rating: toNumber(r.rating),
   content: r.content,
   spec: r.spec || '',
   images: (r.images || []).map(i => imgUrl(typeof i === 'string' ? i : i.img)),
@@ -265,7 +301,7 @@ const api = {
     search: (keyword) => request('/api/h5/products/search/?q=' + encodeURIComponent(keyword)).then(ps => (ps || []).map(mapProduct)),
     getDesc: (name) => request('/api/h5/products/search/?q=' + encodeURIComponent(name)).then(ps => (ps && ps[0] && ps[0].description) || '优质商品，精选材质，简约设计，品质保障'),
     recommend: () => request('/api/h5/products/').then(ps => (ps || []).slice(0, 4).map(mapProduct)),
-    getReviews: (productId) => request('/api/h5/products/' + productId + '/reviews/').then(res => (res.data || []).map(mapReview)),
+    getReviews: (productId) => request('/api/h5/products/' + productId + '/reviews/').then(res => (res || []).map(mapReview)),
     createReview: (productId, data) => request('/api/h5/products/' + productId + '/reviews/', {
       method: 'POST',
       body: JSON.stringify(data)
@@ -316,7 +352,7 @@ const api = {
 
     selectAll: (selected) => request('/api/h5/cart/select-all/?selected=' + selected, { method: 'PUT' }),
 
-    clear: () => request('/api/h5/cart/', { method: 'DELETE' }),
+    clear: () => request('/api/h5/cart/clear/', { method: 'DELETE' }),
   },
 
   order: {
@@ -328,7 +364,7 @@ const api = {
       if (limit) params.set('limit', limit)
       const qs = params.toString()
       if (qs) url += '?' + qs
-      return request(url).then(res => res)
+      return request(url).then(res => (res || []).map(mapOrder))
     },
     getById: (id) => request('/api/h5/orders/' + id + '/').then(o => o ? mapOrder(o) : null),
     preview: ({ cartItemIds, addressId }) => request('/api/h5/orders/preview/', {
@@ -338,10 +374,17 @@ const api = {
     create: ({ cartItemIds, addressId, couponId, remark }) => request('/api/h5/orders/', {
       method: 'POST',
       body: JSON.stringify({ cartItemIds, addressId, couponId: couponId || undefined, remark: remark || '' })
-    }),
-    cancel: (id) => request('/api/h5/orders/' + id + '/cancel', { method: 'PUT' }),
-    pay: (id) => request('/api/h5/orders/' + id + '/pay', { method: 'PUT' }),
-    confirmReceipt: (id) => request('/api/h5/orders/' + id + '/confirm', { method: 'PUT' }),
+    }).then(o => o ? mapOrder(o) : null),
+    cancel: (id) => request('/api/h5/orders/' + id + '/cancel/', { method: 'PUT' }),
+    pay: (id, paymentMethod = 'wxpay') => request('/api/h5/orders/' + id + '/pay/', { method: 'PUT', body: JSON.stringify({ paymentMethod }) }),
+    ship: (id, data = {}) => request('/api/h5/orders/' + id + '/ship/', { method: 'PUT', body: JSON.stringify(data) }).then(o => o ? mapOrder(o) : null),
+    getLogistics: (id) => request('/api/h5/orders/' + id + '/logistics/'),
+    confirmReceipt: (id) => request('/api/h5/orders/' + id + '/confirm/', { method: 'PUT' }),
+    requestAfterSale: (id, reason) => request('/api/h5/orders/' + id + '/after-sale/', {
+      method: 'POST',
+      body: JSON.stringify({ reason })
+    }).then(o => o ? mapOrder(o) : null),
+    buyAgain: (id) => request('/api/h5/orders/' + id + '/buy-again/', { method: 'POST' }),
   },
 
   address: {
@@ -362,20 +405,31 @@ const api = {
 
   favorite: {
     getList: () => request('/api/h5/favorites/').then(favs => (favs || []).map(mapFavorite)),
-    add: ({ id }) => request('/api/h5/favorites/', {
+    add: (productId) => request('/api/h5/favorites/', {
       method: 'POST',
-      body: JSON.stringify({ productId: id })
-    }).then(() => ({ success: true })),
+      body: JSON.stringify({ productId })
+    }),
     remove: (id) => request('/api/h5/favorites/' + id + '/', { method: 'DELETE' }).then(() => ({ success: true })),
+    check: (productId) => request('/api/h5/favorites/check/?product_id=' + productId),
   },
 
   
-  coupon: {
-    getList: () => request('/api/h5/coupons/').then(coupons => ({
-      available: (coupons || []).map(mapCoupon),
-      used: [],
-      expired: []
-    })),
+	  coupon: {
+	    getList: () => request('/api/h5/coupons/').then(coupons => ({
+	      available: (coupons || []).map(mapCoupon).filter(c => c.status === 'available'),
+	      used: (coupons || []).map(mapCoupon).filter(c => c.status === 'used'),
+	      expired: (coupons || []).map(mapCoupon).filter(c => c.status === 'expired')
+	    })),
+		  },
+
+  history: {
+    getList: () => request('/api/h5/browse-history/').then(items => (items || []).map(mapHistory)),
+    add: (productId) => request('/api/h5/browse-history/', {
+      method: 'POST',
+      body: JSON.stringify({ productId })
+    }),
+    remove: (id) => request('/api/h5/browse-history/' + id + '/', { method: 'DELETE' }).then(() => ({ success: true })),
+    clear: () => request('/api/h5/browse-history/clear/', { method: 'DELETE' }).then(() => ({ success: true })),
   },
 
   notification: {
@@ -387,11 +441,13 @@ const api = {
 
   checkout: {
     getAddresses: () => request('/api/h5/addresses/').then(addrs => (addrs || []).map(mapAddress)),
-    getCoupons: () => request('/api/h5/coupons/').then(coupons => (coupons || []).map(c => ({
-      id: c.id, name: c.name, discount: c.value, threshold: c.threshold,
-      desc: c.description || c.desc || '', validUntil: c.time
-    }))),
-  },
+	    getCoupons: () => request('/api/h5/coupons/').then(coupons => (coupons || []).map(c => ({
+	      id: c.id, name: c.name, discount: c.value, threshold: c.threshold,
+	      threshold_amount: Number(c.threshold_amount || c.threshold || 0),
+	      desc: c.description || c.desc || '', validUntil: c.time,
+	      status: c.status || 'available'
+	    })).filter(c => c.status === 'available')),
+	  },
 
   search: {
     getHistory: () => Promise.resolve(searchLS._load()),
@@ -437,13 +493,14 @@ const api = {
   },
 
   shop: {
-    getInfo: () => Promise.resolve({
-      name: '潮流优品官方旗舰店',
-      logo: imgUrl('./static/images/product-01-watch.webp'),
-      banner: imgUrl('./static/images/banner-1-summer-1710.webp'),
-      desc: '专注品质生活，提供高性价比优质商品，正品保障',
-      score: 4.9, productCount: 286, sales: '12.8万', fans: '56.2万',
-    }),
+    getInfo: () => request('/api/h5/shop/').then(d => ({
+      name: d.name,
+      desc: d.description,
+      score: d.score,
+      productCount: d.product_count,
+      sales: d.sales,
+      fans: d.fans_count,
+    })),
     getProducts: () => request('/api/h5/products/').then(ps => (ps || []).map(p => ({
       id: p.id, name: p.name, price: p.price,
       original: p.original_price || p.originalPrice || p.price,
@@ -468,6 +525,12 @@ const api = {
       return data
     }),
     getInfo: () => request('/api/h5/user/profile/'),
+    updateProfile: (data) => request('/api/h5/user/profile/', {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }),
+    getVIP: () => request('/api/h5/vip/'),
+    upgradeVIP: () => request('/api/h5/vip/upgrade/', { method: 'POST' }),
   }
 }
 

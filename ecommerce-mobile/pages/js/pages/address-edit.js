@@ -70,10 +70,12 @@ function bindEvents() {
     updateDistricts('')
   })
   document.getElementById('citySelect').addEventListener('change', (e) => updateDistricts(e.target.value))
-  document.getElementById('defaultSwitch').addEventListener('click', () => {
-    isDefault = !isDefault
-    updateDefaultSwitch()
-  })
+  document.getElementById('defaultSwitch').addEventListener('click', toggleDefault)
+}
+
+function toggleDefault() {
+  isDefault = !isDefault
+  updateDefaultSwitch()
 }
 
 function updateCities(province, preselect = '') {
@@ -142,4 +144,5 @@ async function saveAddress() {
 }
 
 window.saveAddress = saveAddress
+window.toggleDefault = toggleDefault
 init()

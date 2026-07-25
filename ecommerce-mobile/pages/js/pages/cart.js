@@ -25,16 +25,8 @@ async function loadCartFromServer() {
 async function loadRecommend() {
   try {
     const recs = await api.home.getRecommend()
-    console.log('[Cart] getRecommend returned:', recs)
-    const allProducts = []
-    recs.forEach(rec => {
-      if (rec.products && rec.products.length > 0) {
-        allProducts.push(...rec.products)
-      }
-    })
-    console.log('[Cart] allProducts:', allProducts)
+    const allProducts = recs.flatMap(rec => rec.products || [])
     recommendProducts = allProducts.slice(0, 6)
-    console.log('[Cart] recommendProducts:', recommendProducts)
     renderRecommend()
   } catch (e) {
     console.error('Failed to load recommend:', e)
@@ -42,16 +34,9 @@ async function loadRecommend() {
 }
 
 function renderRecommend() {
-  console.log('[Cart] renderRecommend called, recommendProducts:', recommendProducts)
-  if (recommendProducts.length === 0) {
-    console.log('[Cart] recommendProducts is empty, skipping render')
-    return
-  }
-
+  if (recommendProducts.length === 0) return
   const recSection = document.getElementById('recommendSection')
-  console.log('[Cart] recSection element:', recSection)
   if (!recSection) return
-
   recSection.innerHTML = `
     <div class="recommend-header">
       <span class="recommend-title">为你推荐</span>
@@ -72,7 +57,14 @@ function renderRecommend() {
       `).join('')}
     </div>
   `
-  console.log('[Cart] recSection innerHTML updated')
+}
+
+function itemSpecText(item) {
+  if (item.spec) return item.spec
+  if (Array.isArray(item.specValues) && item.specValues.length) {
+    return item.specValues.map(s => s.value || '').filter(Boolean).join(' / ')
+  }
+  return [item.color, item.size].filter(Boolean).join(' / ')
 }
 
 function renderCart() {
@@ -116,7 +108,7 @@ function renderCart() {
               <div class="product-info">
                 <div>
                   <div class="product-name">${item.name}</div>
-                  ${item.color || item.size ? `<div class="product-spec">${[item.color, item.size].filter(Boolean).join(' / ')}</div>` : ''}
+                  ${itemSpecText(item) ? `<div class="product-spec">${itemSpecText(item)}</div>` : ''}
                 </div>
                 <div class="product-bottom">
                   <span class="product-price">¥${item.price}</span>
@@ -206,26 +198,7 @@ function bindCartEvents() {
 
   document.getElementById('storeCheck')?.addEventListener('click', async () => {
     const allSelected = cart.every(i => i.selected)
-    if (allSelected) {
-      // All selected → deselect all: toggle all (inverts to off)
-      cart.forEach(i => i.selected = false)
-      for (const item of cart) {
-        if (item.cartId && !item.cartId.startsWith('local_')) {
-          await api.cart.toggleItem(item.cartId)
-        }
-      }
-    } else {
-      // Not all selected → select all: only toggle those that are currently unselected
-      for (const item of cart) {
-        if (item.cartId && !item.cartId.startsWith('local_')) {
-          if (!item.selected) {
-            item.selected = true
-            await api.cart.toggleItem(item.cartId)
-          }
-        }
-      }
-      cart.forEach(i => { if (!i.cartId || i.cartId.startsWith('local_')) i.selected = true })
-    }
+    await api.cart.selectAll(!allSelected)
     await loadCartFromServer()
     renderCart()
   })
@@ -274,26 +247,7 @@ function setupSelectAll() {
   ['selectAll', 'selectAllEdit'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', async () => {
       const allSelected = cart.every(i => i.selected)
-      if (allSelected) {
-        // All selected → deselect all: toggle all (inverts to off)
-        cart.forEach(i => i.selected = false)
-        for (const item of cart) {
-          if (item.cartId && !item.cartId.startsWith('local_')) {
-            await api.cart.toggleItem(item.cartId)
-          }
-        }
-      } else {
-        // Not all selected → select all: only toggle those currently unselected
-        for (const item of cart) {
-          if (item.cartId && !item.cartId.startsWith('local_')) {
-            if (!item.selected) {
-              item.selected = true
-              await api.cart.toggleItem(item.cartId)
-            }
-          }
-        }
-        cart.forEach(i => { if (!i.cartId || i.cartId.startsWith('local_')) i.selected = true })
-      }
+      await api.cart.selectAll(!allSelected)
       await loadCartFromServer()
       renderCart()
     })

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>协议 - 潮流好物</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <style>
+    body{margin:0;background:#f7f7f7;color:#1a1a1a;font-family:Geist,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .legal-page{min-height:100vh;background:#f7f7f7}
+    .legal-header{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid rgba(0,0,0,.06)}
+    .legal-header-inner{height:52px;display:flex;align-items:center;justify-content:center;padding:0 16px}
+    .back-btn{position:absolute;left:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:18px;color:#1a1a1a}
+    .legal-title{font-size:16px;font-weight:700}
+    .legal-body{padding:18px 16px 32px}
+    .legal-card{background:#fff;border-radius:12px;padding:18px;line-height:1.75;font-size:14px;color:#333;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  </style>
+</head>
+<body>
+  <div class="legal-page">
+    <div class="legal-header">
+      <div class="legal-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="legal-title" id="legalTitle">用户协议</div>
+      </div>
+    </div>
+    <main class="legal-body">
+      <section class="legal-card" id="legalContent"></section>
+    </main>
+  </div>
+  <script>
+    const docs = {
+      agreement: {
+        title: '用户协议',
+        body: '欢迎使用潮流好物。登录后你可以同步购物车、订单、收藏、优惠券和会员权益。请妥善保管账号信息，不要使用本服务从事违法违规交易。订单、支付、售后与通知功能会根据你的操作在服务端保存必要记录，以便完成商城业务流程。'
+      },
+      privacy: {
+        title: '隐私政策',
+        body: '潮流好物只在完成账号登录、收货地址、订单履约、购物车同步、头像更新和通知提醒等必要场景下处理你的信息。你可以在个人资料、地址管理、通知和设置页面查看或修改相关内容。退出登录后，本机认证状态会被清除。'
+      }
+    }
+    const type = new URLSearchParams(location.search).get('type') || 'agreement'
+    const doc = docs[type] || docs.agreement
+    document.title = doc.title + ' - 潮流好物'
+    document.getElementById('legalTitle').textContent = doc.title
+    document.getElementById('legalContent').textContent = doc.body
+  </script>
+</body>
+</html>

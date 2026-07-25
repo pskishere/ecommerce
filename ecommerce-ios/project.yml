@@ -20,6 +20,7 @@ targets:
     platform: iOS
     sources:
       - path: Sources
+      - path: Resources/Assets.xcassets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pskishere.rcommerce
@@ -34,3 +35,8 @@ targets:
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "用于保存商品图片到相册"
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "用于获取收货地址位置信息"
         INFOPLIST_KEY_NSUserNotificationsUsageDescription: "用于接收订单状态和优惠信息通知"
+    info:
+      path: Sources/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true

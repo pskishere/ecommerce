@@ -36,27 +36,19 @@ class Command(BaseCommand):
             'icon-sport-06.webp',
             'icon-food-07.webp',
             'icon-beauty-08.webp',
-            'icon_fashion.png',
-            'icon_mens.png',
-            'icon_skincare.png',
-            'icon_phone.png',
-            'icon_home.png',
-            'icon_sport.png',
-            'icon_food.png',
-            'icon_beauty.png',
         ]
 
         # UUID-named files to rename to original names
         uuid_files = {}
-        for f in os.listdir(upload_dir):
-            if not f.endswith('.webp'):
-                continue
-            if f in named_files:
-                continue
-            # Check if this is a UUID-named file
-            parts = f.split('.')
-            if len(parts) == 2 and len(parts[0]) == 36:  # UUID format
-                uuid_files[f] = None
+        for root, _, files in os.walk(upload_dir):
+            for f in files:
+                if not f.endswith('.webp'):
+                    continue
+                if f in named_files:
+                    continue
+                parts = f.split('.')
+                if len(parts) == 2 and len(parts[0]) == 36:
+                    uuid_files[os.path.join(root, f)] = None
 
         created = 0
         renamed = 0
@@ -66,12 +58,13 @@ class Command(BaseCommand):
         # For now, let's just create MediaFile records for named files that exist
 
         for filename in named_files:
-            filepath = os.path.join(upload_dir, filename)
+            filepath = self._find_media_file(upload_dir, filename)
             if not os.path.exists(filepath):
                 self.stdout.write(f'  Not found: {filename}')
                 continue
 
             mime_type = 'image/png' if filename.endswith('.png') else 'image/webp'
+            relative_name = os.path.relpath(filepath, upload_dir)
             media, is_new = MediaFile.objects.get_or_create(
                 original_name=filename,
                 defaults={
@@ -79,10 +72,24 @@ class Command(BaseCommand):
                     'mime_type': mime_type,
                 }
             )
-            if is_new:
-                media.file.name = filename
+            if is_new or media.file.name != relative_name:
+                media.file.name = relative_name
+                media.size = os.path.getsize(filepath)
+                media.mime_type = mime_type
                 media.save()
-                created += 1
-                self.stdout.write(f'  Created: {filename}')
+                if is_new:
+                    created += 1
+                    self.stdout.write(f'  Created: {filename}')
+                else:
+                    self.stdout.write(f'  Updated path: {filename}')
 
         self.stdout.write(self.style.SUCCESS(f'\nCreated {created} media files'))
+
+    def _find_media_file(self, upload_dir, filename):
+        for path in (
+            os.path.join(upload_dir, filename),
+            os.path.join(upload_dir, 'uploads', filename),
+        ):
+            if os.path.exists(path):
+                return path
+        return os.path.join(upload_dir, filename)

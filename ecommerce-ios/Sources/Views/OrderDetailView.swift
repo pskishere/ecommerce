@@ -1,44 +1,63 @@
 import SwiftUI
 
 struct OrderDetailView: View {
-    let order: Order
+    @State private var order: Order
+    @Environment(\.dismiss) private var dismiss
+    @State private var toast: String? = nil
+    @State private var showPayment = false
+    @State private var showAfterSalePrompt = false
+    @State private var afterSaleReason = "商品不合适，需要售后处理"
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
+    init(order: Order) {
+        self._order = State(initialValue: order)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 10) {
-                    // Status Section
                     statusSection
-
-                    // Address Section
                     addressSection
-
-                    // Products Section
                     productsSection
-
-                    // Order Info Section
                     orderInfoSection
-
-                    // Logistics Section (for shipped orders)
-                    if order.status == .shipped {
+                    if order.afterSaleStatus != "none" {
+                        afterSaleSection
+                    }
+                    if !order.logistics.isEmpty {
                         logisticsSection
                     }
-
-                    Spacer()
-                        .frame(height: 80)
+                    Spacer().frame(height: 80)
                 }
                 .padding(.top, 10)
             }
             .background(Color(hex: "F5F5F5"))
 
-            // Bottom Bar
             bottomBar
         }
+        .toast($toast, bottomPadding: 80)
         .navigationTitle("订单详情")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .navigationDestination(isPresented: $showPayment) {
+            PaymentView(
+                order: order,
+                onComplete: {
+                    showPayment = false
+                },
+                onPaid: { updatedOrder in
+                    order = updatedOrder
+                }
+            )
+        }
+        .alert("申请售后", isPresented: $showAfterSalePrompt) {
+            TextField("请输入售后原因", text: $afterSaleReason)
+            Button("取消", role: .cancel) { }
+            Button("提交") {
+                submitAfterSale()
+            }
+        } message: {
+            Text("提交后客服会尽快处理。")
+        }
     }
 
     // MARK: - Status Section
@@ -81,7 +100,7 @@ struct OrderDetailView: View {
 
     private var statusIconColor: Color {
         switch order.status {
-        case .pending: return accentColor
+        case .pending: return DesignSystem.Colors.accent
         case .paid: return Color.blue
         case .shipped: return Color.green
         case .completed: return Color.green
@@ -118,22 +137,28 @@ struct OrderDetailView: View {
                 .overlay(
                     Image(systemName: "location.fill")
                         .font(.system(size: 18))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(DesignSystem.Colors.accent)
                 )
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text("林小琳")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color(hex: "1A1A1A"))
-                    Text("138****8888")
+            if let addr = order.address {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(addr.name)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color(hex: "1A1A1A"))
+                        Text(addr.phone)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(hex: "666666"))
+                    }
+                    Text(addr.fullAddress)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color(hex: "666666"))
+                        .foregroundStyle(Color(hex: "999999"))
+                        .lineSpacing(2)
                 }
-                Text("广东省广州市天河区珠江新城花城大道88号华夏中心A栋1501室")
+            } else {
+                Text("暂无收货地址")
                     .font(.system(size: 13))
                     .foregroundStyle(Color(hex: "999999"))
-                    .lineSpacing(2)
             }
 
             Spacer()
@@ -149,7 +174,7 @@ struct OrderDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "store")
                     .font(.system(size: 14))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
                 Text(order.store)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color(hex: "1A1A1A"))
@@ -175,16 +200,32 @@ struct OrderDetailView: View {
     private func productRow(_ product: OrderProduct) -> some View {
         HStack(alignment: .top, spacing: 10) {
             // Product Image
-            AsyncImage(url: product.imageURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "F8F8F8"))
+            NavigationLink(destination: ProductDetailView(product: Product(
+                id: product.productId,
+                name: product.name,
+                description: product.spec,
+                price: product.price,
+                originalPrice: nil,
+                image: product.image,
+                subcategoryRef: nil,
+                rating: 5,
+                reviewCount: 0,
+                salesCount: 0,
+                isInStock: true,
+                tag: ""
+            ))) {
+                AsyncImage(url: product.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(hex: "F8F8F8"))
+                }
+                .frame(width: 70, height: 70)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            .frame(width: 70, height: 70)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .buttonStyle(.plain)
 
             // Product Info
             VStack(alignment: .leading, spacing: 4) {
@@ -223,13 +264,13 @@ struct OrderDetailView: View {
                 .padding(12)
 
             VStack(spacing: 0) {
-                infoRow(label: "商品总价", value: "¥\(order.totalAmount)")
-                infoRow(label: "运费", value: "免运费")
-                infoRow(label: "优惠", value: "-¥0")
+                infoRow(label: "商品总价", value: order.totalAmount.rmbText)
+                infoRow(label: "运费", value: order.freight == 0 ? "免运费" : order.freight.rmbText)
+                infoRow(label: "优惠", value: order.discount > 0 ? "-¥\(order.discount)" : "-")
                 infoRow(label: "订单编号", value: order.orderNumber, showCopy: true)
-                infoRow(label: "下单时间", value: "2026-03-15 14:32:18")
+                infoRow(label: "下单时间", value: order.createdAt)
                 infoRow(label: "支付方式", value: "微信支付")
-                infoRow(label: "实付金额", value: "¥\(order.totalAmount)", isHighlighted: true, hasBorder: false)
+                infoRow(label: "实付金额", value: order.payment.rmbText, isHighlighted: true, hasBorder: false)
             }
         }
         .background(Color.white)
@@ -247,13 +288,16 @@ struct OrderDetailView: View {
                 HStack(spacing: 8) {
                     Text(value)
                         .font(.system(size: isHighlighted ? 16 : 13, weight: isHighlighted ? .bold : .regular))
-                        .foregroundStyle(isHighlighted ? accentColor : Color(hex: "1A1A1A"))
+                        .foregroundStyle(isHighlighted ? DesignSystem.Colors.accent : Color(hex: "1A1A1A"))
 
                     if showCopy {
-                        Button(action: {}) {
+                        Button(action: {
+                            UIPasteboard.general.string = value
+                            toast = "已复制"
+                        }) {
                             Text("复制")
                                 .font(.system(size: 12))
-                                .foregroundStyle(accentColor)
+                                .foregroundStyle(DesignSystem.Colors.accent)
                         }
                     }
                 }
@@ -268,6 +312,22 @@ struct OrderDetailView: View {
                     .padding(.leading, 12)
             }
         }
+    }
+
+    // MARK: - After Sale Section
+    private var afterSaleSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("售后信息")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(hex: "1A1A1A"))
+                .padding(12)
+
+            VStack(spacing: 0) {
+                infoRow(label: "售后状态", value: order.afterSaleStatusText)
+                infoRow(label: "申请原因", value: order.afterSaleReason.isEmpty ? "-" : order.afterSaleReason, hasBorder: false)
+            }
+        }
+        .background(Color.white)
     }
 
     // MARK: - Logistics Section
@@ -290,12 +350,7 @@ struct OrderDetailView: View {
     }
 
     private var logisticsItems: [(text: String, time: String, isActive: Bool)] {
-        [
-            ("您的订单已由顺丰快递取件，正在配送中", "2026-03-27 14:20:00", true),
-            ("顺丰快递已揽收，正在发往广州转运中心", "2026-03-27 08:30:00", true),
-            ("商家正在准备商品，请耐心等待", "2026-03-26 20:15:00", true),
-            ("订单已支付，等待商家发货", "2026-03-27 10:35:12", false)
-        ]
+        order.logistics.map { ($0.text, $0.time, $0.active) }
     }
 
     private func logisticsItem(item: (text: String, time: String, isActive: Bool), isLast: Bool) -> some View {
@@ -303,7 +358,7 @@ struct OrderDetailView: View {
             // Dot column - 11pt width, dot with 4pt top offset
             VStack(spacing: 0) {
                 Circle()
-                    .fill(item.isActive ? accentColor : Color(hex: "DDDDDD"))
+                    .fill(item.isActive ? DesignSystem.Colors.accent : Color(hex: "DDDDDD"))
                     .frame(width: 11, height: 11)
                     .padding(.top, 4)
 
@@ -337,7 +392,17 @@ struct OrderDetailView: View {
     private var bottomBar: some View {
         HStack(spacing: 10) {
             if order.status == .pending {
-                Button(action: {}) {
+                Button(action: {
+                    Task {
+                        do {
+                            _ = try await Order.cancelOrder(id: order.id)
+                            toast = "已取消订单"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
+                        } catch {
+                            toast = userFacingErrorMessage(error, fallback: "取消订单失败")
+                        }
+                    }
+                }) {
                     Text("取消订单")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(hex: "FF3B30"))
@@ -351,17 +416,19 @@ struct OrderDetailView: View {
                         )
                 }
 
-                Button(action: {}) {
+                Button(action: { showPayment = true }) {
                     Text("去支付")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
-                        .background(accentColor)
+                        .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
             } else if order.status == .shipped {
-                Button(action: {}) {
+                Button(action: {
+                    toast = order.trackingNumber.isEmpty ? "物流信息已展示" : "运单号：\(order.trackingNumber)"
+                }) {
                     Text("查看物流")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(hex: "666666"))
@@ -375,17 +442,43 @@ struct OrderDetailView: View {
                         )
                 }
 
-                Button(action: {}) {
+                if order.afterSaleStatus == "none" {
+                    Button(action: { showAfterSalePrompt = true }) {
+                        Text("申请售后")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color(hex: "666666"))
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.white)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color(hex: "DDDDDD"), lineWidth: 1)
+                            )
+                    }
+                }
+
+                Button(action: {
+                    Task {
+                        do {
+                            let updated = try await Order.confirmReceipt(id: order.id)
+                            order = updated
+                            toast = "已确认收货"
+                        } catch {
+                            toast = userFacingErrorMessage(error, fallback: "确认收货失败")
+                        }
+                    }
+                }) {
                     Text("确认收货")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
-                        .background(accentColor)
+                        .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
             } else if order.status == .completed {
-                Button(action: {}) {
+                Button(action: buyAgain) {
                     Text("再次购买")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(hex: "666666"))
@@ -399,21 +492,84 @@ struct OrderDetailView: View {
                         )
                 }
 
-                Button(action: {}) {
+                if order.afterSaleStatus == "none" {
+                    Button(action: { showAfterSalePrompt = true }) {
+                        Text("申请售后")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color(hex: "666666"))
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.white)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color(hex: "DDDDDD"), lineWidth: 1)
+                            )
+                    }
+                }
+
+                NavigationLink(destination: ReviewView(product: reviewProduct)) {
                     Text("去评价")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
-                        .background(accentColor)
+                        .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .background(Color.white)
+    }
+
+    private func submitAfterSale() {
+        let reason = afterSaleReason.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !reason.isEmpty else {
+            toast = "请填写售后原因"
+            return
+        }
+        Task {
+            do {
+                let updated = try await Order.requestAfterSale(id: order.id, reason: reason)
+                order = updated
+                toast = "售后申请已提交"
+            } catch {
+                toast = userFacingErrorMessage(error, fallback: "售后申请失败")
+            }
+        }
+    }
+
+    private func buyAgain() {
+        Task {
+            do {
+                let count = try await Order.buyAgain(id: order.id)
+                toast = count > 0 ? "已加入购物车" : "没有可加入购物车的商品"
+            } catch {
+                toast = userFacingErrorMessage(error, fallback: "再次购买失败")
+            }
+        }
+    }
+
+    private var reviewProduct: Product {
+        let item = order.products.first
+        return Product(
+            id: item?.productId ?? "",
+            name: item?.name ?? "商品",
+            description: item?.spec ?? "",
+            price: item?.price ?? 0,
+            originalPrice: nil,
+            image: item?.image ?? "",
+            subcategoryRef: nil,
+            rating: 5,
+            reviewCount: 0,
+            salesCount: 0,
+            isInStock: true,
+            tag: ""
+        )
     }
 }
 
@@ -432,8 +588,8 @@ struct OrderDetailView: View {
             payTime: "2026-03-15 10:30:00",
             createdAt: "2026-03-15 10:30:00",
             products: [
-                OrderProduct(id: "preview-product-1", name: "时尚简约腕表", spec: "黑色经典款", price: 299, quantity: 1, image: "https://picsum.photos/200/200?random=1"),
-                OrderProduct(id: "preview-product-2", name: "无线蓝牙耳机", spec: "白色标配版", price: 199, quantity: 2, image: "https://picsum.photos/200/200?random=2")
+                OrderProduct(id: "preview-product-1", name: "时尚简约腕表", spec: "黑色经典款", price: 299, quantity: 1, image: "http://localhost:8080/media/uploads/product-01-watch.webp"),
+                OrderProduct(id: "preview-product-2", name: "无线蓝牙耳机", spec: "白色标配版", price: 199, quantity: 2, image: "http://localhost:8080/media/uploads/product-02-earbuds.webp")
             ]
         ))
     }

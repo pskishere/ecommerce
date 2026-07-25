@@ -8,6 +8,7 @@ let productReviews = []
 let cart = JSON.parse(localStorage.getItem('cart') || '[]')
 let qty = 1
 let isFav = false
+let favId = null
 // selectedSpecValues: Map<groupId, selectedSpecValueId>
 let selectedSpecValues = new Map()
 // availabilityCache: Map<groupId, Set<availableSpecValueId>>
@@ -49,8 +50,11 @@ async function init() {
   updateCartBadge()
   bindEvents()
   initSwiperNav()
-  // Fetch availability with empty selection first to get all available options
   fetchAvailability()
+  if (localStorage.getItem('token')) {
+    checkFavoriteState(id)
+    api.history.add(id).catch(() => {})
+  }
 }
 
 function loadProduct() {
@@ -88,12 +92,13 @@ function renderSpecSheet() {
       <div class="spec-group-title">${group.name}</div>
       <div class="spec-options">
         ${group.values.map(sv => `
-          <div class="spec-option"
-               data-value-id="${sv.id}"
-               data-value="${sv.value}"
-               ${sv.imageName ? `data-image="${sv.imageName.replace('./static/images/', './assets/images/')}"` : ''}>
+          <button type="button"
+                  class="spec-option"
+                  data-value-id="${sv.id}"
+                  data-value="${sv.value}"
+                  ${sv.imageName ? `data-image="${sv.imageName.replace('./static/images/', './assets/images/')}"` : ''}>
             ${sv.value}
-          </div>
+          </button>
         `).join('')}
       </div>
     </div>
@@ -247,7 +252,12 @@ function renderReviews() {
 
   const reviewCountEl = document.getElementById('reviewCount')
   if (reviewCountEl && productData.rating) {
-    reviewCountEl.textContent = productData.rating.toFixed(1)
+    reviewCountEl.textContent = Number(productData.rating || 0).toFixed(1)
+  }
+
+  const reviewsMore = document.querySelector('.reviews-more')
+  if (reviewsMore && productData.id) {
+    reviewsMore.href = `reviews.html?productId=${encodeURIComponent(productData.id)}`
   }
 }
 
@@ -331,7 +341,7 @@ async function addToCart() {
   localStorage.setItem('cart', JSON.stringify(cart))
 
   try {
-    await api.cart.addItem({ id: productData.id, qty: qty })
+    await api.cart.addItem({ id: productData.id, qty: qty, skuId })
   } catch (e) {
     console.error('Failed to sync cart to server:', e)
   }
@@ -345,25 +355,54 @@ function buyNow() {
   setTimeout(() => { window.location.href = 'cart.html' }, 500)
 }
 
-async function toggleFav() {
-  isFav = !isFav
-  if (isFav) {
-    await api.favorite.add(productData.id)
-    showToast('已收藏')
-  } else {
-    showToast('已取消收藏')
+async function checkFavoriteState(productId) {
+  try {
+    const result = await api.favorite.check(productId)
+    isFav = result?.is_favorited ?? false
+    favId = result?.favorite_id ?? null
+    updateFavBtn()
+  } catch (e) {
+    // non-critical — default state is unfavorited
   }
+}
+
+function updateFavBtn() {
   const btn = document.getElementById('favBtn')
+  if (!btn) return
   const svg = btn.querySelector('svg')
   if (isFav) {
-    svg.setAttribute('fill', '#FF6B4A')
-    svg.setAttribute('stroke', '#FF6B4A')
+    svg?.setAttribute('fill', '#FF6B4A')
+    svg?.setAttribute('stroke', '#FF6B4A')
     btn.classList.add('active')
   } else {
-    svg.setAttribute('fill', 'none')
-    svg.setAttribute('stroke', 'currentColor')
+    svg?.setAttribute('fill', 'none')
+    svg?.setAttribute('stroke', 'currentColor')
     btn.classList.remove('active')
   }
+}
+
+async function toggleFav() {
+  if (!localStorage.getItem('token')) {
+    if (productData.id) sessionStorage.setItem('productId', productData.id)
+    window.location.href = 'login.html?redirect=product-detail.html'
+    return
+  }
+  if (isFav) {
+    try {
+      if (favId) await api.favorite.remove(favId)
+      isFav = false
+      favId = null
+      showToast('已取消收藏')
+    } catch { showToast('操作失败') }
+  } else {
+    try {
+      const res = await api.favorite.add(productData.id)
+      isFav = true
+      favId = res?.id ?? null
+      showToast('已收藏')
+    } catch { showToast('操作失败') }
+  }
+  updateFavBtn()
 }
 
 function openSpecSheet(mode) {
@@ -387,17 +426,38 @@ function initStickyNav() {
   }, { passive: true })
 }
 
+async function shareProduct() {
+  const url = location.href
+  const title = productData.name || document.title
+  const text = productData.desc || '潮流好物'
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text, url })
+      return
+    }
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+      showToast('商品链接已复制')
+      return
+    }
+  } catch (e) {
+    if (e?.name === 'AbortError') return
+  }
+  showToast('当前环境不支持分享')
+}
+
 function bindEvents() {
   initStickyNav()
 
   document.getElementById('backBtn')?.addEventListener('click', () => history.back())
   document.getElementById('navBack')?.addEventListener('click', () => history.back())
-  document.getElementById('shareBtn')?.addEventListener('click', () => showToast('分享功能'))
-  document.getElementById('navShare')?.addEventListener('click', () => showToast('分享功能'))
+  document.getElementById('shareBtn')?.addEventListener('click', shareProduct)
+  document.getElementById('navShare')?.addEventListener('click', shareProduct)
   document.getElementById('navMore')?.addEventListener('click', () => showToast('更多选项'))
   document.getElementById('specSelect')?.addEventListener('click', () => openSpecSheet('add'))
   document.getElementById('serviceSelect')?.addEventListener('click', () => showToast('服务：极速退款 · 7天无理由 · 运费险'))
-  document.getElementById('shopBtn')?.addEventListener('click', () => showToast('进入店铺'))
+  document.getElementById('shopBtn')?.addEventListener('click', () => { window.location.href = 'shop.html' })
   document.getElementById('favBtn')?.addEventListener('click', toggleFav)
   document.getElementById('cartBtn')?.addEventListener('click', () => window.location.href = 'cart.html')
   document.getElementById('addCartBtn')?.addEventListener('click', () => openSpecSheet('add'))

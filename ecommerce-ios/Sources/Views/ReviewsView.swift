@@ -4,7 +4,6 @@ struct ReviewsView: View {
     let product: Product
     @StateObject private var viewModel = ReviewsViewModel()
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,10 +20,12 @@ struct ReviewsView: View {
                 reviewsList
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("全部评价")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($viewModel.errorMessage, bottomPadding: 80)
+        .task { await viewModel.load(productId: product.id) }
     }
 
     // MARK: - Header Summary
@@ -34,7 +35,7 @@ struct ReviewsView: View {
             VStack(spacing: 2) {
                 Text(String(format: "%.1f", product.rating))
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
 
                 Text("综合评分")
                     .font(.system(size: 12))
@@ -60,10 +61,10 @@ struct ReviewsView: View {
         Button(action: { viewModel.selectedFilter = tag }) {
             Text(tag)
                 .font(.system(size: 12))
-                .foregroundStyle(viewModel.selectedFilter == tag ? .white : accentColor)
+                .foregroundStyle(viewModel.selectedFilter == tag ? .white : DesignSystem.Colors.accent)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(viewModel.selectedFilter == tag ? accentColor : Color(red: 1.0, green: 0.94, blue: 0.92))
+                .background(viewModel.selectedFilter == tag ? DesignSystem.Colors.accent : Color(red: 1.0, green: 0.94, blue: 0.92))
                 .clipShape(Capsule())
         }
     }
@@ -117,7 +118,6 @@ struct ReviewsView: View {
 struct ReviewCard: View {
     let review: ProductReview
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -189,7 +189,7 @@ struct ReviewCard: View {
                 HStack {
                     Text("商家回复：\(review.replyText)")
                         .font(.system(size: 12))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(DesignSystem.Colors.accent)
 
                     Spacer()
 
@@ -199,7 +199,7 @@ struct ReviewCard: View {
                         Text("\(review.likeCount)")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(review.isLiked ? accentColor : .secondary)
+                    .foregroundStyle(review.isLiked ? DesignSystem.Colors.accent : .secondary)
                 }
                 .padding(.top, 8)
             } else {
@@ -212,7 +212,7 @@ struct ReviewCard: View {
                         Text("\(review.likeCount)")
                             .font(.system(size: 12))
                     }
-                    .foregroundStyle(review.isLiked ? accentColor : .secondary)
+                    .foregroundStyle(review.isLiked ? DesignSystem.Colors.accent : .secondary)
                 }
                 .padding(.top, 4)
             }
@@ -257,45 +257,47 @@ struct ProductReview: Identifiable {
 }
 
 // MARK: - Reviews ViewModel
+@MainActor
 class ReviewsViewModel: ObservableObject {
     @Published var selectedFilter = "全部"
     @Published var selectedTab = "全部"
-    @Published var showWithImages = false
-    @Published var showWithVideos = false
-    @Published var reviews: [ProductReview]
+    @Published var reviews: [ProductReview] = []
+    @Published var errorMessage: String? = nil
 
-    init() {
-        reviews = [
-            ProductReview(id: UUID(), userName: "用户小王", rating: 5, content: "非常满意！手表外观简约大气，表带佩戴舒适，走时精准。包装也很精美，送礼自用都很合适。", spec: "黑色 / M码", date: "2026-03-25", images: ["photo"], hasReply: true, replyText: "感谢您的支持，欢迎再次光临~", likeCount: 12, isLiked: false),
-            ProductReview(id: UUID(), userName: "潮流达人", rating: 5, content: "超级喜欢这款手表，简约风格很百搭，性价比超高！", spec: "黑色 / L码", date: "2026-03-24", images: [], hasReply: false, likeCount: 8, isLiked: true),
-            ProductReview(id: UUID(), userName: "品质生活", rating: 4, content: "整体不错，就是表带稍微有点硬，不过戴几天就好了。", spec: "棕色 / M码", date: "2026-03-23", images: ["photo", "photo"], hasReply: true, replyText: "感谢您的反馈，表带会越戴越贴合的~", likeCount: 3, isLiked: false),
-            ProductReview(id: UUID(), userName: "购物达人", rating: 5, content: "第三次购买了，品质一如既往的好，物流也很快，好评！", spec: "黑色 / S码", date: "2026-03-22", images: [], hasReply: false, likeCount: 15, isLiked: false),
-            ProductReview(id: UUID(), userName: "时尚博主", rating: 3, content: "还行吧，没有想象中那么满意，表盘有点小。", spec: "黑色 / M码", date: "2026-03-21", images: [], hasReply: false, likeCount: 1, isLiked: false)
-        ]
+    func load(productId: String) async {
+        do {
+            let items = try await Product.getReviews(id: productId)
+            errorMessage = nil
+            reviews = items.map { r in
+                ProductReview(
+                    id: UUID(),
+                    userName: r.userName,
+                    rating: r.rating,
+                    content: r.content,
+                    spec: r.spec,
+                    date: r.createdAt.flatMap { String($0.prefix(10)) } ?? "",
+                    images: r.images,
+                    hasReply: false
+                )
+            }
+        } catch {
+            reviews = []
+            errorMessage = userFacingErrorMessage(error, fallback: "评价加载失败")
+        }
     }
 
     var filteredReviews: [ProductReview] {
         var result = reviews
-
-        // Filter by tab (star rating)
         switch selectedTab {
-        case "5星":
-            result = result.filter { $0.rating == 5 }
-        case "4星":
-            result = result.filter { $0.rating == 4 }
-        case "3星":
-            result = result.filter { $0.rating == 3 }
-        case "1-2星":
-            result = result.filter { $0.rating <= 2 }
-        default:
-            break
+        case "5星": result = result.filter { $0.rating == 5 }
+        case "4星": result = result.filter { $0.rating == 4 }
+        case "3星": result = result.filter { $0.rating == 3 }
+        case "1-2星": result = result.filter { $0.rating <= 2 }
+        default: break
         }
-
-        // Filter by images
         if selectedFilter == "有图" {
             result = result.filter { !$0.images.isEmpty }
         }
-
         return result
     }
 }

@@ -48,7 +48,7 @@ function renderCoupons(currentTab) {
           <div class="coupon-desc">${coupon.desc}</div>
           <div class="coupon-time">${coupon.time}</div>
         </div>
-        ${currentTab === 'available' ? `<button class="coupon-use-btn" onclick="useCoupon(${coupon.id})">立即使用</button>` : ''}
+        ${currentTab === 'available' ? `<button class="coupon-use-btn" onclick="useCoupon('${coupon.id}')">立即使用</button>` : ''}
         ${currentTab === 'used' ? '<div class="coupon-status-tag used">已使用</div>' : ''}
         ${currentTab === 'expired' ? '<div class="coupon-status-tag expired">已失效</div>' : ''}
       </div>
@@ -56,7 +56,10 @@ function renderCoupons(currentTab) {
 }
 
 function useCoupon(id) {
-  showToast('跳转优惠专区...')
+  sessionStorage.setItem('selectedCouponId', id)
+  window.location.href = 'cart.html'
 }
+
+window.useCoupon = useCoupon
 
 loadCoupons()

@@ -2,10 +2,14 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var authManager = LoginView.shared
-    @State private var selectedTab: MainTab = .home
+    @StateObject private var appNavigation: AppNavigation
+
+    init() {
+        _appNavigation = StateObject(wrappedValue: AppNavigation(selectedTab: MainTab.initialTabFromLaunchArguments))
+    }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $appNavigation.selectedTab) {
             HomeTabView()
                 .tag(MainTab.home)
                 .tabItem {
@@ -32,6 +36,7 @@ struct ContentView: View {
         }
         .tint(DesignSystem.Colors.accent)
         .environmentObject(authManager)
+        .environmentObject(appNavigation)
     }
 }
 
@@ -54,18 +59,20 @@ struct CategoryTabView: View {
 
 struct CartTabView: View {
     @ObservedObject var authManager: LoginView
+    @EnvironmentObject private var cart: Cart
     @State private var showCheckout = false
     @State private var showLogin = false
-    @StateObject private var cart = Cart()
 
     var body: some View {
         NavigationStack {
             Group {
                 if authManager.isAuthenticated {
                     CartView(showCheckout: $showCheckout)
-                        .environmentObject(cart)
                         .navigationDestination(isPresented: $showCheckout) {
-                            CheckoutView()
+                            CheckoutView(onComplete: {
+                                showCheckout = false
+                            })
+                                .environmentObject(cart)
                         }
                 } else {
                     LoginPromptView(onLogin: { showLogin = true })
@@ -160,6 +167,16 @@ enum MainTab: String, CaseIterable {
     case cart
     case profile
 
+    static var initialTabFromLaunchArguments: MainTab {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flagIndex = arguments.firstIndex(of: "-initialTab"),
+              arguments.indices.contains(flagIndex + 1),
+              let tab = MainTab(rawValue: arguments[flagIndex + 1]) else {
+            return .home
+        }
+        return tab
+    }
+
     var title: String {
         switch self {
         case .home: return "首页"
@@ -176,6 +193,15 @@ enum MainTab: String, CaseIterable {
         case .cart: return "bag.fill"
         case .profile: return "person.fill"
         }
+    }
+}
+
+@MainActor
+final class AppNavigation: ObservableObject {
+    @Published var selectedTab: MainTab
+
+    init(selectedTab: MainTab = .home) {
+        self.selectedTab = selectedTab
     }
 }
 

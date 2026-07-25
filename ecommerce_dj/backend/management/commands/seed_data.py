@@ -1,14 +1,16 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.utils import timezone
 from backend.models import (
     Category, Subcategory, Product,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
     SpecGroup, SpecValue, SKU,
     Address, CartItem, Order, OrderProduct, UserCoupon,
     UserProfile, AdminProfile, Review, ProductDetail,
+    Favorite, Notification, ShopInfo, VIPMembership,
 )
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Command(BaseCommand):
@@ -36,6 +38,9 @@ class Command(BaseCommand):
         self._create_cart_items()
         self._create_orders()
         self._create_coupons()
+        self._create_favorites()
+        self._create_notifications()
+        self._create_shop_and_vip()
 
         self.stdout.write(self.style.SUCCESS('\n=== Seed data complete! ==='))
         self.stdout.write(f'Categories: {Category.objects.count()}')
@@ -47,13 +52,20 @@ class Command(BaseCommand):
         self.stdout.write(f'Addresses: {Address.objects.count()}')
         self.stdout.write(f'CartItems: {CartItem.objects.count()}')
         self.stdout.write(f'Orders: {Order.objects.count()}')
+        self.stdout.write(f'Favorites: {Favorite.objects.count()}')
+        self.stdout.write(f'Coupons: {UserCoupon.objects.count()}')
+        self.stdout.write(f'Notifications: {Notification.objects.count()}')
 
     def _reset_data(self):
         OrderProduct.objects.all().delete()
         Order.objects.all().delete()
         CartItem.objects.all().delete()
         Address.objects.all().delete()
+        Favorite.objects.all().delete()
+        Notification.objects.all().delete()
         UserCoupon.objects.all().delete()
+        VIPMembership.objects.all().delete()
+        ShopInfo.objects.all().delete()
         SKU.objects.all().delete()
         SpecValue.objects.all().delete()
         SpecGroup.objects.all().delete()
@@ -83,12 +95,15 @@ class Command(BaseCommand):
     def _create_users(self):
         self.stdout.write('\nCreating users...')
         testuser, created = User.objects.get_or_create(username='testuser')
-        if created:
-            testuser.set_password('testuser')
-            testuser.email = 'test@example.com'
-            testuser.save()
-        UserProfile.objects.get_or_create(user=testuser, defaults={'user_type': 'user', 'phone': '13800138000'})
-        self.stdout.write(f'  testuser: {testuser.username} (password: testuser)')
+        testuser.set_password('iole')
+        testuser.email = 'test@example.com'
+        testuser.save()
+        profile, _ = UserProfile.objects.get_or_create(user=testuser, defaults={'user_type': 'user', 'phone': '13800138000'})
+        profile.points = max(profile.points, 1280)
+        profile.follow_count = max(profile.follow_count, 12)
+        profile.fans_count = max(profile.fans_count, 86)
+        profile.save()
+        self.stdout.write(f'  testuser: {testuser.username} (password: iole)')
 
         admin, admin_created = User.objects.get_or_create(username='admin')
         if admin_created:
@@ -133,8 +148,8 @@ class Command(BaseCommand):
         self.stdout.write('\nCreating subcategories...')
         subcategories_data = {
             '女装': ['连衣裙', 'T恤', '衬衫', '牛仔裤', '半身裙'],
-            '男装': ['T恤', '衬衫', '裤装', '外套', '卫衣'],
-            '美妆护肤': ['护肤', '彩妆', '香水', '个护', '面膜'],
+            '男装': ['T恤', '衬衫', '裤装', '外套', '卫衣', 'Polo衫'],
+            '美妆护肤': ['护肤', '彩妆', '香水', '个护', '面膜', '洁面'],
             '数码电子': ['手机', '耳机', '音箱', '配件', '智能穿戴'],
             '家居生活': ['家纺', '收纳', '厨具', '家装', '清洁'],
             '运动户外': ['运动鞋', '健身', '户外', '箱包', '运动服饰'],
@@ -197,7 +212,7 @@ class Command(BaseCommand):
             ('法式碎花连衣裙', '优雅碎花图案，轻薄透气面料，适合夏季穿着', 189, 299, '女装:连衣裙', 4.6, 320, 8600, '热卖'),
             ('纯棉宽松T恤', '100%纯棉，宽松版型，百搭款式', 79, 129, '女装:T恤', 4.5, 580, 12000, '爆款'),
             ('高腰直筒牛仔裤', '高腰设计，显瘦直筒版型，经典靛蓝色', 159, 259, '女装:牛仔裤', 4.7, 890, 15000, '推荐'),
-            ('商务Polo衫', '珠地棉面料，透气舒适，经典商务款式', 129, 199, '男装:POLO衫', 4.6, 520, 11000, '热卖'),
+            ('商务Polo衫', '珠地棉面料，透气舒适，经典商务款式', 129, 199, '男装:Polo衫', 4.6, 520, 11000, '热卖'),
             ('休闲牛仔短裤', '柔软丹宁面料，直筒版型，夏季必备', 99, 169, '男装:裤装', 4.5, 680, 13500, '爆款'),
             ('玻尿酸保湿面膜', '深层补水，焕亮肌肤，医美级玻尿酸', 99, 169, '美妆护肤:面膜', 4.9, 1200, 28000, '热卖'),
             ('氨基酸洁面乳', '温和清洁，不刺激，适合敏感肌', 89, 139, '美妆护肤:洁面', 4.8, 890, 22000, '爆款'),
@@ -231,16 +246,22 @@ class Command(BaseCommand):
                     'subcategory': subcat,
                 }
             )
-            if not created and prod.subcategory is None:
-                prod.subcategory = subcat
-                prod.save()
+            prod.description = desc
+            prod.price = Decimal(str(price))
+            prod.original_price = Decimal(str(original))
+            prod.tag = tag
+            prod.sales_count = sales
+            prod.rating = Decimal(str(rating))
+            prod.review_count = reviews
+            prod.is_in_stock = True
+            prod.subcategory = subcat
 
             img_name = product_image_map.get(name)
             if img_name:
                 img_media = self._get_media(img_name)
                 if img_media:
                     prod.image = img_media
-                    prod.save()
+            prod.save()
 
             self.products[name] = prod
             self.stdout.write(f'  {"Created" if created else "Exists"}: {name}')
@@ -268,8 +289,22 @@ class Command(BaseCommand):
             '法式碎花连衣裙': [('尺码', ['S', 'M', 'L', 'XL']), ('颜色', ['碎花', '纯色'])],
             '纯棉宽松T恤': [('尺码', ['S', 'M', 'L', 'XL']), ('颜色', ['白色', '黑色', '灰色'])],
             '高腰直筒牛仔裤': [('尺码', ['26', '27', '28', '29', '30']), ('颜色', ['深蓝', '浅蓝', '黑色'])],
+            '商务Polo衫': [('尺码', ['M', 'L', 'XL', 'XXL']), ('颜色', ['藏青', '白色', '灰色'])],
+            '休闲牛仔短裤': [('尺码', ['M', 'L', 'XL']), ('颜色', ['浅蓝', '深蓝'])],
+            '玻尿酸保湿面膜': [('组合', ['5片装', '10片装', '20片装'])],
             '氨基酸洁面乳': [('规格', ['100ml', '150ml'])],
+            'iPhone保护壳': [('机型', ['iPhone 15', 'iPhone 16', 'iPhone 17']), ('颜色', ['雾黑', '奶白', '松石绿'])],
+            '无线充电器': [('功率', ['15W', '30W']), ('颜色', ['白色', '黑色'])],
+            '日式收纳盒': [('容量', ['小号', '中号', '大号']), ('颜色', ['透明', '米白'])],
+            '骨瓷餐具套装': [('件数', ['4件套', '8件套', '12件套'])],
+            '跑步鞋': [('尺码', ['39', '40', '41', '42', '43']), ('颜色', ['黑白', '云灰', '荧光绿'])],
+            '瑜伽垫': [('厚度', ['6mm', '8mm']), ('颜色', ['莫兰迪粉', '湖蓝', '石墨灰'])],
+            '水果礼盒': [('规格', ['6斤装', '10斤装'])],
+            '每日坚果礼盒': [('规格', ['15袋', '30袋'])],
             '简约真皮腕表': [('颜色', ['黑色', '棕色', '银色']), ('表带', ['皮质', '钢带'])],
+            '复古飞行员太阳镜': [('颜色', ['金框茶片', '银框灰片'])],
+            '无线蓝牙耳机': [('颜色', ['云白', '曜黑']), ('版本', ['标准版', '降噪版'])],
+            '极简陶瓷咖啡杯': [('容量', ['350ml', '500ml']), ('颜色', ['白色', '墨绿'])],
         }
 
         for prod_name, spec_groups in spec_data.items():
@@ -278,20 +313,24 @@ class Command(BaseCommand):
                 continue
 
             group_values = {}
-            for group_name, values in spec_groups:
+            for group_index, (group_name, values) in enumerate(spec_groups):
                 sg, _ = SpecGroup.objects.get_or_create(product=prod, name=group_name)
+                sg.sort_order = group_index
+                sg.save()
                 group_values[group_name] = []
-                for val in values:
+                for value_index, val in enumerate(values):
                     sv, _ = SpecValue.objects.get_or_create(group=sg, value=val)
+                    sv.sort_order = value_index
+                    sv.save()
                     group_values[group_name].append((sv, val))
 
             group_names = list(group_values.keys())
-            for combo in iter_product(*[group_values[gn] for gn in group_names]):
+            for combo_index, combo in enumerate(iter_product(*[group_values[gn] for gn in group_names])):
                 sku = SKU.objects.create(
                     product=prod,
                     price=prod.price,
                     original_price=prod.original_price,
-                    stock=100,
+                    stock=80 + combo_index * 7,
                 )
                 for sv, _ in combo:
                     sku.spec_values.add(sv)
@@ -307,6 +346,20 @@ class Command(BaseCommand):
             ('极简陶瓷咖啡杯', '孙**', 4, '做工精细，容量刚好，适合喝茶。'),
             ('跑步鞋', '郑**', 5, '穿起来很舒服，透气性好，样式好看。'),
             ('法式碎花连衣裙', '林**', 5, '碎花图案很漂亮，面料很舒服！'),
+            ('纯棉宽松T恤', '周**', 5, '面料柔软，洗后不变形，日常很好搭。'),
+            ('高腰直筒牛仔裤', '陈**', 4, '版型挺括，显腿直，尺码按推荐买正好。'),
+            ('商务Polo衫', '赵**', 5, '通勤穿很合适，领口不塌。'),
+            ('休闲牛仔短裤', '许**', 4, '夏天穿很清爽，颜色也耐看。'),
+            ('玻尿酸保湿面膜', '刘**', 5, '补水效果明显，敷完不黏腻。'),
+            ('氨基酸洁面乳', '何**', 5, '敏感肌用着也温和，泡沫细腻。'),
+            ('iPhone保护壳', '吴**', 5, '手感细腻，孔位准确。'),
+            ('无线充电器', '马**', 4, '充电稳定，放桌面也简洁。'),
+            ('日式收纳盒', '郭**', 5, '厨房和衣柜都能用，叠放很稳。'),
+            ('骨瓷餐具套装', '黄**', 5, '釉面很亮，包装也结实。'),
+            ('瑜伽垫', '梁**', 4, '防滑不错，厚度适合居家训练。'),
+            ('水果礼盒', '蒋**', 5, '果子新鲜，送人很体面。'),
+            ('每日坚果礼盒', '冯**', 5, '独立包装方便，日期也新。'),
+            ('复古飞行员太阳镜', '唐**', 4, '镜片清晰，脸型适配度高。'),
         ]
         user = User.objects.get(username='testuser')
         for prod_name, user_name, rating, content in review_data:
@@ -318,6 +371,11 @@ class Command(BaseCommand):
                 user_name=user_name,
                 defaults={'rating': rating, 'content': content, 'user': user}
             )
+            if not created:
+                rev.rating = rating
+                rev.content = content
+                rev.user = user
+                rev.save()
             if created:
                 self.stdout.write(f'  Created review: {prod_name} by {user_name}')
 
@@ -354,6 +412,12 @@ class Command(BaseCommand):
             title='限时秒杀',
             defaults={'subtitle': '爆款限时抢', 'sort_order': 1, 'is_enabled': True}
         )
+        flashsale.subtitle = '爆款限时抢'
+        flashsale.start_time = timezone.now() - timedelta(hours=2)
+        flashsale.end_time = timezone.now() + timedelta(hours=8)
+        flashsale.sort_order = 1
+        flashsale.is_enabled = True
+        flashsale.save()
         hotrank, _ = HomeHotRank.objects.get_or_create(
             title='热销榜单',
             defaults={'sort_order': 2, 'is_enabled': True}
@@ -370,6 +434,12 @@ class Command(BaseCommand):
             title='优惠活动',
             defaults={'subtitle': '满减优惠', 'sort_order': 5, 'is_enabled': True}
         )
+        promo.subtitle = '满99减10，满199减30'
+        promo.link = 'coupon.html'
+        promo.image = self._get_media('banner-3-discount-1710.webp') or promo.image
+        promo.sort_order = 5
+        promo.is_enabled = True
+        promo.save()
 
         for prod in Product.objects.all()[:6]:
             recommend.products.add(prod)
@@ -406,10 +476,12 @@ class Command(BaseCommand):
         self.stdout.write('\nCreating cart items...')
         user = User.objects.get(username='testuser')
         CartItem.objects.filter(user=user).delete()
-        for i, prod in enumerate(Product.objects.all()[:3]):
+        for i, prod in enumerate(Product.objects.all()[:4]):
+            sku = prod.skus.order_by('id').first()
             cart_item = CartItem.objects.create(
                 user=user,
                 product=prod,
+                sku=sku,
                 quantity=(i % 3) + 1,
                 is_selected=i < 2
             )
@@ -422,88 +494,89 @@ class Command(BaseCommand):
         Order.objects.filter(user=user).delete()
 
         addr1 = self.addresses[0]
+        addr2 = self.addresses[1] if len(self.addresses) > 1 else addr1
 
         def make_order_num(seed):
             return f"ORH5{datetime.now().strftime('%Y%m%d%H%M%S')}{seed:03d}"
 
-        order1_id = make_order_num(1)
-        order1 = Order.objects.create(
-            id=order1_id,
-            user=user,
-            store='潮流优品官方旗舰店',
-            status='pending',
-            total_amount=Decimal('268.00'),
-            payment=Decimal('268.00'),
-            freight=Decimal('0.00'),
-            discount=Decimal('0.00'),
-            address_name=addr1.name,
-            address_phone=addr1.phone,
-            address_province=addr1.province,
-            address_city=addr1.city,
-            address_district=addr1.district,
-            address_detail=addr1.detail,
-        )
-        OrderProduct.objects.create(order=order1, name='法式碎花连衣裙', spec='白色, M', price=Decimal('189.00'), quantity=1, image=self.products['法式碎花连衣裙'].image)
-        OrderProduct.objects.create(order=order1, name='纯棉宽松T恤', spec='黑色, L', price=Decimal('79.00'), quantity=1, image=self.products['纯棉宽松T恤'].image)
+        def pick_sku(product_name, index=0):
+            product = self.products[product_name]
+            return product.skus.order_by('id')[index] if product.skus.exists() else None
 
-        order2_id = make_order_num(2)
-        order2 = Order.objects.create(
-            id=order2_id,
-            user=user,
-            store='潮流优品官方旗舰店',
-            status='paid',
-            total_amount=Decimal('159.00'),
-            payment=Decimal('159.00'),
-            freight=Decimal('0.00'),
-            discount=Decimal('0.00'),
-            address_name=addr1.name,
-            address_phone=addr1.phone,
-            address_province=addr1.province,
-            address_city=addr1.city,
-            address_district=addr1.district,
-            address_detail=addr1.detail,
-        )
-        OrderProduct.objects.create(order=order2, name='高腰直筒牛仔裤', spec='浅蓝, 27', price=Decimal('159.00'), quantity=1, image=self.products['高腰直筒牛仔裤'].image)
+        def spec_text(sku):
+            if not sku:
+                return ''
+            values = sku.spec_values.select_related('group').order_by('group__sort_order', 'sort_order', 'id')
+            return ' / '.join(v.value for v in values)
 
-        order3_id = make_order_num(3)
-        order3 = Order.objects.create(
-            id=order3_id,
-            user=user,
-            store='潮流优品官方旗舰店',
-            status='shipped',
-            total_amount=Decimal('298.00'),
-            payment=Decimal('298.00'),
-            freight=Decimal('10.00'),
-            discount=Decimal('0.00'),
-            address_name=self.addresses[1].name,
-            address_phone=self.addresses[1].phone,
-            address_province=self.addresses[1].province,
-            address_city=self.addresses[1].city,
-            address_district=self.addresses[1].district,
-            address_detail=self.addresses[1].detail,
-        )
-        OrderProduct.objects.create(order=order3, name='简约真皮腕表', spec='', price=Decimal('299.00'), quantity=1, image=self.products['简约真皮腕表'].image)
+        def make_line(product_name, quantity=1, sku_index=0):
+            product = self.products[product_name]
+            sku = pick_sku(product_name, sku_index)
+            return {
+                'product': product,
+                'sku': sku,
+                'name': product.name,
+                'spec': spec_text(sku),
+                'price': sku.price if sku else product.price,
+                'quantity': quantity,
+                'image': sku.image if sku and sku.image else product.image,
+            }
 
-        order4_id = make_order_num(4)
-        order4 = Order.objects.create(
-            id=order4_id,
-            user=user,
-            store='潮流优品官方旗舰店',
-            status='completed',
-            total_amount=Decimal('198.00'),
-            payment=Decimal('198.00'),
-            freight=Decimal('0.00'),
-            discount=Decimal('0.00'),
-            address_name=addr1.name,
-            address_phone=addr1.phone,
-            address_province=addr1.province,
-            address_city=addr1.city,
-            address_district=addr1.district,
-            address_detail=addr1.detail,
-            pay_time=datetime.now(),
-        )
-        OrderProduct.objects.create(order=order4, name='无线蓝牙耳机', spec='', price=Decimal('199.00'), quantity=1, image=self.products['无线蓝牙耳机'].image)
-        OrderProduct.objects.create(order=order4, name='极简陶瓷咖啡杯', spec='', price=Decimal('68.00'), quantity=2, image=self.products['极简陶瓷咖啡杯'].image)
+        def create_order(seed, status, lines, address, discount=Decimal('0.00')):
+            total = sum(line['price'] * line['quantity'] for line in lines)
+            freight = Decimal('0.00') if total >= Decimal('99.00') else Decimal('10.00')
+            payment = max(Decimal('0.00'), total + freight - discount)
+            order = Order.objects.create(
+                id=make_order_num(seed),
+                user=user,
+                store='潮流优品官方旗舰店',
+                status=status,
+                total_amount=total,
+                payment=payment,
+                freight=freight,
+                discount=discount,
+                address_name=address.name,
+                address_phone=address.phone,
+                address_province=address.province,
+                address_city=address.city,
+                address_district=address.district,
+                address_detail=address.detail,
+                pay_time=timezone.now() if status in ('paid', 'shipped', 'completed') else None,
+            )
+            for line in lines:
+                OrderProduct.objects.create(
+                    order=order,
+                    product_id=line['product'].id,
+                    name=line['name'],
+                    spec=line['spec'],
+                    price=line['price'],
+                    quantity=line['quantity'],
+                    image=line['image'],
+                )
+            return order
+
+        create_order(1, 'pending', [
+            make_line('法式碎花连衣裙', 1, 0),
+            make_line('纯棉宽松T恤', 1, 2),
+        ], addr1)
+
+        create_order(2, 'paid', [
+            make_line('高腰直筒牛仔裤', 1, 4),
+            make_line('无线充电器', 1, 1),
+        ], addr1, discount=Decimal('10.00'))
+
+        create_order(3, 'shipped', [
+            make_line('简约真皮腕表', 1, 1),
+        ], addr2)
+
+        create_order(4, 'completed', [
+            make_line('无线蓝牙耳机', 1, 1),
+            make_line('极简陶瓷咖啡杯', 2, 0),
+        ], addr1, discount=Decimal('20.00'))
+
+        create_order(5, 'cancelled', [
+            make_line('玻尿酸保湿面膜', 1, 0),
+        ], addr2)
 
         self.stdout.write(f'  Created {Order.objects.filter(user=user).count()} orders')
 
@@ -511,9 +584,11 @@ class Command(BaseCommand):
         self.stdout.write('\nCreating coupons...')
         user = User.objects.get(username='testuser')
         coupons_data = [
-            {'name': '新人专享券', 'value': 20, 'threshold': '满100元减20元', 'description': '满100元减20元'},
-            {'name': '满50减10', 'value': 10, 'threshold': '满50元减10元', 'description': '满50元减10元'},
-            {'name': '无门槛券', 'value': 5, 'threshold': '无门槛', 'description': '无门槛使用'},
+            {'name': '新人专享券', 'value': 20, 'threshold': '满100元减20元', 'description': '全场通用，新用户首单可用', 'status': 'available', 'time': '2026-12-31'},
+            {'name': '满50减10', 'value': 10, 'threshold': '满50元减10元', 'description': '服饰、美妆、家居均可用', 'status': 'available', 'time': '2026-11-30'},
+            {'name': '无门槛券', 'value': 5, 'threshold': '无门槛', 'description': '任意商品可直接抵扣', 'status': 'available', 'time': '2026-10-31'},
+            {'name': '会员专享券', 'value': 30, 'threshold': '满199元减30元', 'description': '会员日专属福利', 'status': 'used', 'time': '2026-09-30'},
+            {'name': '夏日清仓券', 'value': 50, 'threshold': '满299元减50元', 'description': '活动已结束', 'status': 'expired', 'time': '2026-06-30'},
         ]
         for cp_data in coupons_data:
             coupon, created = UserCoupon.objects.get_or_create(
@@ -523,7 +598,77 @@ class Command(BaseCommand):
                     'value': cp_data['value'],
                     'threshold': cp_data['threshold'],
                     'description': cp_data['description'],
-                    'time': '2026-12-31'
+                    'time': cp_data['time'],
+                    'status': cp_data['status'],
                 }
             )
+            if not created:
+                coupon.value = cp_data['value']
+                coupon.threshold = cp_data['threshold']
+                coupon.description = cp_data['description']
+                coupon.time = cp_data['time']
+                coupon.status = cp_data['status']
+                coupon.save()
             self.stdout.write(f'  {"Created" if created else "Exists"}: {cp_data["name"]}')
+
+    def _create_favorites(self):
+        self.stdout.write('\nCreating favorites...')
+        user = User.objects.get(username='testuser')
+        Favorite.objects.filter(user=user).delete()
+        for product_name in ['简约真皮腕表', '无线蓝牙耳机', '法式碎花连衣裙', '跑步鞋']:
+            product = self.products.get(product_name)
+            if not product:
+                continue
+            Favorite.objects.create(
+                user=user,
+                product_id=product.id,
+                name=product.name,
+                price=product.price,
+                original_price=product.original_price,
+                image=product.image,
+                sales=f'{product.sales_count}+'
+            )
+            self.stdout.write(f'  Favorite: {product.name}')
+
+    def _create_notifications(self):
+        self.stdout.write('\nCreating notifications...')
+        user = User.objects.get(username='testuser')
+        Notification.objects.filter(user=user).delete()
+        notifications_data = [
+            ('logistics', '包裹运输中', '2分钟前', '你的简约真皮腕表已到达上海浦东分拨中心，预计明天送达。', '查看物流', False),
+            ('order', '订单待支付', '15分钟前', '你有一笔订单尚未支付，30分钟后将自动关闭。', '去支付', False),
+            ('promo', '会员日优惠', '今天 10:00', '会员专享满199减30券已发放，可在结算页直接使用。', '去使用', False),
+            ('sys', '账号安全提醒', '昨天 20:30', '检测到你在新设备登录，如非本人操作请及时修改密码。', '查看详情', True),
+            ('order', '退款进度更新', '昨天 12:20', '你的退款申请已通过，款项将在1-3个工作日原路退回。', '查看订单', True),
+        ]
+        for notif_type, name, time, content, action, is_read in notifications_data:
+            Notification.objects.create(
+                user=user,
+                type=notif_type,
+                name=name,
+                time=time,
+                content=content,
+                action=action,
+                is_read=is_read,
+            )
+            self.stdout.write(f'  Notification: {name}')
+
+    def _create_shop_and_vip(self):
+        self.stdout.write('\nCreating shop and VIP info...')
+        user = User.objects.get(username='testuser')
+        shop, _ = ShopInfo.objects.get_or_create(pk=1)
+        shop.name = '潮流优品官方旗舰店'
+        shop.description = '专注年轻人日常穿搭、数码配件与品质生活好物'
+        shop.score = Decimal('4.9')
+        shop.product_count = Product.objects.count()
+        shop.sales = '12.8万'
+        shop.fans_count = '56.2万'
+        shop.save()
+
+        vip, _ = VIPMembership.objects.get_or_create(user=user)
+        vip.level = 'silver'
+        vip.points = max(vip.points, 1280)
+        vip.growth_value = max(vip.growth_value, 2680)
+        vip.expire_date = (timezone.now() + timedelta(days=365)).date()
+        vip.save()
+        self.stdout.write('  ShopInfo and VIP ready')

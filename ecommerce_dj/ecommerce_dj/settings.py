@@ -4,8 +4,11 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-*x+y3fod4uw287*&^so&=_)w2n_2=5xr7f4h%f9(xw+wzm6v(g')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+_SECRET_KEY_DEFAULT = 'django-insecure-local-dev-only-do-not-use-in-production'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', _SECRET_KEY_DEFAULT if DEBUG else '')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY environment variable must be set in production (DEBUG=False)")
 ALLOWED_HOSTS = ['*']
 
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8080')
@@ -58,10 +61,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ecommerce_dj.wsgi.application'
 
-# PostgreSQL (Neon)
-DATABASES = {
-    'default': dj_database_url.parse(os.environ['DATABASE_URL'], conn_max_age=600)
-}
+# PostgreSQL (Neon) or SQLite fallback for local dev
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ['DATABASE_URL'], conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

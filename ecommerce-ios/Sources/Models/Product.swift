@@ -31,6 +31,7 @@ struct Product: Identifiable, Hashable, Codable {
     }
 
     var imageURL: URL? { URL(string: image) }
+    var hasImage: Bool { !image.isEmpty }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -54,7 +55,7 @@ struct Product: Identifiable, Hashable, Codable {
             originalPrice = nil
         }
 
-        image = try container.decode(String.self, forKey: .image)
+        image = try container.decodeIfPresent(String.self, forKey: .image) ?? ""
 
         // Rating can be string or number from backend
         if let ratingStr = try? container.decode(String.self, forKey: .rating) {
@@ -77,7 +78,7 @@ struct Product: Identifiable, Hashable, Codable {
             salesCount = try container.decode(Int.self, forKey: .salesCount)
         }
         isInStock = try container.decode(Bool.self, forKey: .isInStock)
-        tag = try container.decode(String.self, forKey: .tag)
+        tag = try container.decodeIfPresent(String.self, forKey: .tag) ?? ""
 
         // Parse subcategory from backend
         subcategoryRef = try container.decodeIfPresent(SubcategoryRef.self, forKey: .subcategory)
@@ -138,11 +139,7 @@ struct Product: Identifiable, Hashable, Codable {
     }
 
     var formattedPrice: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "CNY"
-        formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: NSDecimalNumber(decimal: price)) ?? "¥\(price)"
+        price.rmbText
     }
 
     var formattedOriginalPrice: String? {
@@ -192,7 +189,7 @@ struct Category: Identifiable, Hashable, Codable {
         subcategories = try container.decodeIfPresent([String].self, forKey: .subcategories) ?? []
     }
 
-    // Manual initializer for static all array
+    // Manual initializer for SwiftUI previews and local placeholders.
     init(id: String, name: String, iconName: String, bannerName: String, subcategories: [String]) {
         self.id = id
         self.name = name
@@ -211,14 +208,14 @@ struct Category: Identifiable, Hashable, Codable {
     }
 
     static let all: [Category] = [
-        Category(id: "cat_women", name: "女装", iconName: "icon_fashion", bannerName: "https://picsum.photos/600/200?random=201", subcategories: ["T恤", "连衣裙", "牛仔裤", "外套", "衬衫", "半身裙"]),
-        Category(id: "cat_men", name: "男装", iconName: "icon_mens", bannerName: "https://picsum.photos/600/200?random=202", subcategories: ["T恤", "休闲裤", "牛仔裤", "外套", "衬衫", "卫衣"]),
-        Category(id: "cat_skincare", name: "美妆护肤", iconName: "icon_skincare", bannerName: "https://picsum.photos/600/200?random=203", subcategories: ["护肤", "彩妆", "面膜", "洁面", "精华", "防晒"]),
-        Category(id: "cat_digital", name: "数码电子", iconName: "icon_phone", bannerName: "https://picsum.photos/600/200?random=204", subcategories: ["手机", "耳机", "充电宝", "数据线", "键盘", "鼠标"]),
-        Category(id: "cat_home", name: "家居生活", iconName: "icon_home", bannerName: "https://picsum.photos/600/200?random=205", subcategories: ["收纳", "清洁", "餐厨", "家纺", "装饰", "绿植"]),
-        Category(id: "cat_sport", name: "运动户外", iconName: "icon_sport", bannerName: "https://picsum.photos/600/200?random=206", subcategories: ["运动鞋", "健身服", "球类", "泳装", "户外装备", "瑜伽"]),
-        Category(id: "cat_food", name: "食品生鲜", iconName: "icon_food", bannerName: "https://picsum.photos/600/200?random=207", subcategories: ["水果", "零食", "粮油", "饮料", "肉禽", "海鲜"]),
-        Category(id: "cat_accessories", name: "潮流配饰", iconName: "icon_beauty", bannerName: "https://picsum.photos/600/200?random=208", subcategories: ["腕表", "包袋", "围巾", "帽子", "饰品", "眼镜"]),
+        Category(id: "cat_women", name: "女装", iconName: "icon_fashion", bannerName: "", subcategories: ["T恤", "连衣裙", "牛仔裤", "外套", "衬衫", "半身裙"]),
+        Category(id: "cat_men", name: "男装", iconName: "icon_mens", bannerName: "", subcategories: ["T恤", "休闲裤", "牛仔裤", "外套", "衬衫", "卫衣"]),
+        Category(id: "cat_skincare", name: "美妆护肤", iconName: "icon_skincare", bannerName: "", subcategories: ["护肤", "彩妆", "面膜", "洁面", "精华", "防晒"]),
+        Category(id: "cat_digital", name: "数码电子", iconName: "icon_phone", bannerName: "", subcategories: ["手机", "耳机", "充电宝", "数据线", "键盘", "鼠标"]),
+        Category(id: "cat_home", name: "家居生活", iconName: "icon_home", bannerName: "", subcategories: ["收纳", "清洁", "餐厨", "家纺", "装饰", "绿植"]),
+        Category(id: "cat_sport", name: "运动户外", iconName: "icon_sport", bannerName: "", subcategories: ["运动鞋", "健身服", "球类", "泳装", "户外装备", "瑜伽"]),
+        Category(id: "cat_food", name: "食品生鲜", iconName: "icon_food", bannerName: "", subcategories: ["水果", "零食", "粮油", "饮料", "肉禽", "海鲜"]),
+        Category(id: "cat_accessories", name: "潮流配饰", iconName: "icon_beauty", bannerName: "", subcategories: ["腕表", "包袋", "围巾", "帽子", "饰品", "眼镜"]),
     ]
 }
 
@@ -300,16 +297,6 @@ struct Banner: Identifiable, Hashable, Codable {
             return [Color.orange.opacity(0.8), Color.red.opacity(0.6)]
         }
     }
-}
-
-// MARK: - CategoryPage Model
-struct CategoryPage: Identifiable, Hashable, Codable {
-    let id: String
-    let name: String
-    let iconName: String
-    let bannerName: String
-    let subcategories: [String]
-    let products: [Product]
 }
 
 // MARK: - Product API
@@ -402,16 +389,6 @@ extension Product {
         return Array(products.prefix(6))
     }
 
-    static let categoryPages: [CategoryPage] = [
-        CategoryPage(id: "cp_women", name: "女装", iconName: "icon_fashion", bannerName: "https://picsum.photos/600/200?random=201", subcategories: ["T恤", "连衣裙", "牛仔裤", "外套", "衬衫", "半身裙"], products: []),
-        CategoryPage(id: "cp_men", name: "男装", iconName: "icon_mens", bannerName: "https://picsum.photos/600/200?random=202", subcategories: ["T恤", "休闲裤", "牛仔裤", "外套", "衬衫", "卫衣"], products: []),
-        CategoryPage(id: "cp_skincare", name: "美妆护肤", iconName: "icon_skincare", bannerName: "https://picsum.photos/600/200?random=203", subcategories: ["护肤", "彩妆", "面膜", "洁面", "精华", "防晒"], products: []),
-        CategoryPage(id: "cp_digital", name: "数码电子", iconName: "icon_phone", bannerName: "https://picsum.photos/600/200?random=204", subcategories: ["手机", "耳机", "充电宝", "数据线", "键盘", "鼠标"], products: []),
-        CategoryPage(id: "cp_home", name: "家居生活", iconName: "icon_home", bannerName: "https://picsum.photos/600/200?random=205", subcategories: ["收纳", "清洁", "餐厨", "家纺", "装饰", "绿植"], products: []),
-        CategoryPage(id: "cp_sport", name: "运动户外", iconName: "icon_sport", bannerName: "https://picsum.photos/600/200?random=206", subcategories: ["运动鞋", "健身服", "球类", "泳装", "户外装备", "瑜伽"], products: []),
-        CategoryPage(id: "cp_food", name: "食品生鲜", iconName: "icon_food", bannerName: "https://picsum.photos/600/200?random=207", subcategories: ["水果", "零食", "粮油", "饮料", "肉禽", "海鲜"], products: []),
-        CategoryPage(id: "cp_accessories", name: "潮流配饰", iconName: "icon_beauty", bannerName: "https://picsum.photos/600/200?random=208", subcategories: ["腕表", "包袋", "围巾", "帽子", "饰品", "眼镜"], products: []),
-    ]
 }
 
 // MARK: - Home Section Response Models
@@ -419,7 +396,13 @@ struct FlashSaleSection: Codable {
     let id: String
     let title: String
     let subtitle: String?
+    let endTime: Date?
     let products: [Product]
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, subtitle, products
+        case endTime = "end_time"
+    }
 }
 
 struct HotRankSection: Codable {
@@ -594,7 +577,7 @@ struct ProductDetail: Codable {
             originalPrice = nil
         }
 
-        image = try container.decode(String.self, forKey: .image)
+        image = try container.decodeIfPresent(String.self, forKey: .image) ?? ""
         subcategoryRef = try container.decodeIfPresent(SubcategoryRef.self, forKey: .subcategory)
 
         if let ratingStr = try? container.decode(String.self, forKey: .rating) {
@@ -640,11 +623,7 @@ struct ProductDetail: Codable {
     }
 
     var formattedPrice: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "CNY"
-        formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: NSDecimalNumber(decimal: price)) ?? "¥\(price)"
+        price.rmbText
     }
 
     var imageURL: URL? { URL(string: image) }
@@ -708,8 +687,54 @@ struct SpecAvailableResponse: Codable {
     }
 }
 
+// MARK: - Product Review Model
+struct ProductReviewItem: Identifiable, Codable {
+    let id: String
+    let userName: String
+    let userAvatar: String?
+    let rating: Int
+    let content: String
+    let spec: String
+    let images: [String]
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, rating, content, spec, images
+        case userName = "user_name"
+        case userAvatar = "user_avatar"
+        case createdAt = "created_at"
+    }
+}
+
 // MARK: - Product API Extensions
 extension Product {
+    static func getReviews(id: String) async throws -> [ProductReviewItem] {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.productReviews(id),
+            requiresAuth: false
+        )
+    }
+
+    static func createReview(productId: String, rating: Int, content: String, isAnonymous: Bool, images: [String] = []) async throws {
+        struct ReviewRequest: Encodable {
+            let rating: Int
+            let content: String
+            let spec: String
+            let isAnonymous: Bool
+            let images: [String]
+            enum CodingKeys: String, CodingKey {
+                case rating, content, spec, images
+                case isAnonymous = "is_anonymous"
+            }
+        }
+        _ = try await APIClient.shared.request(
+            endpoint: APIEndpoints.productReviews(productId),
+            method: "POST",
+            body: ReviewRequest(rating: rating, content: content, spec: "", isAnonymous: isAnonymous, images: images),
+            requiresAuth: true
+        ) as ProductReviewItem
+    }
+
     static func getDetail(id: String) async throws -> ProductDetail {
         return try await APIClient.shared.request(
             endpoint: APIEndpoints.product(id),

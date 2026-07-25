@@ -3,7 +3,6 @@ import SwiftUI
 struct CouponView: View {
     @StateObject private var viewModel = CouponViewModel()
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -11,16 +10,23 @@ struct CouponView: View {
             tabBar
 
             // Coupon List
-            if viewModel.filteredCoupons.isEmpty {
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.filteredCoupons.isEmpty {
                 emptyView
             } else {
                 couponList
             }
         }
-        .background(Color(hex: "F5F5F5"))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("优惠券")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($viewModel.errorMessage, bottomPadding: 80)
+        .task {
+            await viewModel.loadCoupons()
+        }
     }
 
     // MARK: - Tab Bar
@@ -64,9 +70,9 @@ struct CouponView: View {
 
 // MARK: - Coupon Card
 struct CouponCard: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     let coupon: Coupon
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
     private let gradientColors = [Color(hex: "FF6B4A"), Color(hex: "FF8E6B")]
 
     var body: some View {
@@ -120,13 +126,13 @@ struct CouponCard: View {
                     .padding(.top, 6)
 
                 if coupon.status == .available {
-                    Button(action: {}) {
-                        Text("立即领取")
+                    Button(action: { appNavigation.selectedTab = .cart }) {
+                        Text("立即使用")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 5)
-                            .background(accentColor)
+                            .background(DesignSystem.Colors.accent)
                             .clipShape(Capsule())
                     }
                     .padding(.top, 6)
@@ -169,7 +175,7 @@ struct CouponCard: View {
 
 // MARK: - Coupon
 struct Coupon: Identifiable {
-    let id: UUID
+    let id: String
     let title: String
     let desc: String
     let value: Int
@@ -187,13 +193,9 @@ enum CouponStatus {
 // MARK: - Coupon ViewModel
 class CouponViewModel: ObservableObject {
     @Published var selectedTab: String = "可用"
-    @Published var coupons: [Coupon] = [
-        Coupon(id: UUID(), title: "新人专享券", desc: "全场通用（除特例商品）", value: 20, condition: "满99元可用", dateRange: "2026.03.01-2026.03.31", status: .available),
-        Coupon(id: UUID(), title: "限时折扣券", desc: "指定商品可用", value: 50, condition: "满299元可用", dateRange: "2026.03.01-2026.03.31", status: .available),
-        Coupon(id: UUID(), title: "会员专享券", desc: "全场通用", value: 100, condition: "满599元可用", dateRange: "2026.03.01-2026.03.15", status: .available),
-        Coupon(id: UUID(), title: "节日特惠券", desc: "全场通用", value: 30, condition: "满149元可用", dateRange: "2026.02.01-2026.02.28", status: .expired),
-        Coupon(id: UUID(), title: "积分兑换券", desc: "指定商品可用", value: 15, condition: "满79元可用", dateRange: "2026.01.15-2026.02.15", status: .used)
-    ]
+    @Published var coupons: [Coupon] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String? = nil
 
     let tabs = ["可用", "已使用", "已过期"]
 
@@ -209,10 +211,48 @@ class CouponViewModel: ObservableObject {
             return coupons
         }
     }
+
+    @MainActor
+    func loadCoupons() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let remoteCoupons = try await UserCoupon.getCoupons()
+            errorMessage = nil
+            coupons = remoteCoupons.map { coupon in
+                Coupon(
+                    id: coupon.id,
+                    title: coupon.name,
+                    desc: coupon.description,
+                    value: coupon.discountValue,
+                    condition: coupon.threshold,
+                    dateRange: coupon.time,
+                    status: CouponStatus(rawValue: coupon.status)
+                )
+            }
+        } catch {
+            coupons = []
+            errorMessage = userFacingErrorMessage(error, fallback: "优惠券加载失败")
+        }
+    }
+}
+
+private extension CouponStatus {
+    init(rawValue: String) {
+        switch rawValue {
+        case "used":
+            self = .used
+        case "expired":
+            self = .expired
+        default:
+            self = .available
+        }
+    }
 }
 
 #Preview {
     NavigationStack {
         CouponView()
     }
+    .environmentObject(AppNavigation())
 }

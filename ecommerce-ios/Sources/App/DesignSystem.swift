@@ -16,21 +16,33 @@ enum DesignSystem {
     enum Radius {
         static let sm: CGFloat = 8
         static let md: CGFloat = 12
-        static let lg: CGFloat = 16
-        static let xl: CGFloat = 24
+        static let lg: CGFloat = 20
+        static let xl: CGFloat = 28
         static let xxl: CGFloat = 32
     }
 
     // MARK: Colors
     enum Colors {
-        static let accent = Color(red: 1.0, green: 0.27, blue: 0.23)
-        static let background = Color(.systemBackground)
-        static let secondaryBackground = Color(.secondarySystemBackground)
-        static let tertiaryBackground = Color(.tertiarySystemBackground)
-        static let text = Color(.label)
-        static let secondaryText = Color(.secondaryLabel)
-        static let tertiaryText = Color(.tertiaryLabel)
-        static let separator = Color(.separator)
+        static let accent = Color(hex: "FF6B4A")
+        static let accentDark = Color(hex: "E85A3A")
+        static let accentLight = Color(hex: "FF8A6A")
+        static let accentSoft = Color(hex: "FFF0ED")
+        static let dark = Color(hex: "1A1A1A")
+        static let dark2 = Color(hex: "2D2D2D")
+        static let gray1 = Color(hex: "666666")
+        static let gray2 = Color(hex: "999999")
+        static let gray3 = Color(hex: "CCCCCC")
+        static let gray4 = Color(hex: "E5E5E5")
+        static let light = Color(hex: "F8F8F8")
+        static let pageBackground = Color(hex: "F5F5F5")
+        static let surface = Color.white
+        static let background = Color.white
+        static let secondaryBackground = Color(hex: "F8F8F8")
+        static let tertiaryBackground = Color(hex: "F2F2F2")
+        static let text = Color(hex: "1A1A1A")
+        static let secondaryText = Color(hex: "666666")
+        static let tertiaryText = Color(hex: "999999")
+        static let separator = Color.black.opacity(0.06)
         static let success = Color.green
         static let warning = Color.orange
         static let error = Color.red
@@ -50,6 +62,192 @@ enum DesignSystem {
         static let smooth = SwiftUI.Animation.spring(response: 0.5, dampingFraction: 0.8)
         static let bouncy = SwiftUI.Animation.spring(response: 0.4, dampingFraction: 0.6)
         static let quick = SwiftUI.Animation.easeInOut(duration: 0.15)
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3:
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6:
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8:
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
+// MARK: - H5-Aligned Shared UI
+struct H5SearchNav: View {
+    let placeholder: String
+    let searchDestination: SearchView
+    let trailing: AnyView
+
+    init(placeholder: String = "搜索", searchDestination: SearchView = SearchView()) {
+        self.placeholder = placeholder
+        self.searchDestination = searchDestination
+        self.trailing = AnyView(EmptyView())
+    }
+
+    init<Trailing: View>(
+        placeholder: String = "搜索",
+        searchDestination: SearchView = SearchView(),
+        @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.placeholder = placeholder
+        self.searchDestination = searchDestination
+        self.trailing = AnyView(trailing())
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            NavigationLink(destination: searchDestination) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(DesignSystem.Colors.gray2)
+
+                    Text(placeholder)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(DesignSystem.Colors.gray2)
+
+                    Spacer()
+                }
+                .frame(height: 36)
+                .padding(.horizontal, 14)
+                .background(Color(hex: "F2F2F2"))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            trailing
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .background(Color.white)
+        .overlay(
+            Rectangle()
+                .fill(DesignSystem.Colors.separator)
+                .frame(height: 0.5),
+            alignment: .bottom
+        )
+    }
+}
+
+struct H5IconButton: View {
+    let systemName: String
+    var badge: Int? = nil
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .topTrailing) {
+                Image(systemName: systemName)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.dark)
+                    .frame(width: 40, height: 40)
+                    .background(Color.white)
+                    .clipShape(Circle())
+
+                if let badge, badge > 0 {
+                    Text("\(min(badge, 99))")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 15, minHeight: 15)
+                        .padding(.horizontal, 2)
+                        .background(DesignSystem.Colors.accent)
+                        .clipShape(Capsule())
+                        .offset(x: 2, y: 4)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct H5PageHeader: View {
+    let title: String
+    var showsBackButton: Bool = true
+    let trailing: AnyView
+    @Environment(\.dismiss) private var dismiss
+
+    init(title: String, showsBackButton: Bool = true) {
+        self.title = title
+        self.showsBackButton = showsBackButton
+        self.trailing = AnyView(EmptyView())
+    }
+
+    init<Trailing: View>(
+        title: String,
+        showsBackButton: Bool = true,
+        @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.title = title
+        self.showsBackButton = showsBackButton
+        self.trailing = AnyView(trailing())
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Group {
+                if showsBackButton {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Colors.dark)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Color.clear.frame(width: 44, height: 44)
+                }
+            }
+
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(DesignSystem.Colors.dark)
+                .frame(maxWidth: .infinity)
+
+            trailing
+                .frame(width: 44, height: 44)
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 52)
+        .background(Color.white)
+        .overlay(
+            Rectangle()
+                .fill(DesignSystem.Colors.separator)
+                .frame(height: 0.5),
+            alignment: .bottom
+        )
+    }
+}
+
+struct H5Section<Content: View>: View {
+    var horizontalPadding: CGFloat = 16
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        content()
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white)
     }
 }
 

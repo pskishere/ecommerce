@@ -2,49 +2,68 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var authManager: LoginView
     @State private var pushNotificationsEnabled = true
     @State private var smsNotificationsEnabled = false
+    @State private var showProfileInfo = false
+    @State private var showNotifications = false
+    @State private var settingsMessage: String?
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Section 1: Account
-                section1
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Section 1: Account
+                    section1
 
-                Spacer().frame(height: 10)
+                    Spacer().frame(height: 10)
 
-                // Section 2: General
-                section2
+                    // Section 2: General
+                    section2
 
-                Spacer().frame(height: 10)
+                    Spacer().frame(height: 10)
 
-                // Section 3: Notifications
-                section3
+                    // Section 3: Notifications
+                    section3
 
-                Spacer().frame(height: 20)
+                    Spacer().frame(height: 20)
 
-                // Logout Button
-                logoutButton
+                    // Logout Button
+                    logoutButton
 
-                // Version
-                versionText
+                    // Version
+                    versionText
+                }
+                .padding(.top, 8)
             }
-            .padding(.top, 8)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("设置")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .navigationDestination(isPresented: $showProfileInfo) {
+            ProfileInfoView()
+        }
+        .navigationDestination(isPresented: $showNotifications) {
+            NotificationsView()
+        }
+        .alert("提示", isPresented: Binding(
+            get: { settingsMessage != nil },
+            set: { if !$0 { settingsMessage = nil } }
+        )) {
+            Button("知道了", role: .cancel) { settingsMessage = nil }
+        } message: {
+            Text(settingsMessage ?? "")
+        }
     }
 
     // MARK: - Section 1: Account
     private var section1: some View {
         VStack(spacing: 0) {
-            settingsItemRow(icon: "person.fill", title: "个人资料") { }
-            settingsItemRow(icon: "lock.fill", title: "账号安全") { }
-            settingsItemRow(icon: "bell.fill", title: "消息通知", valueText: "接收") { }
+            settingsItemRow(icon: "person.fill", title: "个人资料") { showProfileInfo = true }
+            settingsItemRow(icon: "lock.fill", title: "账号安全") { settingsMessage = "账号安全正常" }
+            settingsItemRow(icon: "bell.fill", title: "消息通知", valueText: "接收") { showNotifications = true }
         }
         .background(Color.white)
     }
@@ -52,9 +71,9 @@ struct SettingsView: View {
     // MARK: - Section 2: General
     private var section2: some View {
         VStack(spacing: 0) {
-            settingsItemRow(icon: "gear", title: "通用设置") { }
-            settingsItemRow(icon: "info.circle", title: "关于我们") { }
-            settingsItemRow(icon: "questionmark.circle", title: "帮助与反馈") { }
+            settingsItemRow(icon: "gear", title: "通用设置") { settingsMessage = "通用设置已同步" }
+            settingsItemRow(icon: "info.circle", title: "关于我们") { settingsMessage = "潮流好物 v1.0.0" }
+            settingsItemRow(icon: "questionmark.circle", title: "帮助与反馈") { settingsMessage = "客服已收到反馈入口" }
         }
         .background(Color.white)
     }
@@ -64,7 +83,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             toggleSettingsRow(icon: "bell.fill", title: "推送通知", isOn: $pushNotificationsEnabled)
             toggleSettingsRow(icon: "envelope.fill", title: "短信通知", isOn: $smsNotificationsEnabled)
-            settingsItemRow(icon: "person.2.fill", title: "第三方账号") { }
+            settingsItemRow(icon: "person.2.fill", title: "第三方账号") { settingsMessage = "暂无绑定的第三方账号" }
         }
         .background(Color.white)
     }
@@ -115,7 +134,7 @@ struct SettingsView: View {
             Spacer()
 
             Toggle("", isOn: isOn)
-                .tint(accentColor)
+                .tint(DesignSystem.Colors.accent)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -123,10 +142,13 @@ struct SettingsView: View {
 
     // MARK: - Logout Button
     private var logoutButton: some View {
-        Button(action: {}) {
+        Button(action: {
+            authManager.logout()
+            dismiss()
+        }) {
             Text("退出登录")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(accentColor)
+                .foregroundStyle(DesignSystem.Colors.accent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(Color.white)
@@ -148,4 +170,5 @@ struct SettingsView: View {
     NavigationStack {
         SettingsView()
     }
+    .environmentObject(LoginView.shared)
 }

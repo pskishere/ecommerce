@@ -4,24 +4,29 @@ struct AddressView: View {
     @State private var addresses: [Address] = []
     @State private var isLoading = true
     @State private var showingAddAddress = false
+    @State private var editingAddress: Address?
+    @State private var toast: String? = nil
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            VStack(spacing: 0) {
-                if isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if addresses.isEmpty {
-                    emptyState
-                } else {
-                    addressList
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
+                VStack(spacing: 0) {
+                    if isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if addresses.isEmpty {
+                        emptyState
+                    } else {
+                        addressList
+                    }
                 }
-            }
-            .padding(.bottom, 80)
+                .padding(.bottom, 80)
 
-            addButton
+                addButton
+            }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
+        .toast($toast, bottomPadding: 96)
         .navigationTitle("地址管理")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -34,13 +39,18 @@ struct AddressView: View {
             }
         }
         .hideTabBar()
+        .navigationDestination(isPresented: $showingAddAddress) {
+            AddressEditView(onSaved: {
+                Task { await loadAddresses() }
+            })
+        }
+        .navigationDestination(item: $editingAddress) { address in
+            AddressEditView(address: address, onSaved: {
+                Task { await loadAddresses() }
+            })
+        }
         .task {
-            do {
-                addresses = try await Address.getAddresses()
-            } catch {
-                print("Failed to load addresses: \(error)")
-            }
-            isLoading = false
+            await loadAddresses()
         }
     }
 
@@ -71,7 +81,7 @@ struct AddressView: View {
                         address: address,
                         isDefault: address.isDefault,
                         onSetDefault: { Task { await setDefault(address) } },
-                        onEdit: { },
+                        onEdit: { editingAddress = address },
                         onDelete: { Task { await deleteAddress(address) } }
                     )
                 }
@@ -107,21 +117,37 @@ struct AddressView: View {
         }
     }
 
+    private func loadAddresses() async {
+        isLoading = true
+        do {
+            addresses = try await Address.getAddresses()
+        } catch {
+            toast = "加载地址失败"
+        }
+        isLoading = false
+    }
+
     private func setDefault(_ address: Address) async {
         do {
             try await Address.setDefaultAddress(id: address.id)
             addresses = try await Address.getAddresses()
+            toast = "已设为默认地址"
         } catch {
-            print("Failed to set default address: \(error)")
+            toast = "设置失败，请重试"
         }
     }
 
     private func deleteAddress(_ address: Address) async {
+        guard addresses.count > 1 else {
+            toast = "至少保留一个地址"
+            return
+        }
         do {
             try await Address.deleteAddress(id: address.id)
             addresses = try await Address.getAddresses()
+            toast = "已删除地址"
         } catch {
-            print("Failed to delete address: \(error)")
+            toast = "删除失败，请重试"
         }
     }
 }

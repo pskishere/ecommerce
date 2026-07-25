@@ -147,14 +147,14 @@ function renderRightContent(cat) {
   })
 
   list.querySelectorAll('.cat-product-cart').forEach((btn, i) => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.stopPropagation()
-      addToCart(allProducts[i])
+      await addToCart(allProducts[i])
     })
   })
 }
 
-function addToCart(product) {
+async function addToCart(product) {
   if (!product) return
   try {
     let cart = JSON.parse(localStorage.getItem('cart') || '[]')
@@ -162,9 +162,12 @@ function addToCart(product) {
     if (existing) {
       existing.qty += 1
     } else {
-      cart.push({ id: product.id, name: product.name, price: product.price, img: product.image, qty: 1, selected: true })
+      cart.push({ id: product.id, name: product.name, price: product.price, img: product.img, qty: 1, selected: true })
     }
     localStorage.setItem('cart', JSON.stringify(cart))
+    if (localStorage.getItem('token')) {
+      await api.cart.addItem({ id: product.id, qty: 1 })
+    }
     updateTabCartBadge()
     showToast('已加入购物车')
   } catch (e) {

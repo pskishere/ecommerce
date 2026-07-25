@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
-    CartItem, Order, OrderProduct, Address, Review, Favorite, UserCoupon, Notification
+    CartItem, Order, OrderProduct, Address, Review, Favorite, BrowseHistory, UserCoupon, Notification
 )
 
 
@@ -114,6 +114,12 @@ class ReviewAdmin(admin.ModelAdmin):
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ['id', 'user_id', 'name', 'price']
+
+
+@admin.register(BrowseHistory)
+class BrowseHistoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user_id', 'product', 'viewed_at']
+    search_fields = ['product__name']
 
 
 

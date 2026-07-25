@@ -5,13 +5,140 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.db.models import Avg, Prefetch
+from django.utils import timezone
+from mediafiles.models import MediaFile
+import base64
+import binascii
+import uuid
 import json
+import re
 from datetime import datetime
+from decimal import Decimal
+from .serializers import get_image_url, sku_spec_text
 
 
 def api_response(data=None, msg='success', code=0):
     """统一API响应格式"""
     return Response({'code': code, 'msg': msg, 'data': data})
+
+
+def coupon_threshold_amount(coupon):
+    match = re.search(r'\d+(?:\.\d+)?', coupon.threshold or '')
+    return Decimal(match.group(0)) if match else Decimal('0')
+
+
+GENDER_INPUT_MAP = {
+    'male': 'male',
+    '男': 'male',
+    'female': 'female',
+    '女': 'female',
+    'secret': 'secret',
+    '保密': 'secret',
+    '': 'secret',
+    None: 'secret',
+}
+
+
+def mask_phone(phone):
+    phone = (phone or '').strip()
+    if len(phone) >= 7:
+        return f'{phone[:3]}****{phone[-4:]}'
+    return phone
+
+
+def parse_birthday(value):
+    if value in (None, ''):
+        return None, None
+    try:
+        return datetime.strptime(str(value), '%Y-%m-%d').date(), None
+    except (TypeError, ValueError):
+        return None, '生日格式应为 YYYY-MM-DD'
+
+
+def profile_payload(user, request):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    vip, _ = VIPMembership.objects.get_or_create(user=user)
+    gender_label = dict(UserProfile.GENDER_CHOICES).get(profile.gender, '保密')
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email or '',
+        'avatar_name': get_image_url(profile.avatar, context={'request': request}) or 'https://picsum.photos/200/200?random=100',
+        'phone': profile.phone or '',
+        'phone_masked': mask_phone(profile.phone),
+        'gender': profile.gender,
+        'gender_label': gender_label,
+        'birthday': profile.birthday.isoformat() if profile.birthday else '',
+        'registered_at': user.date_joined.date().isoformat() if user.date_joined else '',
+        'followCount': profile.follow_count,
+        'fansCount': profile.fans_count,
+        'points': vip.points or profile.points,
+        'vip_level': vip.level,
+        'vip_level_name': vip.get_level_display(),
+        'vip_expire_date': str(vip.expire_date) if vip.expire_date else None,
+    }
+
+
+def update_profile(user, data):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+
+    if 'username' in data:
+        username = str(data.get('username') or '').strip()
+        if not username:
+            return '昵称不能为空'
+        user.username = username
+    if 'email' in data:
+        user.email = str(data.get('email') or '').strip()
+
+    if 'phone' in data:
+        profile.phone = str(data.get('phone') or '').strip()
+    if 'gender' in data:
+        gender = GENDER_INPUT_MAP.get(data.get('gender'))
+        if gender is None:
+            return '性别参数无效'
+        profile.gender = gender
+    if 'birthday' in data:
+        birthday, error = parse_birthday(data.get('birthday'))
+        if error:
+            return error
+        profile.birthday = birthday
+    if 'avatar' in data:
+        avatar_data = data.get('avatar')
+        if avatar_data:
+            avatar = media_from_data_url(avatar_data, original_prefix='avatar')
+            if not avatar:
+                return '头像图片格式无效'
+            profile.avatar = avatar
+
+    user.save()
+    profile.save()
+    return None
+
+
+def media_from_data_url(data_url, original_prefix='review-image'):
+    if not isinstance(data_url, str) or not data_url.startswith('data:image/'):
+        return None
+    try:
+        header, encoded = data_url.split(',', 1)
+        match = re.match(r'data:(image/[a-zA-Z0-9+.-]+);base64', header)
+        if not match:
+            return None
+        mime_type = match.group(1)
+        ext = mime_type.split('/')[-1].split('+')[0]
+        raw = base64.b64decode(encoded)
+        if len(raw) > 5 * 1024 * 1024:
+            return None
+        media = MediaFile(
+            original_name=f'{original_prefix}.{ext}',
+            size=len(raw),
+            mime_type=mime_type,
+        )
+        media.file.save(f'{original_prefix}-{uuid.uuid4().hex}.{ext}', ContentFile(raw), save=True)
+        return media
+    except (ValueError, TypeError, binascii.Error):
+        return None
 
 
 class ResponseMixin:
@@ -27,12 +154,36 @@ class ResponseMixin:
         serializer = self.get_serializer(instance)
         return api_response(serializer.data)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return api_response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return api_response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return api_response()
+
 
 from .models import (
     Category, Subcategory, Product, ProductDetail,
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
-    CartItem, Order, OrderProduct, Address, Review, Favorite, UserCoupon, Notification,
-    SpecGroup, SpecValue, SKU, SKUSpec
+    CartItem, Order, OrderProduct, Address, Review, Favorite, BrowseHistory, UserCoupon, Notification, UserProfile,
+    SpecGroup, SpecValue, SKU, SKUSpec,
+    ShopInfo, VIPMembership, VIP_LEVEL_ORDER
 )
 
 from .serializers import (
@@ -41,8 +192,8 @@ from .serializers import (
     HomeBannerSerializer, HomeFlashSaleSerializer, HomeHotRankSerializer,
     HomeRecommendSerializer, HomeNewArrivalSerializer, HomePromotionSerializer,
     CartItemSerializer, OrderSerializer, OrderProductSerializer, AddressSerializer,
-    FavoriteSerializer, CouponSerializer, NotificationSerializer,
-    ReviewSerializer
+    FavoriteSerializer, BrowseHistorySerializer, CouponSerializer, NotificationSerializer,
+    ReviewSerializer, ShopInfoSerializer, VIPSerializer
 )
 
 
@@ -177,19 +328,6 @@ REGION_DATA = {
 }
 
 
-def get_image_url(image_field, context=None):
-    from django.conf import settings
-    if image_field and image_field.file:
-        if getattr(settings, 'GITHUB_RAW_URL', ''):
-            # Use GitHub Raw URL for images
-            filename = image_field.file.name  # e.g., "uploads/xxx.webp"
-            return f"{settings.GITHUB_RAW_URL}/{filename}"
-        if context and 'request' in context:
-            return context['request'].build_absolute_uri(image_field.file.url)
-        return image_field.file.url
-    return None
-
-
 # ============ SKU Algorithm ============
 class SKUService:
     def __init__(self, spec_groups, skus):
@@ -277,9 +415,23 @@ def get_user(request):
         raise AuthenticationFailed('无效的Token')
 
 
+def cart_item_price(item):
+    return item.sku.price if item.sku else item.product.price
+
+
+def cart_item_original_price(item):
+    if item.sku and item.sku.original_price:
+        return item.sku.original_price
+    return item.product.original_price or item.product.price
+
+
+def cart_item_image(item):
+    return item.sku.image if item.sku and item.sku.image else item.product.image
+
+
 # ============ ViewSets ============
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(is_in_stock=True)
+    queryset = Product.objects.filter(is_in_stock=True).select_related('image', 'subcategory__category')
     serializer_class = ProductListSerializer
     permission_classes = [AllowAny]
 
@@ -298,7 +450,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = self.get_serializer(instance)
             return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
-        except:
+        except Product.DoesNotExist:
             return Response({'code': 404, 'msg': 'product not found'})
 
     @action(detail=False, methods=['get'])
@@ -313,12 +465,36 @@ class ProductViewSet(viewsets.ModelViewSet):
             reviews = Review.objects.filter(product_id=pk)
             return Response({'code': 0, 'msg': 'success', 'data': ReviewSerializer(reviews, many=True, context={'request': request}).data})
         else:
-            user = get_user(request)
-            serializer = ReviewSerializer(data=request.data)
+            user = request.user if request.user.is_authenticated else get_user(request)
+            data = request.data.copy()
+            is_anonymous = str(data.pop('is_anonymous', data.pop('isAnonymous', False))).lower() in ('1', 'true', 'yes')
+            image_payloads = data.pop('images', data.pop('imageUrls', []))
+            if not image_payloads:
+                image_payloads = []
+            if isinstance(image_payloads, str):
+                image_payloads = [image_payloads]
+            serializer = ReviewSerializer(data=data)
             if serializer.is_valid():
-                serializer.save(user=user, product_id=pk, user_name='用户', user_avatar=None)
-                return Response({'code': 0, 'msg': 'created', 'data': serializer.data})
-            return Response({'code': 400, 'msg': 'invalid request'})
+                review = serializer.save(
+                    user=user,
+                    product_id=pk,
+                    user_name='匿名用户' if is_anonymous else user.username,
+                    user_avatar=None
+                )
+                media_files = [
+                    media
+                    for media in (media_from_data_url(payload) for payload in image_payloads[:6])
+                    if media is not None
+                ]
+                if media_files:
+                    review.images.add(*media_files)
+                stats = Review.objects.filter(product_id=pk).aggregate(avg=Avg('rating'))
+                Product.objects.filter(id=pk).update(
+                    review_count=Review.objects.filter(product_id=pk).count(),
+                    rating=stats['avg'] or 0
+                )
+                return Response({'code': 0, 'msg': 'created', 'data': ReviewSerializer(review, context={'request': request}).data})
+            return Response({'code': 400, 'msg': 'invalid request', 'data': serializer.errors})
 
     @action(detail=True, methods=['get'], url_path='spec-available')
     def spec_available(self, request, pk=None):
@@ -393,7 +569,7 @@ class CategoryViewSet(ResponseMixin, viewsets.ModelViewSet):
 
 
 class HomeBannerViewSet(viewsets.ModelViewSet):
-    queryset = HomeBanner.objects.filter(is_enabled=True)
+    queryset = HomeBanner.objects.filter(is_enabled=True).select_related('image')
     serializer_class = HomeBannerSerializer
     permission_classes = [AllowAny]
 
@@ -403,8 +579,13 @@ class HomeBannerViewSet(viewsets.ModelViewSet):
         return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
+_product_qs = Product.objects.select_related('image', 'subcategory__category')
+
+
 class HomeFlashSaleViewSet(viewsets.ModelViewSet):
-    queryset = HomeFlashSale.objects.filter(is_enabled=True)
+    queryset = HomeFlashSale.objects.filter(is_enabled=True).prefetch_related(
+        Prefetch('products', queryset=_product_qs)
+    )
     serializer_class = HomeFlashSaleSerializer
     permission_classes = [AllowAny]
 
@@ -415,7 +596,9 @@ class HomeFlashSaleViewSet(viewsets.ModelViewSet):
 
 
 class HomeHotRankViewSet(viewsets.ModelViewSet):
-    queryset = HomeHotRank.objects.filter(is_enabled=True)
+    queryset = HomeHotRank.objects.filter(is_enabled=True).prefetch_related(
+        Prefetch('products', queryset=_product_qs)
+    )
     serializer_class = HomeHotRankSerializer
     permission_classes = [AllowAny]
 
@@ -426,7 +609,9 @@ class HomeHotRankViewSet(viewsets.ModelViewSet):
 
 
 class HomeRecommendViewSet(viewsets.ModelViewSet):
-    queryset = HomeRecommend.objects.filter(is_enabled=True)
+    queryset = HomeRecommend.objects.filter(is_enabled=True).prefetch_related(
+        Prefetch('products', queryset=_product_qs)
+    )
     serializer_class = HomeRecommendSerializer
     permission_classes = [AllowAny]
 
@@ -437,7 +622,9 @@ class HomeRecommendViewSet(viewsets.ModelViewSet):
 
 
 class HomeNewArrivalViewSet(viewsets.ModelViewSet):
-    queryset = HomeNewArrival.objects.filter(is_enabled=True)
+    queryset = HomeNewArrival.objects.filter(is_enabled=True).prefetch_related(
+        Prefetch('products', queryset=_product_qs)
+    )
     serializer_class = HomeNewArrivalSerializer
     permission_classes = [AllowAny]
 
@@ -448,7 +635,7 @@ class HomeNewArrivalViewSet(viewsets.ModelViewSet):
 
 
 class HomePromotionViewSet(viewsets.ModelViewSet):
-    queryset = HomePromotion.objects.filter(is_enabled=True)
+    queryset = HomePromotion.objects.filter(is_enabled=True).select_related('image')
     serializer_class = HomePromotionSerializer
     permission_classes = [AllowAny]
 
@@ -464,27 +651,74 @@ class CartViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
 
     def get_queryset(self):
-        return CartItem.objects.filter(user=get_user(self.request)).select_related('product')
+        return CartItem.objects.filter(user=self.request.user).select_related(
+            'product__image', 'product__subcategory__category', 'sku__image'
+        ).prefetch_related('sku__spec_values__group')
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = CartItemSerializer(queryset, many=True, context={'request': request})
         items = serializer.data
         total = sum(
-            float(item['product']['price']) * item['quantity']
-            for item in items if item['is_selected']
+            float(cart_item_price(item)) * item.quantity
+            for item in queryset if item.is_selected
         )
         return Response({'code': 0, 'msg': 'success', 'data': {'items': items, 'total': total}})
 
     def create(self, request):
-        user = get_user(request)
+        user = request.user
         product_id = request.data.get('productId')
-        quantity = request.data.get('quantity', 1)
-        item, _ = CartItem.objects.get_or_create(user=user, product_id=product_id, defaults={'quantity': quantity})
-        if not _:
+        sku_id = request.data.get('skuId') or request.data.get('sku_id') or None
+        try:
+            quantity = int(request.data.get('quantity', 1))
+        except (TypeError, ValueError):
+            return api_response(msg='invalid quantity', code=400)
+        if quantity < 1:
+            return api_response(msg='invalid quantity', code=400)
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return api_response(msg='商品不存在', code=404)
+
+        sku = None
+        if sku_id:
+            try:
+                sku = SKU.objects.get(id=sku_id, product=product)
+            except SKU.DoesNotExist:
+                return api_response(msg='规格不存在', code=404)
+        elif product.skus.exists():
+            sku = product.skus.order_by('id').first()
+
+        if sku and sku.stock <= 0:
+            return api_response(msg='库存不足', code=400)
+
+        item, created = CartItem.objects.get_or_create(
+            user=user,
+            product=product,
+            sku=sku,
+            defaults={'quantity': quantity, 'is_selected': True}
+        )
+        if not created:
             item.quantity += quantity
+            item.is_selected = True
             item.save()
-        return Response({'code': 0, 'msg': 'added to cart', 'data': {'id': str(item.id)}})
+        return api_response(CartItemSerializer(item, context={'request': request}).data, msg='added to cart')
+
+    def update(self, request, pk=None):
+        item = self.get_object()
+        try:
+            quantity = int(request.data.get('quantity', item.quantity))
+        except (TypeError, ValueError):
+            return api_response(msg='invalid quantity', code=400)
+        if quantity < 1:
+            return api_response(msg='invalid quantity', code=400)
+        item.quantity = quantity
+        item.save()
+        return api_response(CartItemSerializer(item, context={'request': request}).data)
+
+    def partial_update(self, request, pk=None):
+        return self.update(request, pk=pk)
 
     @action(detail=True, methods=['patch'])
     def toggle(self, request, pk=None):
@@ -496,8 +730,12 @@ class CartViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['put'])
     def select_all(self, request):
         selected = request.GET.get('selected', 'true') == 'true'
-        CartItem.objects.filter(user=get_user(request)).update(is_selected=selected)
+        CartItem.objects.filter(user=request.user).update(is_selected=selected)
         return Response({'code': 0, 'msg': 'success'})
+
+    @action(detail=False, methods=['put'], url_path='select-all')
+    def select_all_hyphen(self, request):
+        return self.select_all(request)
 
     def destroy(self, request, pk=None):
         item = self.get_object()
@@ -506,7 +744,7 @@ class CartViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['delete'])
     def clear(self, request):
-        CartItem.objects.filter(user=get_user(request)).delete()
+        CartItem.objects.filter(user=request.user).delete()
         return Response({'code': 0, 'msg': 'cleared'})
 
 
@@ -521,16 +759,19 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
         return api_response(serializer.data)
 
     def get_queryset(self):
-        qs = Order.objects.filter(user=get_user(self.request))
+        qs = Order.objects.filter(user=self.request.user).prefetch_related('products__image')
         status = self.request.GET.get('status')
-        if status:
+        if status == 'refund':
+            qs = qs.exclude(after_sale_status='none')
+        elif status:
             qs = qs.filter(status=status)
         return qs.order_by('-created_at')
 
     def create(self, request):
-        user = get_user(request)
+        user = request.user
         cart_item_ids = request.data.get('cartItemIds', [])
         address_id = request.data.get('addressId')
+        coupon_id = request.data.get('couponId')
         remark = request.data.get('remark', '')
 
         # 获取地址副本
@@ -541,35 +782,54 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
             except Address.DoesNotExist:
                 pass
 
-        total = 0
+        total = Decimal('0')
         order_items = []
         for cid in cart_item_ids:
             try:
-                item = CartItem.objects.select_related('product').get(id=cid, user=user)
-                total += float(item.product.price) * item.quantity
+                item = CartItem.objects.select_related(
+                    'product__image', 'sku__image'
+                ).prefetch_related('sku__spec_values__group').get(id=cid, user=user)
+                unit_price = cart_item_price(item)
+                total += unit_price * item.quantity
                 order_items.append({
+                    'product_id': item.product_id,
                     'name': item.product.name,
-                    'spec': '',
-                    'price': float(item.product.price),
+                    'spec': sku_spec_text(item.sku),
+                    'price': unit_price,
                     'quantity': item.quantity,
-                    'image': item.product.image,
+                    'image': cart_item_image(item),
                 })
-                item.delete()
             except CartItem.DoesNotExist:
                 pass
 
         if not order_items:
             return Response({'code': 400, 'msg': '购物车为空'})
 
+        freight = Decimal('0') if total >= Decimal('99') else Decimal('10')
+        discount = Decimal('0')
+        coupon = None
+        if coupon_id:
+            try:
+                coupon = UserCoupon.objects.get(id=coupon_id, user=user, status='available')
+                threshold = coupon_threshold_amount(coupon)
+                if total >= threshold:
+                    discount = Decimal(str(coupon.value))
+                else:
+                    coupon = None
+            except UserCoupon.DoesNotExist:
+                pass
+
+        payment = max(Decimal('0'), total + freight - discount)
+
         order = Order.objects.create(
             user=user,
-            id=f"ORH5{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            id=f"ORH5{datetime.now().strftime('%Y%m%d%H%M%S%f')[:20]}",
             store='潮流优品官方旗舰店',
             status='pending',
             total_amount=total,
-            payment=total,
-            freight=0,
-            discount=0,
+            payment=payment,
+            freight=freight,
+            discount=discount,
             address_name=address.name if address else '',
             address_phone=address.phone if address else '',
             address_province=address.province if address else '',
@@ -579,37 +839,63 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
         )
         for item in order_items:
             OrderProduct.objects.create(order=order, **item)
+        CartItem.objects.filter(id__in=cart_item_ids, user=user).delete()
+        if coupon and discount > 0:
+            coupon.status = 'used'
+            coupon.save(update_fields=['status'])
+        Notification.objects.create(
+            user=user,
+            type='order',
+            name='订单已提交',
+            time='刚刚',
+            content=f'订单 {order.id} 已生成，请在支付页完成付款。',
+            action='去支付'
+        )
         return Response({'code': 0, 'msg': 'order created', 'data': OrderSerializer(order, context={'request': request}).data})
 
     @action(detail=False, methods=['post'])
     def preview(self, request):
         """预订单接口 - 不入库，只返回预览数据"""
-        user = get_user(request)
+        user = request.user
         cart_item_ids = request.data.get('cartItemIds', [])
         address_id = request.data.get('addressId')
+        coupon_id = request.data.get('couponId')
 
         items = []
         total = 0
         for cid in cart_item_ids:
             try:
-                item = CartItem.objects.select_related('product').get(id=cid, user=user)
-                item_total = float(item.product.price) * item.quantity
+                item = CartItem.objects.select_related(
+                    'product__image', 'sku__image'
+                ).prefetch_related('sku__spec_values__group').get(id=cid, user=user)
+                unit_price = cart_item_price(item)
+                item_total = float(unit_price) * item.quantity
                 total += item_total
                 items.append({
                     'cartId': str(item.id),
                     'productId': str(item.product.id),
                     'name': item.product.name,
-                    'spec': '',
-                    'price': float(item.product.price),
-                    'originalPrice': float(item.product.original_price),
+                    'skuId': str(item.sku_id or ''),
+                    'spec': sku_spec_text(item.sku),
+                    'price': float(unit_price),
+                    'originalPrice': float(cart_item_original_price(item)),
                     'quantity': item.quantity,
-                    'image': get_image_url(item.product.image, context={'request': request}),
+                    'image': get_image_url(cart_item_image(item), context={'request': request}),
                 })
             except CartItem.DoesNotExist:
                 pass
 
-        # 计算运费
         freight = 0 if total >= 99 else 10
+        discount = 0
+        if coupon_id:
+            try:
+                coupon = UserCoupon.objects.get(id=coupon_id, user=user, status='available')
+                threshold = float(coupon_threshold_amount(coupon))
+                if total >= threshold:
+                    discount = float(coupon.value)
+            except UserCoupon.DoesNotExist:
+                pass
+        payment = max(0, total + freight - discount)
 
         return Response({
             'code': 0,
@@ -618,7 +904,9 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
                 'items': items,
                 'subtotal': total,
                 'freight': freight,
+                'discount': discount,
                 'total': total + freight,
+                'payment': payment,
                 'store': '官方旗舰店',
             }
         })
@@ -629,21 +917,140 @@ class OrderViewSet(ResponseMixin, viewsets.ModelViewSet):
         if order.status == 'pending':
             order.status = 'cancelled'
             order.save()
-        return Response({'code': 0, 'msg': 'order cancelled'})
+            Notification.objects.create(
+                user=request.user,
+                type='order',
+                name='订单已取消',
+                time='刚刚',
+                content=f'订单 {order.id} 已取消，未支付款项不会扣除。',
+                action='查看订单'
+            )
+        return api_response(OrderSerializer(order, context={'request': request}).data, msg='order cancelled')
 
     @action(detail=True, methods=['put'])
     def pay(self, request, pk=None):
         order = self.get_object()
+        if order.status != 'pending':
+            return api_response(msg='订单状态不可支付', code=400)
         order.status = 'paid'
+        order.pay_time = timezone.now()
         order.save()
-        return Response({'code': 0, 'msg': 'payment successful'})
+        vip, _ = VIPMembership.objects.get_or_create(user=request.user)
+        points = int(order.payment or 0)
+        vip.points += points
+        vip.growth_value += points
+        vip.save()
+        Notification.objects.create(
+            user=request.user,
+            type='order',
+            name='支付成功',
+            time='刚刚',
+            content=f'订单 {order.id} 已支付成功，商家将尽快发货。',
+            action='查看订单'
+        )
+        return api_response(OrderSerializer(order, context={'request': request}).data)
+
+    @action(detail=True, methods=['put'])
+    def ship(self, request, pk=None):
+        order = self.get_object()
+        if order.status != 'paid':
+            return api_response(msg='只有待发货订单可以发货', code=400)
+        now = timezone.now()
+        tracking_number = (
+            request.data.get('trackingNumber')
+            or request.data.get('tracking_number')
+            or f"SF{now.strftime('%Y%m%d%H%M%S')}{order.id[-4:]}"
+        )
+        order.status = 'shipped'
+        order.shipped_at = now
+        order.carrier = request.data.get('carrier') or '顺丰速运'
+        order.tracking_number = tracking_number
+        order.save(update_fields=['status', 'shipped_at', 'carrier', 'tracking_number'])
+        Notification.objects.create(
+            user=request.user,
+            type='logistics',
+            name='订单已发货',
+            time='刚刚',
+            content=f'订单 {order.id} 已由 {order.carrier} 发出，运单号 {order.tracking_number}。',
+            action='查看物流'
+        )
+        return api_response(OrderSerializer(order, context={'request': request}).data, msg='shipped')
+
+    @action(detail=True, methods=['get'])
+    def logistics(self, request, pk=None):
+        order = self.get_object()
+        data = OrderSerializer(order, context={'request': request}).data
+        return api_response({
+            'carrier': data.get('carrier') or '',
+            'tracking_number': data.get('tracking_number') or '',
+            'items': data.get('logistics') or [],
+        })
 
     @action(detail=True, methods=['put'])
     def confirm(self, request, pk=None):
         order = self.get_object()
+        if order.status != 'shipped':
+            return api_response(msg='只有待收货订单可以确认收货', code=400)
         order.status = 'completed'
-        order.save()
-        return Response({'code': 0, 'msg': 'confirmed'})
+        order.save(update_fields=['status'])
+        Notification.objects.create(
+            user=request.user,
+            type='logistics',
+            name='确认收货',
+            time='刚刚',
+            content=f'订单 {order.id} 已完成，欢迎评价本次购物体验。',
+            action='去评价'
+        )
+        return api_response(OrderSerializer(order, context={'request': request}).data, msg='confirmed')
+
+    @action(detail=True, methods=['post'], url_path='after-sale')
+    def after_sale(self, request, pk=None):
+        order = self.get_object()
+        if order.status not in ('shipped', 'completed'):
+            return api_response(msg='当前订单状态不可申请售后', code=400)
+        reason = str(request.data.get('reason') or '').strip()
+        if not reason:
+            return api_response(msg='请填写售后原因', code=400)
+        order.after_sale_status = 'requested'
+        order.after_sale_reason = reason
+        order.after_sale_applied_at = timezone.now()
+        order.save(update_fields=['after_sale_status', 'after_sale_reason', 'after_sale_applied_at'])
+        Notification.objects.create(
+            user=request.user,
+            type='order',
+            name='售后申请已提交',
+            time='刚刚',
+            content=f'订单 {order.id} 的售后申请已提交，客服将尽快处理。',
+            action='查看订单'
+        )
+        return api_response(OrderSerializer(order, context={'request': request}).data, msg='after sale requested')
+
+    @action(detail=True, methods=['post'], url_path='buy-again')
+    def buy_again(self, request, pk=None):
+        order = self.get_object()
+        added_count = 0
+        for item in order.products.all():
+            if not item.product_id:
+                continue
+            try:
+                product = Product.objects.get(id=item.product_id)
+            except Product.DoesNotExist:
+                continue
+            sku = product.skus.order_by('id').first()
+            cart_item, created = CartItem.objects.get_or_create(
+                user=request.user,
+                product=product,
+                sku=sku,
+                defaults={'quantity': item.quantity, 'is_selected': True}
+            )
+            if not created:
+                cart_item.quantity += item.quantity
+                cart_item.is_selected = True
+                cart_item.save(update_fields=['quantity', 'is_selected'])
+            added_count += item.quantity
+        if added_count == 0:
+            return api_response(msg='订单商品已下架，无法再次购买', code=400)
+        return api_response({'added_count': added_count}, msg='added to cart')
 
 
 class AddressViewSet(ResponseMixin, viewsets.ModelViewSet):
@@ -651,10 +1058,10 @@ class AddressViewSet(ResponseMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Address.objects.filter(user=get_user(self.request))
+        return Address.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=get_user(self.request))
+        serializer.save(user=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -663,9 +1070,8 @@ class AddressViewSet(ResponseMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['put'])
     def set_default(self, request, pk=None):
-        user = get_user(request)
-        Address.objects.filter(user=user).update(is_default=False)
-        Address.objects.filter(id=pk, user=user).update(is_default=True)
+        Address.objects.filter(user=request.user).update(is_default=False)
+        Address.objects.filter(id=pk, user=request.user).update(is_default=True)
         return api_response()
 
     @action(detail=False, methods=['get'])
@@ -679,21 +1085,70 @@ class FavoriteViewSet(ResponseMixin, viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete']
 
     def get_queryset(self):
-        return Favorite.objects.filter(user=get_user(self.request))
+        return Favorite.objects.filter(user=self.request.user).select_related('image')
 
     def perform_create(self, serializer):
         product_id = self.request.data.get('productId')
-        product = Product.objects.get(id=product_id)
+        product = Product.objects.select_related('image').get(id=product_id)
         serializer.save(
-            user=get_user(self.request),
+            user=self.request.user,
+            product_id=product_id,
             name=product.name,
             price=product.price,
             original_price=product.original_price,
-            image=get_image_url(product.image, context={'request': self.request}),
+            image=product.image,
             sales=f"{product.sales_count}+"
         )
 
+    def create(self, request, *args, **kwargs):
+        product_id = request.data.get('productId')
+        existing = self.get_queryset().filter(product_id=product_id).first()
+        if existing:
+            return api_response(FavoriteSerializer(existing, context={'request': request}).data)
+        return super().create(request, *args, **kwargs)
 
+    @action(detail=False, methods=['get'])
+    def check(self, request):
+        product_id = request.GET.get('product_id', '')
+        fav = self.get_queryset().filter(product_id=product_id).first()
+        return api_response({'is_favorited': fav is not None, 'favorite_id': fav.id if fav else None})
+
+
+
+
+class BrowseHistoryViewSet(ResponseMixin, viewsets.ModelViewSet):
+    serializer_class = BrowseHistorySerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'delete']
+
+    def get_queryset(self):
+        return BrowseHistory.objects.filter(user=self.request.user).select_related(
+            'product',
+            'product__image',
+            'product__subcategory',
+        )
+
+    def create(self, request, *args, **kwargs):
+        product_id = request.data.get('productId') or request.data.get('product_id')
+        if not product_id:
+            return api_response(msg='缺少商品ID', code=400)
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return api_response(msg='商品不存在', code=404)
+
+        history, _ = BrowseHistory.objects.update_or_create(
+            user=request.user,
+            product=product,
+            defaults={},
+        )
+        serializer = self.get_serializer(history)
+        return api_response(serializer.data)
+
+    @action(detail=False, methods=['delete'])
+    def clear(self, request):
+        self.get_queryset().delete()
+        return api_response()
 
 
 class CouponViewSet(ResponseMixin, viewsets.ReadOnlyModelViewSet):
@@ -701,7 +1156,7 @@ class CouponViewSet(ResponseMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return UserCoupon.objects.filter(user=get_user(self.request))
+        return UserCoupon.objects.filter(user=self.request.user).order_by('status', 'time')
 
 
 class NotificationViewSet(ResponseMixin, viewsets.ModelViewSet):
@@ -710,7 +1165,7 @@ class NotificationViewSet(ResponseMixin, viewsets.ModelViewSet):
     http_method_names = ['get', 'put']
 
     def get_queryset(self):
-        qs = Notification.objects.filter(user=get_user(self.request))
+        qs = Notification.objects.filter(user=self.request.user)
         notif_type = self.request.GET.get('type')
         if notif_type:
             qs = qs.filter(type=notif_type)
@@ -718,49 +1173,31 @@ class NotificationViewSet(ResponseMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def count(self, request):
-        user = get_user(request)
-        count = Notification.objects.filter(user=user, is_read=False).count()
+        count = Notification.objects.filter(user=request.user, is_read=False).count()
         return api_response({'count': count})
 
     @action(detail=False, methods=['put'])
     def read_all(self, request):
-        Notification.objects.filter(user=get_user(request)).update(is_read=True)
+        Notification.objects.filter(user=request.user).update(is_read=True)
         return api_response()
 
     @action(detail=True, methods=['put'])
     def read(self, request, pk=None):
-        Notification.objects.filter(id=pk, user=get_user(request)).update(is_read=True)
+        Notification.objects.filter(id=pk, user=request.user).update(is_read=True)
         return api_response()
-
-
-class LoginViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
-    @action(detail=False, methods=['post'])
-    def login(self, request):
-        user_id = request.data.get('user_id')
-        if not user_id:
-            return Response({'code': 400, 'msg': '请输入用户名'})
-        try:
-            user = User.objects.get(username=user_id)
-        except User.DoesNotExist:
-            return Response({'code': 401, 'msg': '用户不存在'})
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({'code': 0, 'msg': 'success', 'data': {'token': token.key}})
 
 
 class UserViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def profile(self, request):
-        user = get_user(request)
-        return Response({'code': 0, 'msg': 'success', 'data': {
-            'id': user.id, 'username': user.username, 'email': user.email or '',
-            'avatar_name': 'https://picsum.photos/200/200?random=100',
-            'followCount': 128, 'fansCount': 356, 'points': 2860,
-        }})
+        user = request.user
+        if request.method == 'PATCH':
+            error = update_profile(user, request.data)
+            if error:
+                return api_response(msg=error, code=400)
+        return api_response(profile_payload(user, request))
 
 
 # Function-based views for direct URL mapping
@@ -808,12 +1245,43 @@ def admin_login(request):
     return _do_login(request, ['admin'])
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):
-    user = get_user(request)
-    return Response({'code': 0, 'msg': 'success', 'data': {
-        'id': user.id, 'username': user.username, 'email': user.email or '',
-        'avatar_name': 'https://picsum.photos/200/200?random=100',
-        'followCount': 128, 'fansCount': 356, 'points': 2860,
-    }})
+    user = request.user
+    if request.method == 'PATCH':
+        error = update_profile(user, request.data)
+        if error:
+            return Response({'code': 400, 'msg': error, 'data': None})
+    return Response({'code': 0, 'msg': 'success', 'data': profile_payload(user, request)})
+
+
+# ============== 店铺信息 ==============
+class ShopInfoViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        info, _ = ShopInfo.objects.get_or_create(pk=1)
+        return api_response(ShopInfoSerializer(info).data)
+
+
+# ============== VIP会员 ==============
+class VIPViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        vip, _ = VIPMembership.objects.get_or_create(user=request.user)
+        return api_response(VIPSerializer(vip).data)
+
+    @action(detail=False, methods=['post'])
+    def upgrade(self, request):
+        vip, _ = VIPMembership.objects.get_or_create(user=request.user)
+        idx = VIP_LEVEL_ORDER.index(vip.level) if vip.level in VIP_LEVEL_ORDER else 0
+        if idx < len(VIP_LEVEL_ORDER) - 1:
+            from django.utils import timezone
+            from datetime import timedelta
+            vip.level = VIP_LEVEL_ORDER[idx + 1]
+            vip.expire_date = (timezone.now() + timedelta(days=365)).date()
+            vip.growth_value += 500
+            vip.save()
+        return api_response(VIPSerializer(vip).data)

@@ -3,163 +3,124 @@ import SwiftUI
 struct VIPView: View {
     @StateObject private var viewModel = VIPViewModel()
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Header
-                headerSection
-
-                // Member Stats
-                memberStatsSection
-
-                // Privileges
-                privilegesSection
-
-                // Benefits
-                benefitsSection
-
-                // Upgrade Button
-                upgradeButton
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    headerSection
+                    benefitsSection
+                    privilegesSection
+                    historySection
+                    upgradeButton
+                }
+                .padding(.bottom, 12)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("会员中心")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($viewModel.errorMessage, bottomPadding: 80)
+        .task { await viewModel.load() }
     }
 
     // MARK: - Header Section
     private var headerSection: some View {
-        ZStack(alignment: .topLeading) {
-            // Background
+        VStack(spacing: 14) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "FFE0D0"))
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 25, weight: .medium))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(viewModel.user?.name ?? "会员")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Colors.dark)
+
+                        Image(systemName: "star")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Colors.accent)
+                    }
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 9))
+                        Text(viewModel.vip?.levelName ?? "普通会员")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundStyle(DesignSystem.Colors.dark)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(hex: "FFD700"), Color(hex: "FFA500")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(Capsule())
+
+                    Text(expireText)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Colors.gray2)
+                }
+
+                Spacer()
+            }
+
+            HStack(spacing: 0) {
+                vipPointItem(value: "\(viewModel.vip?.points ?? 0)", label: "可用积分")
+
+                Rectangle()
+                    .fill(Color(hex: "F0F0F0"))
+                    .frame(width: 1, height: 30)
+
+                vipPointItem(value: "\(viewModel.vip?.growthValue ?? 0)", label: "成长值")
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 20)
+        .background(
             LinearGradient(
-                colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.1),
-                    Color(red: 0.18, green: 0.18, blue: 0.18)
-                ],
+                colors: [Color(hex: "FFF8F0"), Color(hex: "FFF0E8")],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .frame(height: 200)
-
-            // Decorative circles
-            Circle()
-                .fill(Color.white.opacity(0.05))
-                .frame(width: 200, height: 200)
-                .offset(x: 200, y: -50)
-
-            Circle()
-                .fill(Color.white.opacity(0.03))
-                .frame(width: 150, height: 150)
-                .offset(x: -30, y: 100)
-
-            // Content
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top, spacing: 12) {
-                    // Avatar
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.15))
-                            .frame(width: 70, height: 70)
-
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 32))
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text("林小琳")
-                                .font(.system(size: 22, weight: .black))
-                                .foregroundStyle(.white)
-
-                            // Crown
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color.yellow)
-                        }
-
-                        Text("黄金会员")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-
-                    Spacer()
-
-                    // Member since
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("会员到期")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.5))
-                        Text("2027.03.15")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-                }
-
-                // Progress bar
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("距离钻石会员还差")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.5))
-
-                        Text("¥2,140")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(Color.yellow)
-
-                        Text("累计消费")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.2))
-                                .frame(height: 6)
-
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.yellow, Color.orange],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geometry.size.width * 0.65, height: 6)
-                        }
-                    }
-                    .frame(height: 6)
-                }
-            }
-            .padding(20)
-        }
+        )
+        .overlay(
+            Rectangle()
+                .fill(DesignSystem.Colors.accent.opacity(0.1))
+                .frame(height: 1),
+            alignment: .bottom
+        )
     }
 
-    // MARK: - Member Stats Section
-    private var memberStatsSection: some View {
-        HStack(spacing: 0) {
-            statItem(value: "¥860", label: "累计消费")
-            statItem(value: "12", label: "优惠券")
-            statItem(value: "2,860", label: "积分")
-            statItem(value: "VIP 6", label: "成长等级")
-        }
-        .padding(.vertical, 16)
-        .background(Color.white)
+    private var expireText: String {
+        guard let expire = viewModel.vip?.expireDate else { return "会员有效期 - " }
+        return "有效期至 \(String(expire.prefix(10)))"
     }
 
-    private func statItem(value: String, label: String) -> some View {
+    private func vipPointItem(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 18, weight: .black))
-                .foregroundStyle(accentColor)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(DesignSystem.Colors.accent)
 
             Text(label)
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignSystem.Colors.gray2)
         }
         .frame(maxWidth: .infinity)
     }
@@ -167,152 +128,179 @@ struct VIPView: View {
     // MARK: - Privileges Section
     private var privilegesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("会员特权")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.primary)
+            ForEach(Array(viewModel.privilegeRows.enumerated()), id: \.element.title) { index, privilege in
+                privilegeRow(privilege)
 
-                Spacer()
-
-                Button(action: {}) {
-                    HStack(spacing: 2) {
-                        Text("查看全部")
-                            .font(.system(size: 12))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10))
-                    }
-                    .foregroundStyle(accentColor)
+                if index < viewModel.privilegeRows.count - 1 {
+                    Rectangle()
+                        .fill(DesignSystem.Colors.pageBackground)
+                        .frame(height: 1)
+                        .padding(.leading, 42)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(viewModel.privileges, id: \.title) { privilege in
-                        privilegeCard(privilege)
-                    }
-                }
-                .padding(.horizontal, 16)
-            }
-            .padding(.bottom, 16)
         }
+        .padding(14)
         .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
     }
 
-    private func privilegeCard(_ privilege: VIPPrivilege) -> some View {
-        VStack(spacing: 8) {
+    private func privilegeRow(_ privilege: VIPActionRow) -> some View {
+        HStack(spacing: 10) {
             ZStack {
-                Circle()
-                    .fill(privilege.color.opacity(0.15))
-                    .frame(width: 50, height: 50)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(DesignSystem.Colors.accentSoft)
+                    .frame(width: 32, height: 32)
 
                 Image(systemName: privilege.icon)
-                    .font(.system(size: 22))
-                    .foregroundStyle(privilege.color)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.accent)
             }
 
-            Text(privilege.title)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(privilege.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.dark)
 
-            Text(privilege.desc)
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+                Text(privilege.desc)
+                    .font(.system(size: 11))
+                    .foregroundStyle(DesignSystem.Colors.gray2)
+            }
+
+            Spacer()
+
+            Text(privilege.action)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DesignSystem.Colors.accent)
         }
-        .frame(width: 80)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Benefits Section
     private var benefitsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("我的权益")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(.primary)
-                .padding(16)
+            Text("会员专享权益")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(DesignSystem.Colors.dark)
+                .padding(.bottom, 12)
 
-            VStack(spacing: 0) {
-                ForEach(viewModel.benefits, id: \.title) { benefit in
-                    benefitRow(benefit)
-
-                    if benefit.id != viewModel.benefits.last?.id {
-                        Divider()
-                            .padding(.leading, 52)
-                    }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                ForEach(viewModel.benefitGridItems) { benefit in
+                    benefitGridItem(benefit)
                 }
             }
-            .background(Color.white)
         }
+        .padding(16)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .padding(.bottom, 10)
     }
 
-    private func benefitRow(_ benefit: VIPBenefit) -> some View {
-        HStack(spacing: 12) {
+    private func benefitGridItem(_ benefit: VIPGridBenefit) -> some View {
+        VStack(spacing: 6) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(benefit.color.opacity(0.15))
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(DesignSystem.Colors.accentSoft)
                     .frame(width: 36, height: 36)
 
                 Image(systemName: benefit.icon)
-                    .font(.system(size: 16))
-                    .foregroundStyle(benefit.color)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.accent)
             }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(benefit.title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.primary)
+            Text(benefit.title)
+                .font(.system(size: 11))
+                .foregroundStyle(DesignSystem.Colors.gray1)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
 
-                Text(benefit.desc)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+    // MARK: - History Section
+    private var historySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("积分明细")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(DesignSystem.Colors.dark)
+
+            VStack(spacing: 10) {
+                ForEach(viewModel.historyItems) { item in
+                    historyRow(item)
+                }
+            }
+        }
+        .padding(14)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
+    }
+
+    private func historyRow(_ item: VIPHistoryItem) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(DesignSystem.Colors.accentSoft)
+                    .frame(width: 32, height: 32)
+
+                Image(systemName: item.icon)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.accent)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.dark)
+
+                Text(item.time)
+                    .font(.system(size: 11))
+                    .foregroundStyle(DesignSystem.Colors.gray3)
             }
 
             Spacer()
 
-            if benefit.isNew {
-                Text("NEW")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(accentColor)
-                    .clipShape(Capsule())
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-            }
+            Text(item.points)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(item.isNegative ? DesignSystem.Colors.gray2 : DesignSystem.Colors.accent)
         }
-        .padding(16)
     }
 
     // MARK: - Upgrade Button
     private var upgradeButton: some View {
-        Button(action: {}) {
-            HStack(spacing: 8) {
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 16))
-
-                Text("升级为钻石会员")
-                    .font(.system(size: 16, weight: .bold))
-
-                Text("立享8大专属权益")
-                    .font(.system(size: 12))
+        Group {
+            if !(viewModel.vip?.isMaxLevel ?? false) {
+                Button(action: { Task { await viewModel.upgrade() } }) {
+                    HStack(spacing: 8) {
+                        if viewModel.isUpgrading {
+                            ProgressView().tint(.white).scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "crown.fill").font(.system(size: 16))
+                        }
+                        let nextName = viewModel.vip?.nextLevelName ?? "VIP会员"
+                        Text(viewModel.vip?.level == "none" ? "立即开通会员" : "升级为\(nextName)")
+                            .font(.system(size: 16, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 1.0, green: 0.65, blue: 0.0)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(Capsule())
+                    .padding(.horizontal, 24)
+                    .padding(.top, 6)
+                    .padding(.bottom, 20)
+                }
+                .disabled(viewModel.isUpgrading)
             }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(
-                LinearGradient(
-                    colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 1.0, green: 0.65, blue: 0.0)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(16)
         }
     }
 }
@@ -333,10 +321,40 @@ struct VIPBenefit: Identifiable {
     let icon: String
     let color: Color
     let isNew: Bool
+
+}
+
+struct VIPGridBenefit: Identifiable {
+    let id = UUID()
+    let title: String
+    let icon: String
+}
+
+struct VIPActionRow: Identifiable {
+    let id = UUID()
+    let title: String
+    let desc: String
+    let icon: String
+    let action: String
+}
+
+struct VIPHistoryItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let time: String
+    let points: String
+    let icon: String
+    let isNegative: Bool
 }
 
 // MARK: - VIP ViewModel
+@MainActor
 class VIPViewModel: ObservableObject {
+    @Published var vip: VIPInfo?
+    @Published var user: User?
+    @Published var isUpgrading = false
+    @Published var errorMessage: String? = nil
+
     let privileges: [VIPPrivilege] = [
         VIPPrivilege(title: "专享价", desc: "会员专属折扣", icon: "tag.fill", color: .red),
         VIPPrivilege(title: "生日礼", desc: "生日礼包", icon: "gift.fill", color: .orange),
@@ -347,13 +365,56 @@ class VIPViewModel: ObservableObject {
     ]
 
     let benefits: [VIPBenefit] = [
-        VIPBenefit(id: UUID(), title: "专享折扣", desc: "全场商品享受黄金会员专属价", icon: "percent", color: .red, isNew: false),
-        VIPBenefit(id: UUID(), title: "每月优惠券包", desc: "每月领取消平台优惠券（价值100元+）", icon: "ticket.fill", color: .orange, isNew: true),
+        VIPBenefit(id: UUID(), title: "专享折扣", desc: "全场商品享受会员专属价", icon: "percent", color: .red, isNew: false),
+        VIPBenefit(id: UUID(), title: "每月优惠券包", desc: "每月领取平台优惠券（价值100元+）", icon: "ticket.fill", color: .orange, isNew: true),
         VIPBenefit(id: UUID(), title: "生日礼包", desc: "生日当月领取专属礼包", icon: "gift.fill", color: .purple, isNew: false),
         VIPBenefit(id: UUID(), title: "专属客服", desc: "7x24小时优先客服接入", icon: "headphones", color: .blue, isNew: false),
         VIPBenefit(id: UUID(), title: "免运费券", desc: "每月赠送3张免运费券", icon: "shippingbox.fill", color: .green, isNew: true),
         VIPBenefit(id: UUID(), title: "积分翻倍", desc: "购物享受积分双倍累计", icon: "star.fill", color: .yellow, isNew: false)
     ]
+
+    let benefitGridItems: [VIPGridBenefit] = [
+        VIPGridBenefit(title: "专享券", icon: "tag"),
+        VIPGridBenefit(title: "免费配送", icon: "shippingbox"),
+        VIPGridBenefit(title: "专属客服", icon: "message"),
+        VIPGridBenefit(title: "生日礼包", icon: "gift")
+    ]
+
+    let privilegeRows: [VIPActionRow] = [
+        VIPActionRow(title: "专享优惠券", desc: "每月4张专属优惠券", icon: "tag", action: "领取"),
+        VIPActionRow(title: "专享价商品", desc: "会员专属低价", icon: "message", action: "查看")
+    ]
+
+    let historyItems: [VIPHistoryItem] = [
+        VIPHistoryItem(title: "购物赠送", time: "2026-03-27 14:30", points: "+200", icon: "shippingbox", isNegative: false),
+        VIPHistoryItem(title: "积分兑换优惠券", time: "2026-03-26 10:15", points: "-100", icon: "gift", isNegative: true)
+    ]
+
+    func load() async {
+        async let vipTask = VIPInfo.getVIP()
+        async let userTask = User.getProfile()
+        do {
+            vip = try await vipTask
+        } catch {
+            errorMessage = userFacingErrorMessage(error, fallback: "会员信息加载失败")
+        }
+        do {
+            user = try await userTask
+        } catch {
+            errorMessage = userFacingErrorMessage(error, fallback: "个人资料加载失败")
+        }
+    }
+
+    func upgrade() async {
+        isUpgrading = true
+        do {
+            vip = try await VIPInfo.upgrade()
+            errorMessage = "会员升级成功"
+        } catch {
+            errorMessage = userFacingErrorMessage(error, fallback: "会员升级失败")
+        }
+        isUpgrading = false
+    }
 }
 
 #Preview {

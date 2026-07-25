@@ -31,7 +31,7 @@ function renderFavorites() {
       ${item.tag ? `<span class="fav-tag">${item.tag}</span>` : ''}
       <div class="fav-img-wrap">
         <img class="fav-img" src="${item.img}" alt="${item.name}">
-        <div class="fav-remove" onclick="event.stopPropagation(); removeFavoriteItem(${item.id})">
+        <div class="fav-remove" onclick="event.stopPropagation(); removeFavoriteItem('${item.favoriteId}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </div>
       </div>
@@ -57,7 +57,7 @@ function renderFavorites() {
 
 async function removeFavoriteItem(id) {
   await api.favorite.remove(id)
-  favorites = favorites.filter(f => f.id !== id)
+  favorites = favorites.filter(f => f.favoriteId !== id)
   renderFavorites()
   showToast('已取消收藏')
 }

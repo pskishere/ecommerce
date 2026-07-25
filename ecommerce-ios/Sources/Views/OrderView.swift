@@ -5,6 +5,7 @@ import SwiftUI
 final class OrderViewModel: ObservableObject {
     @Published var orders: [Order] = []
     @Published var selectedTab: OrderStatus = .all
+    @Published var errorMessage: String? = nil
 
     var selectedTabBinding: Binding<String> {
         Binding(
@@ -33,8 +34,9 @@ final class OrderViewModel: ObservableObject {
     func loadOrders() async {
         do {
             orders = try await Order.getList()
+            errorMessage = nil
         } catch {
-            print("Failed to load orders: \(error)")
+            errorMessage = userFacingErrorMessage(error, fallback: "订单加载失败")
         }
     }
 
@@ -60,10 +62,11 @@ struct OrderView: View {
                 orderList
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("我的订单")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($viewModel.errorMessage, bottomPadding: 80)
         .onAppear {
             viewModel.selectTab(initialStatus)
         }
@@ -83,7 +86,9 @@ struct OrderView: View {
             LazyVStack(spacing: 12) {
                 ForEach(viewModel.filteredOrders) { order in
                     NavigationLink(destination: OrderDetailView(order: order)) {
-                        OrderCard(order: order)
+                        OrderCard(order: order, onRefresh: {
+                            Task { await viewModel.loadOrders() }
+                        })
                     }
                     .buttonStyle(.plain)
                 }
@@ -114,20 +119,32 @@ struct OrderView: View {
 // MARK: - Order Card
 struct OrderCard: View {
     let order: Order
+    var onRefresh: (() -> Void)? = nil
+
+    @State private var toast: String? = nil
+    @State private var showPayment = false
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             header
-
-            // Products
             products
-
-            // Footer
             footer
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .toast($toast, bottomPadding: 16)
+        .navigationDestination(isPresented: $showPayment) {
+            PaymentView(
+                order: order,
+                onComplete: {
+                    showPayment = false
+                    onRefresh?()
+                },
+                onPaid: { _ in
+                    onRefresh?()
+                }
+            )
+        }
     }
 
     private var header: some View {
@@ -169,7 +186,7 @@ struct OrderCard: View {
     private func productRow(_ product: OrderProduct) -> some View {
         HStack(alignment: .top, spacing: 10) {
             NavigationLink(destination: ProductDetailView(product: Product(
-                id: product.id,
+                id: product.productId,
                 name: product.name,
                 description: product.spec,
                 price: product.price,
@@ -228,7 +245,7 @@ struct OrderCard: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color(.secondaryLabel))
 
-                Text("¥\(order.totalAmount)")
+                Text(order.totalAmount.rmbText)
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Color(.label))
 
@@ -246,7 +263,17 @@ struct OrderCard: View {
         switch order.status {
         case .pending:
             HStack(spacing: 8) {
-                Button(action: {}) {
+                Button(action: {
+                    Task {
+                        do {
+                            _ = try await Order.cancelOrder(id: order.id)
+                            toast = "已取消订单"
+                            onRefresh?()
+                        } catch {
+                            toast = userFacingErrorMessage(error, fallback: "取消订单失败")
+                        }
+                    }
+                }) {
                     Text("取消")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Color(.secondaryLabel))
@@ -260,7 +287,9 @@ struct OrderCard: View {
                         )
                 }
 
-                Button(action: {}) {
+                Button(action: {
+                    showPayment = true
+                }) {
                     Text("去付款")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white)
@@ -273,7 +302,7 @@ struct OrderCard: View {
 
         case .shipped:
             HStack(spacing: 8) {
-                Button(action: {}) {
+                NavigationLink(destination: OrderDetailView(order: order)) {
                     Text("查看物流")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Color(.secondaryLabel))
@@ -286,8 +315,19 @@ struct OrderCard: View {
                                 .stroke(Color(.separator), lineWidth: 1)
                         )
                 }
+                .buttonStyle(.plain)
 
-                Button(action: {}) {
+                Button(action: {
+                    Task {
+                        do {
+                            _ = try await Order.confirmReceipt(id: order.id)
+                            toast = "已确认收货"
+                            onRefresh?()
+                        } catch {
+                            toast = userFacingErrorMessage(error, fallback: "确认收货失败")
+                        }
+                    }
+                }) {
                     Text("确认收货")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white)
@@ -300,8 +340,17 @@ struct OrderCard: View {
 
         case .completed:
             HStack(spacing: 8) {
-                Button(action: {}) {
-                    Text("查看详情")
+                Button(action: {
+                    Task {
+                        do {
+                            let count = try await Order.buyAgain(id: order.id)
+                            toast = count > 0 ? "已加入购物车" : "没有可加入购物车的商品"
+                        } catch {
+                            toast = userFacingErrorMessage(error, fallback: "再次购买失败")
+                        }
+                    }
+                }) {
+                    Text("再次购买")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Color(.secondaryLabel))
                         .padding(.horizontal, 12)
@@ -314,7 +363,7 @@ struct OrderCard: View {
                         )
                 }
 
-                Button(action: {}) {
+                NavigationLink(destination: ReviewView(product: reviewProduct)) {
                     Text("去评价")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white)
@@ -323,37 +372,29 @@ struct OrderCard: View {
                         .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
 
         default:
             EmptyView()
         }
     }
-}
 
-// MARK: - Color Extension
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3:
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6:
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8:
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
+    private var reviewProduct: Product {
+        let item = order.products.first
+        return Product(
+            id: item?.productId ?? "",
+            name: item?.name ?? "商品",
+            description: item?.spec ?? "",
+            price: item?.price ?? 0,
+            originalPrice: nil,
+            image: item?.image ?? "",
+            subcategoryRef: nil,
+            rating: 5,
+            reviewCount: 0,
+            salesCount: 0,
+            isInStock: true,
+            tag: ""
         )
     }
 }

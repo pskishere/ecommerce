@@ -29,22 +29,23 @@
       </div>
 
       <!-- Avatar -->
-      <div class="info-avatar-section clickable" onclick="showToast('头像修改功能开发中')">
+      <div class="info-avatar-section clickable" onclick="chooseAvatar()">
         <span class="info-avatar-label">头像</span>
         <div class="info-avatar-wrap">
           <div class="info-avatar">
-            <img src="https://picsum.photos/200/200?random=100" alt="头像">
+            <img id="profileAvatar" src="https://picsum.photos/200/200?random=100" alt="头像">
           </div>
           <div class="info-avatar-arrow">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </div>
       </div>
+      <input id="avatarInput" class="visually-hidden-file" type="file" accept="image/*">
 
       <!-- Basic Info -->
       <div class="info-section-title">基本信息</div>
       <div class="info-list">
-        <div class="info-item clickable" onclick="editField('昵称', '林小琳')">
+        <div class="info-item clickable" onclick="editField('昵称')">
           <span class="info-item-label">昵称</span>
           <div class="info-item-content">
             <span class="value" id="nickname">林小琳</span>
@@ -58,15 +59,20 @@
           <span class="info-item-label">性别</span>
           <div class="info-item-content">
             <div class="gender-select">
-              <label class="gender-option active" onclick="selectGender(this, '女')">
-                <input type="radio" name="gender" value="女" checked>
+              <label class="gender-option active" onclick="selectGender(this, 'female')">
+                <input type="radio" name="gender" value="female" checked>
                 <span class="gender-radio"></span>
                 <span>女</span>
               </label>
-              <label class="gender-option" onclick="selectGender(this, '男')">
-                <input type="radio" name="gender" value="男">
+              <label class="gender-option" onclick="selectGender(this, 'male')">
+                <input type="radio" name="gender" value="male">
                 <span class="gender-radio"></span>
                 <span>男</span>
+              </label>
+              <label class="gender-option" onclick="selectGender(this, 'secret')">
+                <input type="radio" name="gender" value="secret">
+                <span class="gender-radio"></span>
+                <span>保密</span>
               </label>
             </div>
           </div>
@@ -86,17 +92,17 @@
       <!-- Contact Info -->
       <div class="info-section-title">联系方式</div>
       <div class="info-list">
-        <div class="info-item">
+        <div class="info-item clickable" onclick="editField('手机号')">
           <span class="info-item-label">手机号</span>
           <div class="info-item-content">
-            <span class="value">138****8888</span>
+            <span class="value" id="phone">未填写</span>
           </div>
-          <div class="info-item-arrow" style="visibility: hidden;">
+          <div class="info-item-arrow">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </div>
 
-        <div class="info-item clickable" onclick="editField('邮箱', 'linxiaolin@email.com')">
+        <div class="info-item clickable" onclick="editField('邮箱')">
           <span class="info-item-label">邮箱</span>
           <div class="info-item-content">
             <span class="value" id="email">linxiaolin@email.com</span>
@@ -113,21 +119,21 @@
         <div class="info-item">
           <span class="info-item-label">用户ID</span>
           <div class="info-item-content">
-            <span class="value">88888888</span>
+            <span class="value" id="userId">88888888</span>
           </div>
         </div>
 
         <div class="info-item">
           <span class="info-item-label">注册时间</span>
           <div class="info-item-content">
-            <span class="value">2024-01-15</span>
+            <span class="value" id="registeredAt">2024-01-15</span>
           </div>
         </div>
 
         <div class="info-item">
           <span class="info-item-label">会员等级</span>
           <div class="info-item-content">
-            <span class="value" style="color: #FF6B4A;">黄金会员</span>
+            <span class="value" id="memberLevel" style="color: #FF6B4A;">普通会员</span>
           </div>
         </div>
       </div>

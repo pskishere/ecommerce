@@ -230,6 +230,7 @@ class CartItem(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    sku = models.ForeignKey('SKU', on_delete=models.SET_NULL, null=True, blank=True, related_name='cart_items')
     quantity = models.IntegerField(default=1)
     is_selected = models.BooleanField(default=True)
 
@@ -263,6 +264,22 @@ class Order(models.Model):
     address_detail = models.TextField(blank=True)
     pay_time = models.DateTimeField(null=True, blank=True, help_text='支付时间')
     created_at = models.DateTimeField(auto_now_add=True)
+    shipped_at = models.DateTimeField(null=True, blank=True, help_text='发货时间')
+    carrier = models.CharField(max_length=100, blank=True, help_text='物流承运商')
+    tracking_number = models.CharField(max_length=100, blank=True, help_text='物流单号')
+    after_sale_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('none', '未申请'),
+            ('requested', '已申请'),
+            ('processing', '处理中'),
+            ('refunded', '已退款'),
+            ('rejected', '已拒绝'),
+        ],
+        default='none',
+    )
+    after_sale_reason = models.TextField(blank=True)
+    after_sale_applied_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'orders'
@@ -274,6 +291,7 @@ class Order(models.Model):
 class OrderProduct(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='products')
+    product_id = models.CharField(max_length=50, blank=True, default='')
     name = models.CharField(max_length=255)
     spec = models.CharField(max_length=255, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -324,6 +342,7 @@ class Review(models.Model):
 class Favorite(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    product_id = models.CharField(max_length=50, blank=True, default='')
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -336,15 +355,34 @@ class Favorite(models.Model):
 
 
 
+class BrowseHistory(models.Model):
+    id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='browse_histories')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='browse_histories')
+    viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'browse_histories'
+        unique_together = ('user', 'product')
+        ordering = ['-viewed_at']
+
+
 # ============== 用户资料表 ==============
 class UserProfile(models.Model):
     USER_TYPE_CHOICES = [
         ('admin', '管理员'),
         ('user', '普通用户'),
     ]
+    GENDER_CHOICES = [
+        ('male', '男'),
+        ('female', '女'),
+        ('secret', '保密'),
+    ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='user')
     phone = models.CharField(max_length=50, blank=True)
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default='secret')
+    birthday = models.DateField(null=True, blank=True)
     avatar = models.ForeignKey(MediaFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='user_avatars')
     points = models.IntegerField(default=0)
     follow_count = models.IntegerField(default=0)
@@ -365,6 +403,11 @@ class AdminProfile(models.Model):
 
 # ============== 优惠券表（保留）==============
 class UserCoupon(models.Model):
+    STATUS_CHOICES = [
+        ('available', '可用'),
+        ('used', '已使用'),
+        ('expired', '已过期'),
+    ]
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupons')
     name = models.CharField(max_length=100)
@@ -372,6 +415,7 @@ class UserCoupon(models.Model):
     threshold = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     time = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
 
     class Meta:
         db_table = 'user_coupons'
@@ -396,3 +440,51 @@ class Notification(models.Model):
 
     class Meta:
         db_table = 'notifications'
+
+
+# ============== 店铺信息（单例）==============
+class ShopInfo(models.Model):
+    name = models.CharField(max_length=100, default='潮流优品官方旗舰店')
+    description = models.TextField(blank=True, default='专注时尚潮流，只卖好货')
+    score = models.DecimalField(max_digits=3, decimal_places=1, default=4.9)
+    product_count = models.IntegerField(default=0)
+    sales = models.CharField(max_length=20, blank=True, default='12.8万')
+    fans_count = models.CharField(max_length=20, blank=True, default='56.2万')
+
+    class Meta:
+        db_table = 'shop_info'
+
+    def __str__(self):
+        return self.name
+
+
+# ============== VIP会员 ==============
+VIP_LEVELS = [
+    ('none',    '普通会员'),
+    ('bronze',  '铜牌会员'),
+    ('silver',  '银牌会员'),
+    ('gold',    '黄金会员'),
+    ('diamond', '钻石会员'),
+]
+
+VIP_LEVEL_ORDER = ['none', 'bronze', 'silver', 'gold', 'diamond']
+
+VIP_LEVEL_NAMES = {
+    'none':    '普通会员',
+    'bronze':  '铜牌会员',
+    'silver':  '银牌会员',
+    'gold':    '黄金会员',
+    'diamond': '钻石会员',
+}
+
+
+class VIPMembership(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vip')
+    level = models.CharField(max_length=20, choices=VIP_LEVELS, default='none')
+    expire_date = models.DateField(null=True, blank=True)
+    points = models.IntegerField(default=0)
+    growth_value = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'vip_memberships'

@@ -1,0 +1,114 @@
+.payment-page { min-height: 100vh; background: #f5f5f5; display: flex; flex-direction: column; font-family: 'Geist', sans-serif; }
+
+/* Header */
+.pay-header { background: white; padding: 0 16px; height: 56px; display: flex; align-items: center; border-bottom: 1px solid #f0f0f0; }
+.pay-header-inner { display: flex; align-items: center; gap: 12px; width: 100%; }
+.pay-title { font-size: 17px; font-weight: 700; }
+
+/* Amount */
+.pay-amount-section {
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8E6B 100%);
+  padding: 36px 24px 32px;
+  text-align: center;
+  color: white;
+}
+.pay-amount-label { font-size: 13px; opacity: 0.8; margin-bottom: 8px; }
+.pay-amount { font-size: 42px; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+.pay-order-id { font-size: 11px; opacity: 0.6; }
+
+/* Methods */
+.pay-methods-section { padding: 16px; }
+.pay-methods-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px; padding: 0 4px; }
+.pay-methods { background: white; border-radius: 16px; overflow: hidden; }
+.pay-method {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.15s;
+}
+.pay-method:last-child { border-bottom: none; }
+.pay-method:active { background: #fafafa; }
+
+.pay-method-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pay-method-icon.wxpay { background: #e8f5e9; color: #4caf50; }
+.pay-method-icon.alipay { background: #e3f2fd; color: #2196f3; }
+.pay-method-icon.balance { background: #fff3e0; color: #FF6B4A; }
+
+.pay-method-name { font-size: 15px; color: #1a1a1a; flex: 1; }
+.pay-method-tag {
+  font-size: 10px; font-weight: 700;
+  color: #FF6B4A; background: #fff0ec;
+  padding: 2px 7px; border-radius: 20px;
+}
+.pay-method-radio {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid #ddd;
+  position: relative; flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.pay-method-radio.active {
+  border-color: #FF6B4A;
+}
+.pay-method-radio.active::after {
+  content: ''; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  background: #FF6B4A; border-radius: 50%;
+}
+
+/* Pay bar */
+.pay-bar { padding: 16px 24px 36px; margin-top: auto; }
+.pay-btn {
+  width: 100%; height: 52px;
+  background: #FF6B4A; color: white;
+  border: none; border-radius: 26px;
+  font-size: 17px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.pay-btn:active { opacity: 0.85; }
+
+/* Overlays */
+.pay-overlay {
+  position: fixed; inset: 0;
+  background: rgba(255,255,255,0.96);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+
+/* Processing */
+.pay-processing { text-align: center; }
+.pay-spinner {
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 4px solid #f0f0f0;
+  border-top-color: #FF6B4A;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.pay-processing-text { font-size: 16px; color: #666; }
+
+/* Result */
+.pay-result { text-align: center; padding: 0 32px; }
+.pay-result-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.pay-result-icon.success { background: #4caf50; }
+.pay-result-icon.failed  { background: #f44336; }
+.pay-result-title { font-size: 24px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+.pay-result-amount { font-size: 20px; font-weight: 700; color: #666; margin-bottom: 32px; }
+.pay-result-sub { font-size: 14px; color: #999; margin-bottom: 32px; }
+.pay-result-actions { display: flex; flex-direction: column; gap: 12px; }
+.pay-result-btn {
+  width: 100%; height: 50px; border-radius: 25px;
+  border: none; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.pay-result-btn:active { opacity: 0.85; }
+.pay-result-btn.primary { background: #FF6B4A; color: white; }
+.pay-result-btn.secondary { background: #fff0ec; color: #FF6B4A; }

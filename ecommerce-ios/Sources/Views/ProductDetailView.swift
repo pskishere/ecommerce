@@ -3,20 +3,25 @@ import SwiftUI
 struct ProductDetailView: View {
     let product: Product
     @EnvironmentObject private var cart: Cart
+    @EnvironmentObject private var appNavigation: AppNavigation
     @Environment(\.dismiss) private var dismiss
 
     @State private var quantity: Int = 1
-    @State private var showingAddedToast = false
+    @State private var addedToast: String? = nil
     @State private var selectedImageIndex = 0
     @State private var showingSpecSheet = false
     @State private var isFavorite = false
+    @State private var favoriteId: String? = nil
+    @State private var productReviews: [ProductReviewItem] = []
     @State private var relatedProducts: [Product] = []
     @State private var productDetail: ProductDetail?
     @State private var selectedSpecs: [String: String] = [:]  // groupId: valueId
     @State private var availableSpecs: [String: Set<String>] = [:]  // groupId: available valueIds
     @State private var selectedSKU: SKU?
+    @State private var detailLoadError: String? = nil
+    @State private var isAddingToCart = false
+    @State private var showShop = false
 
-    private let accentColor = DesignSystem.Colors.accent
 
     var body: some View {
         GeometryReader { geometry in
@@ -40,44 +45,77 @@ struct ProductDetailView: View {
             }
             .navigationBarBackButtonHidden(false)
             .hideTabBar()
+            .background(DesignSystem.Colors.light)
             .safeAreaInset(edge: .bottom) {
                 bottomActionBar
             }
-            .overlay {
-                if showingAddedToast {
-                    toastView
-                }
+            .toast($addedToast, bottomPadding: 100)
+            .navigationDestination(isPresented: $showShop) {
+                ShopView()
             }
         }
         .sheet(isPresented: $showingSpecSheet) {
-            if let detail = productDetail {
-                SpecSheetView(
-                    productDetail: detail,
-                    selectedSpecs: $selectedSpecs,
-                    selectedSKU: $selectedSKU,
-                    availableSpecs: $availableSpecs,
-                    quantity: $quantity,
-                    isFavorite: $isFavorite,
-                    onSpecsChanged: { Task { await fetchAvailability() } },
-                    onAddToCart: { addToCart() },
-                    onBuyNow: { buyNow() }
-                )
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            Group {
+                if let detail = productDetail {
+                    SpecSheetView(
+                        productDetail: detail,
+                        selectedSpecs: $selectedSpecs,
+                        selectedSKU: $selectedSKU,
+                        availableSpecs: $availableSpecs,
+                        quantity: $quantity,
+                        isFavorite: $isFavorite,
+                        onSpecsChanged: { Task { await fetchAvailability() } },
+                        onAddToCart: { addToCart() },
+                        onBuyNow: { buyNow() }
+                    )
+                } else {
+                    VStack(spacing: 14) {
+                        if detailLoadError == nil {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 26))
+                                .foregroundStyle(DesignSystem.Colors.accent)
+                        }
+
+                        Text(detailLoadError ?? "规格加载中，请稍后")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+
+                        Button(action: { showingSpecSheet = false }) {
+                            Text("关闭")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 140, height: 42)
+                                .background(DesignSystem.Colors.accent)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(24)
+                }
             }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .task {
+            await recordBrowseHistory()
             await loadProductDetail()
             await loadRelatedProducts()
+            await loadReviews()
+            await checkFavoriteStatus()
         }
     }
 
     private func loadProductDetail() async {
         do {
+            detailLoadError = nil
             productDetail = try await Product.getDetail(id: product.id)
             await fetchAvailability()
         } catch {
-            print("Failed to load product detail: \(error)")
+            detailLoadError = friendlyErrorMessage(error, fallback: "规格加载失败，请稍后重试")
+            addedToast = detailLoadError
         }
     }
 
@@ -85,37 +123,54 @@ struct ProductDetailView: View {
         do {
             relatedProducts = try await Product.getRelatedProducts(for: product.id)
         } catch {
-            print("Failed to load related products: \(error)")
+            relatedProducts = []
         }
+    }
+
+    private func loadReviews() async {
+        do {
+            productReviews = try await Product.getReviews(id: product.id)
+        } catch {
+            productReviews = []
+        }
+    }
+
+    private func checkFavoriteStatus() async {
+        do {
+            let result = try await FavoriteProduct.checkFavorite(productId: product.id)
+            isFavorite = result.isFavorited
+            favoriteId = result.favoriteId
+        } catch {
+            // Not logged in or error — leave isFavorite = false
+        }
+    }
+
+    private func recordBrowseHistory() async {
+        guard APIClient.shared.isAuthenticated else { return }
+        try? await HistoryItem.add(productId: product.id)
     }
 
     private func fetchAvailability() async {
         guard let detail = productDetail else {
-            print("[DEBUG] fetchAvailability early return - productDetail is nil")
             return
         }
         let selectedIds = Array(selectedSpecs.values)
-        print("[DEBUG] fetchAvailability called, detail.id: \(detail.id), selectedIds: \(selectedIds), specGroups count: \(detail.specGroups.count)")
 
         if selectedIds.isEmpty {
             var allAvailable: [String: Set<String>] = [:]
             for group in detail.specGroups {
                 let valueIds = group.values.map { $0.id }
-                print("[DEBUG] Group \(group.id) (\(group.name)): \(valueIds)")
                 allAvailable[group.id] = Set(valueIds)
             }
             availableSpecs = allAvailable
-            print("[DEBUG] No selection - all available: \(allAvailable)")
             return
         }
 
         do {
             let responses = try await Product.getSpecAvailable(productId: detail.id, selectedIds: selectedIds)
-            print("[DEBUG] API returned \(responses.count) groups")
             var newAvailable: [String: Set<String>] = [:]
             for resp in responses {
                 newAvailable[resp.groupId] = Set(resp.availableValues)
-                print("[DEBUG] Group \(resp.groupId): available \(resp.availableValues)")
             }
             for group in detail.specGroups {
                 if newAvailable[group.id] == nil {
@@ -123,9 +178,7 @@ struct ProductDetailView: View {
                 }
             }
             availableSpecs = newAvailable
-            print("[DEBUG] Updated availableSpecs: \(newAvailable)")
         } catch {
-            print("[DEBUG] fetchAvailability error: \(error)")
             var allAvailable: [String: Set<String>] = [:]
             for group in detail.specGroups {
                 allAvailable[group.id] = Set(group.values.map { $0.id })
@@ -137,36 +190,43 @@ struct ProductDetailView: View {
     // MARK: - Product Image Section
     private var productImageSection: some View {
         ZStack(alignment: .bottom) {
-            // Image swiper - full width, full image display
             GeometryReader { geometry in
-                AsyncImage(url: product.imageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                        .clipped()
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.1))
-                        .frame(width: geometry.size.width, height: geometry.size.width)
+                TabView(selection: $selectedImageIndex) {
+                    ForEach(Array(displayImages.enumerated()), id: \.offset) { index, imagePath in
+                        AsyncImage(url: URL(string: imagePath)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geometry.size.width, height: geometry.size.width)
+                                .clipped()
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(width: geometry.size.width, height: geometry.size.width)
+                        }
+                        .tag(index)
+                    }
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
             }
             .aspectRatio(1, contentMode: .fit)
 
-            // Page indicator
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(.white)
-                    .frame(width: 8, height: 8)
+            if displayImages.count > 1 {
+                HStack(spacing: 6) {
+                    ForEach(displayImages.indices, id: \.self) { index in
+                        Circle()
+                            .fill(index == selectedImageIndex ? .white : .white.opacity(0.45))
+                            .frame(width: index == selectedImageIndex ? 8 : 6, height: index == selectedImageIndex ? 8 : 6)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .padding(.bottom, 16)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(.ultraThinMaterial)
-            .clipShape(Capsule())
-            .padding(.bottom, 16)
 
-            // Image counter
-            Text("1/3")
+            Text("\(min(selectedImageIndex + 1, max(displayImages.count, 1)))/\(max(displayImages.count, 1))")
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.white)
@@ -188,7 +248,7 @@ struct ProductDetailView: View {
             HStack(alignment: .bottom, spacing: 10) {
                 Text(product.formattedPrice)
                     .font(.system(size: 32, weight: .black))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
 
                 if let originalPrice = product.formattedOriginalPrice {
                     Text(originalPrice)
@@ -200,10 +260,10 @@ struct ProductDetailView: View {
                 Text("限时特惠")
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(accentColor.opacity(0.1))
+                    .background(DesignSystem.Colors.accent.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .padding(.leading, 4)
             }
@@ -233,7 +293,7 @@ struct ProductDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 0))
         .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 4)
         .offset(y: -20)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Spec Section
@@ -256,13 +316,16 @@ struct ProductDetailView: View {
                 icon: "shield.fill",
                 label: "服务",
                 value: "极速退款 · 7天无理由 · 运费险",
-                valueColor: accentColor,
+                valueColor: DesignSystem.Colors.accent,
                 showArrow: true
             )
+            .onTapGesture {
+                addedToast = "服务：极速退款 · 7天无理由 · 运费险"
+            }
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 16)
     }
 
     private var selectedSpecsText: String {
@@ -277,6 +340,17 @@ struct ProductDetailView: View {
         return parts.isEmpty ? "请选择规格" : parts.joined(separator: " / ")
     }
 
+    private var displayImages: [String] {
+        let images = productDetail?.detail?.images.filter { !$0.isEmpty } ?? []
+        if !images.isEmpty { return images }
+        return [product.image].filter { !$0.isEmpty }
+    }
+
+    private var detailImages: [String] {
+        let images = productDetail?.detail?.detailImages.filter { !$0.isEmpty } ?? []
+        return images.isEmpty ? displayImages : images
+    }
+
     // MARK: - Shop Section
     private var shopSection: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -285,7 +359,7 @@ struct ProductDetailView: View {
                     .fill(Color.gray.opacity(0.1))
                     .frame(width: 52, height: 52)
                     .overlay {
-                        AsyncImage(url: product.imageURL) { image in
+                        AsyncImage(url: productDetail?.detail?.shopLogoURL ?? product.imageURL) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -297,7 +371,7 @@ struct ProductDetailView: View {
                     }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("潮流优品官方旗舰店")
+                    Text(productDetail?.detail?.shopName ?? "潮流优品官方旗舰店")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.primary)
 
@@ -305,7 +379,7 @@ struct ProductDetailView: View {
                         HStack(spacing: 3) {
                             Image(systemName: "star.fill")
                                 .font(.caption2)
-                                .foregroundStyle(accentColor)
+                                .foregroundStyle(DesignSystem.Colors.accent)
                             Text("4.9")
                                 .font(.caption)
                         }
@@ -317,15 +391,15 @@ struct ProductDetailView: View {
 
                 Spacer()
 
-                Button(action: {}) {
+                Button(action: { showShop = true }) {
                     Text("进店逛逛")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(DesignSystem.Colors.accent)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(accentColor, lineWidth: 1.5)
+                                .stroke(DesignSystem.Colors.accent, lineWidth: 1.5)
                         )
                 }
             }
@@ -333,7 +407,7 @@ struct ProductDetailView: View {
         .padding(16)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 16)
         .padding(.top, 12)
     }
 
@@ -345,14 +419,14 @@ struct ProductDetailView: View {
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("4.9")
+                Text(String(format: "%.1f", productDetail?.rating ?? product.rating))
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
 
                 Spacer()
 
-                Button(action: {}) {
+                NavigationLink(destination: ReviewsView(product: product)) {
                     HStack(spacing: 2) {
                         Text("查看全部")
                             .font(.caption)
@@ -363,56 +437,22 @@ struct ProductDetailView: View {
                 }
             }
 
-            // Review item
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [accentColor, Color(red: 1.0, green: 0.6, blue: 0.5)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 32, height: 32)
-                        .overlay {
-                            Text("林")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-
-                    Text("林小琳")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
-
-                    Spacer()
-
-                    HStack(spacing: 2) {
-                        ForEach(0..<5, id: \.self) { _ in
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 10))
-                                .foregroundStyle(accentColor)
-                        }
-                    }
-                }
-
-                Text("手表收到啦！做工非常精致，皮质表带很软很舒服，戴上很有气质。走时很准，防水效果也不错，推荐购买！")
+            if productReviews.isEmpty {
+                Text("暂无评价")
                     .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineSpacing(4)
-
-                Text("购买规格：黑色经典款 / 标准版")
-                    .font(.caption)
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 18)
+            } else {
+                ForEach(productReviews.prefix(2)) { review in
+                    ReviewSnippetView(review: review)
+                }
             }
-            .padding(12)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .padding(16)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 16)
         .padding(.top, 12)
     }
 
@@ -425,21 +465,22 @@ struct ProductDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
 
-            // Detail images - fill width
-            GeometryReader { geometry in
-                AsyncImage(url: product.imageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width)
-                        .clipped()
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.1))
-                        .frame(width: geometry.size.width, height: geometry.size.width)
+            ForEach(Array(detailImages.enumerated()), id: \.offset) { _, imagePath in
+                GeometryReader { geometry in
+                    AsyncImage(url: URL(string: imagePath)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width)
+                            .clipped()
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.1))
+                            .frame(width: geometry.size.width, height: geometry.size.width)
+                    }
                 }
+                .aspectRatio(1, contentMode: .fit)
             }
-            .aspectRatio(1, contentMode: .fit)
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -475,7 +516,7 @@ struct ProductDetailView: View {
         HStack(spacing: 10) {
             // Icon buttons
             VStack(spacing: 2) {
-                Button(action: { isFavorite.toggle() }) {
+                Button(action: { Task { await toggleFavorite() } }) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .font(.system(size: 22))
                         .foregroundStyle(isFavorite ? .red : .gray)
@@ -489,7 +530,10 @@ struct ProductDetailView: View {
 
             VStack(spacing: 2) {
                 ZStack(alignment: .topTrailing) {
-                    Button(action: {}) {
+                    Button(action: {
+                        appNavigation.selectedTab = .cart
+                        dismiss()
+                    }) {
                         Image(systemName: "bag")
                             .font(.system(size: 22))
                             .foregroundStyle(.gray)
@@ -500,7 +544,7 @@ struct ProductDetailView: View {
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(minWidth: 16, minHeight: 16)
-                            .background(accentColor)
+                            .background(DesignSystem.Colors.accent)
                             .clipShape(Circle())
                             .offset(x: 4, y: -4)
                     }
@@ -530,7 +574,7 @@ struct ProductDetailView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
-                        .background(accentColor)
+                        .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
             }
@@ -538,58 +582,43 @@ struct ProductDetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(Color.white)
         .overlay(
-            Divider(),
+            Rectangle()
+                .fill(DesignSystem.Colors.separator)
+                .frame(height: 0.5),
             alignment: .top
         )
     }
 
-    // MARK: - Toast
-    private var toastView: some View {
-        VStack {
-            Spacer()
-            Text("已加入购物车")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(Color.black.opacity(0.75))
-                .clipShape(Capsule())
-                .padding(.bottom, 100)
-        }
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
-    }
-
     // MARK: - Actions
-    private func addToCart() {
-        guard let detail = productDetail else { return }
+    private func addToCart(goToCart: Bool = false) {
+        guard let detail = productDetail else {
+            addedToast = detailLoadError ?? "规格加载中，请稍后"
+            return
+        }
         if !detail.specGroups.isEmpty && selectedSKU == nil {
             showingSpecSheet = true
             return
         }
-        var productToAdd = product
-        if let sku = selectedSKU {
-            productToAdd = Product(
-                id: product.id,
-                name: product.name,
-                description: product.description,
-                price: sku.price,
-                originalPrice: sku.originalPrice,
-                image: sku.image ?? product.image,
-                subcategoryRef: product.subcategoryRef,
-                rating: product.rating,
-                reviewCount: product.reviewCount,
-                salesCount: product.salesCount,
-                isInStock: product.isInStock,
-                tag: product.tag
-            )
+
+        Task { @MainActor in
+            guard !isAddingToCart else { return }
+            isAddingToCart = true
+            defer { isAddingToCart = false }
+
+            do {
+                try await cart.addToCart(product, skuId: selectedSKU?.id, quantity: quantity)
+                showingSpecSheet = false
+                addedToast = quantity > 1 ? "已加入购物车 ×\(quantity)" : "已加入购物车"
+                if goToCart {
+                    appNavigation.selectedTab = .cart
+                    dismiss()
+                }
+            } catch {
+                addedToast = friendlyErrorMessage(error, fallback: "加入购物车失败")
+            }
         }
-        for _ in 0..<quantity {
-            cart.addToCart(productToAdd)
-        }
-        showToast()
     }
 
     private func buyNow() {
@@ -598,18 +627,89 @@ struct ProductDetailView: View {
             showingSpecSheet = true
             return
         }
-        addToCart()
+        addToCart(goToCart: true)
     }
 
-    private func showToast() {
-        withAnimation(.spring(duration: 0.35)) {
-            showingAddedToast = true
+    private func friendlyErrorMessage(_ error: Error, fallback: String) -> String {
+        if let message = (error as? LocalizedError)?.errorDescription, !message.isEmpty {
+            return message
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation {
-                showingAddedToast = false
+        return fallback
+    }
+
+    private func toggleFavorite() async {
+        if isFavorite, let id = favoriteId {
+            do {
+                try await FavoriteProduct.removeFavorite(id: id)
+                isFavorite = false
+                favoriteId = nil
+                addedToast = "已取消收藏"
+            } catch {
+                addedToast = userFacingErrorMessage(error, fallback: "取消收藏失败")
+            }
+        } else {
+            do {
+                let newId = try await FavoriteProduct.addFavorite(productId: product.id)
+                isFavorite = true
+                favoriteId = newId
+                addedToast = "已收藏"
+            } catch {
+                addedToast = userFacingErrorMessage(error, fallback: "收藏失败")
             }
         }
+    }
+}
+
+private struct ReviewSnippetView: View {
+    let review: ProductReviewItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [DesignSystem.Colors.accent, Color(red: 1.0, green: 0.6, blue: 0.5)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 32, height: 32)
+                    .overlay {
+                        Text(String(review.userName.prefix(1)))
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                Text(review.userName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                HStack(spacing: 2) {
+                    ForEach(1...5, id: \.self) { index in
+                        Image(systemName: index <= review.rating ? "star.fill" : "star")
+                            .font(.system(size: 10))
+                            .foregroundStyle(index <= review.rating ? DesignSystem.Colors.accent : Color(.systemGray4))
+                    }
+                }
+            }
+
+            Text(review.content)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .lineSpacing(4)
+
+            if !review.spec.isEmpty {
+                Text("购买规格：\(review.spec)")
+                    .font(.caption)
+                    .foregroundStyle(.gray)
+            }
+        }
+        .padding(12)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -617,18 +717,17 @@ struct ProductDetailView: View {
 struct PromoTag: View {
     let icon: String
     let text: String
-    private let accentColor = DesignSystem.Colors.accent
 
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.caption2)
-                .foregroundStyle(accentColor)
+                .foregroundStyle(DesignSystem.Colors.accent)
 
             Text(text)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundStyle(accentColor)
+                .foregroundStyle(DesignSystem.Colors.accent)
         }
     }
 }
@@ -675,7 +774,6 @@ struct SpecRow: View {
 // MARK: - Related Product Card
 struct RelatedProductCard: View {
     let product: Product
-    private let accentColor = DesignSystem.Colors.accent
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -700,7 +798,7 @@ struct RelatedProductCard: View {
 
                 Text(product.formattedPrice)
                     .font(.system(size: 15, weight: .black))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
             }
             .padding(10)
         }
@@ -724,7 +822,6 @@ struct SpecSheetView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    private let accentColor = DesignSystem.Colors.accent
 
     var body: some View {
         VStack(spacing: 0) {
@@ -746,7 +843,7 @@ struct SpecSheetView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(formattedPrice)
                                 .font(.system(size: 24, weight: .black))
-                                .foregroundStyle(accentColor)
+                                .foregroundStyle(DesignSystem.Colors.accent)
 
                             Text(stockText)
                                 .font(.caption)
@@ -763,12 +860,12 @@ struct SpecSheetView: View {
 
                     // Spec groups
                     ForEach(productDetail.specGroups) { group in
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text(group.name)
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(.primary)
 
-                            WrapHStack(spacing: 2) {
+                            WrapHStack(horizontalSpacing: 10, verticalSpacing: 10) {
                                 ForEach(group.values) { specValue in
                                     SpecOption(
                                         text: specValue.value,
@@ -826,7 +923,6 @@ struct SpecSheetView: View {
             HStack(spacing: 10) {
                 Button(action: {
                     onAddToCart()
-                    dismiss()
                 }) {
                     Text("加入购物车")
                         .font(.system(size: 15, weight: .bold))
@@ -839,14 +935,13 @@ struct SpecSheetView: View {
 
                 Button(action: {
                     onBuyNow()
-                    dismiss()
                 }) {
                     Text("立即购买")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(accentColor)
+                        .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
             }
@@ -857,11 +952,7 @@ struct SpecSheetView: View {
 
     private var formattedPrice: String {
         if let sku = selectedSKU {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencyCode = "CNY"
-            formatter.locale = Locale(identifier: "zh_CN")
-            return formatter.string(from: NSDecimalNumber(decimal: sku.price)) ?? "¥\(sku.price)"
+            return sku.price.rmbText
         }
         return productDetail.formattedPrice
     }
@@ -893,25 +984,19 @@ struct SpecSheetView: View {
 
     private func isSpecAvailable(groupId: String, valueId: String) -> Bool {
         if let available = availableSpecs[groupId] {
-            let isAvail = available.contains(valueId)
-            print("[DEBUG] isSpecAvailable(\(groupId), \(valueId)) = \(isAvail), available: \(available)")
-            return isAvail
+            return available.contains(valueId)
         }
-        print("[DEBUG] isSpecAvailable(\(groupId), \(valueId)) = true (no entry in availableSpecs), availableSpecs: \(availableSpecs)")
         return true
     }
 
     private func toggleSpec(groupId: String, valueId: String) {
-        print("[DEBUG] toggleSpec called with (\(groupId), \(valueId))")
         // Toggle selection - if already selected, deselect (same as H5)
         if selectedSpecs[groupId] == valueId {
             selectedSpecs.removeValue(forKey: groupId)
         } else {
             selectedSpecs[groupId] = valueId
         }
-        print("[DEBUG] toggleSpec selectedSpecs now: \(selectedSpecs)")
         updateSelectedSKU()
-        print("[DEBUG] toggleSpec calling onSpecsChanged")
         onSpecsChanged()
     }
 
@@ -931,7 +1016,6 @@ struct SpecOption: View {
     var isDisabled: Bool = false
     var onTap: () -> Void
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)  // #FF6B4A
 
     private var normalBg: Color { Color(red: 0.97, green: 0.97, blue: 0.97) }  // #F8F8F8
     private var normalBorder: Color { Color(red: 0.90, green: 0.90, blue: 0.90) }  // #E5E5E5
@@ -947,16 +1031,18 @@ struct SpecOption: View {
             Text(text)
                 .font(.system(size: 13))
                 .fontWeight(isSelected ? .bold : .medium)
-                .foregroundStyle(isSelected ? accentColor : normalText)
+                .foregroundStyle(isSelected ? DesignSystem.Colors.accent : normalText)
+                .lineLimit(1)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.vertical, 9)
+                .frame(minWidth: 56, minHeight: 36)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
                         .fill(isSelected ? selectedBg : normalBg)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(isSelected ? accentColor : normalBorder, lineWidth: 1.5)
+                        .stroke(isSelected ? DesignSystem.Colors.accent : normalBorder, lineWidth: 1.5)
                 )
         }
         .disabled(isDisabled)
@@ -966,38 +1052,86 @@ struct SpecOption: View {
 
 // MARK: - Wrap HStack for left-aligned flow layout
 struct WrapHStack<Content: View>: View {
-    let spacing: CGFloat
+    let horizontalSpacing: CGFloat
+    let verticalSpacing: CGFloat
     let content: () -> Content
 
     init(spacing: CGFloat, @ViewBuilder content: @escaping () -> Content) {
-        self.spacing = spacing
+        self.horizontalSpacing = spacing
+        self.verticalSpacing = spacing
+        self.content = content
+    }
+
+    init(horizontalSpacing: CGFloat, verticalSpacing: CGFloat, @ViewBuilder content: @escaping () -> Content) {
+        self.horizontalSpacing = horizontalSpacing
+        self.verticalSpacing = verticalSpacing
         self.content = content
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: spacing) {
-            FlowLayoutView(spacing: spacing) {
-                content()
-            }
-        }
-    }
-}
-
-// MARK: - Flow Layout using LazyVGrid
-struct FlowLayoutView<Content: View>: View {
-    let spacing: CGFloat
-    let content: () -> Content
-
-    init(spacing: CGFloat, @ViewBuilder content: @escaping () -> Content) {
-        self.spacing = spacing
-        self.content = content
-    }
-
-    var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80, maximum: 200), spacing: spacing)], spacing: spacing) {
+        LeftAlignedFlowLayout(horizontalSpacing: horizontalSpacing, verticalSpacing: verticalSpacing) {
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Left Aligned Flow Layout
+struct LeftAlignedFlowLayout: Layout {
+    let horizontalSpacing: CGFloat
+    let verticalSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? subviews.reduce(0) { partial, subview in
+            partial + subview.sizeThatFits(.unspecified).width + horizontalSpacing
+        }
+        let rows = arrangedRows(maxWidth: maxWidth, subviews: subviews)
+        return CGSize(width: proposal.width ?? rows.width, height: rows.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var lineHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+            if x > bounds.minX && x + size.width > bounds.maxX {
+                x = bounds.minX
+                y += lineHeight + verticalSpacing
+                lineHeight = 0
+            }
+
+            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + horizontalSpacing
+            lineHeight = max(lineHeight, size.height)
+        }
+    }
+
+    private func arrangedRows(maxWidth: CGFloat, subviews: Subviews) -> (width: CGFloat, height: CGFloat) {
+        var currentWidth: CGFloat = 0
+        var currentHeight: CGFloat = 0
+        var totalHeight: CGFloat = 0
+        var widestRow: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
+            let nextWidth = currentWidth == 0 ? size.width : currentWidth + horizontalSpacing + size.width
+
+            if currentWidth > 0 && nextWidth > maxWidth {
+                widestRow = max(widestRow, currentWidth)
+                totalHeight += currentHeight + verticalSpacing
+                currentWidth = size.width
+                currentHeight = size.height
+            } else {
+                currentWidth = nextWidth
+                currentHeight = max(currentHeight, size.height)
+            }
+        }
+
+        widestRow = max(widestRow, currentWidth)
+        totalHeight += currentHeight
+        return (widestRow, totalHeight)
     }
 }
 

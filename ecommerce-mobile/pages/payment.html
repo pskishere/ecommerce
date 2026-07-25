@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>收银台 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./payment.css">
+</head>
+<body class="page-transition">
+  <div class="payment-page" id="paymentPage">
+
+    <!-- Header -->
+    <div class="pay-header">
+      <div class="pay-header-inner">
+        <div class="back-btn" onclick="window.history.back()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </div>
+        <div class="pay-title">收银台</div>
+      </div>
+    </div>
+
+    <!-- Amount -->
+    <div class="pay-amount-section">
+      <div class="pay-amount-label">待支付金额</div>
+      <div class="pay-amount">¥<span id="payAmount">0.00</span></div>
+      <div class="pay-order-id">订单号：<span id="payOrderId">-</span></div>
+    </div>
+
+    <!-- Methods -->
+    <div class="pay-methods-section">
+      <div class="pay-methods-title">选择支付方式</div>
+      <div class="pay-methods">
+        <div class="pay-method selected" data-method="wxpay" onclick="selectMethod(this,'wxpay')">
+          <div class="pay-method-icon wxpay">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span class="pay-method-name">微信支付</span>
+          <span class="pay-method-tag">推荐</span>
+          <div class="pay-method-radio active"></div>
+        </div>
+        <div class="pay-method" data-method="alipay" onclick="selectMethod(this,'alipay')">
+          <div class="pay-method-icon alipay">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h10M7 11h6"/></svg>
+          </div>
+          <span class="pay-method-name">支付宝</span>
+          <span class="pay-method-tag" style="visibility:hidden">-</span>
+          <div class="pay-method-radio"></div>
+        </div>
+        <div class="pay-method" data-method="balance" onclick="selectMethod(this,'balance')">
+          <div class="pay-method-icon balance">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <span class="pay-method-name">余额支付</span>
+          <span class="pay-method-tag" style="visibility:hidden">-</span>
+          <div class="pay-method-radio"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pay button -->
+    <div class="pay-bar">
+      <button class="pay-btn" id="payBtn" onclick="submitPayment()">立即支付</button>
+    </div>
+
+    <!-- Processing overlay -->
+    <div class="pay-overlay" id="processingOverlay" style="display:none">
+      <div class="pay-processing">
+        <div class="pay-spinner"></div>
+        <div class="pay-processing-text">支付处理中…</div>
+      </div>
+    </div>
+
+    <!-- Success overlay -->
+    <div class="pay-overlay" id="successOverlay" style="display:none">
+      <div class="pay-result">
+        <div class="pay-result-icon success">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="pay-result-title">支付成功</div>
+        <div class="pay-result-amount">¥<span id="successAmount">0</span></div>
+        <div class="pay-result-actions">
+          <button class="pay-result-btn primary" onclick="viewOrder()">查看订单</button>
+          <button class="pay-result-btn secondary" onclick="continueShopping()">继续购物</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Failed overlay -->
+    <div class="pay-overlay" id="failedOverlay" style="display:none">
+      <div class="pay-result">
+        <div class="pay-result-icon failed">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+        <div class="pay-result-title">支付失败</div>
+        <div class="pay-result-sub">请检查网络后重试</div>
+        <div class="pay-result-actions">
+          <button class="pay-result-btn primary" onclick="retryPayment()">重新支付</button>
+          <button class="pay-result-btn secondary" onclick="window.location.href='order.html'">查看订单</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script type="module" src="./js/pages/payment.js"></script>
+</body>
+</html>

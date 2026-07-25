@@ -23,11 +23,11 @@
     <div class="review-body">
       <div class="review-product">
         <div class="review-product-img">
-          <img src="./assets/images/product-01-watch.webp" alt="商品图片">
+          <img id="reviewProductImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="商品图片">
         </div>
         <div class="review-product-info">
-          <div class="review-product-name">简约真皮腕表 简约风格</div>
-          <div class="review-product-spec">黑色经典款</div>
+          <div class="review-product-name" id="reviewProductName">商品信息加载中</div>
+          <div class="review-product-spec" id="reviewProductSpec"></div>
         </div>
       </div>
 
@@ -60,8 +60,9 @@
 
       <div class="review-images">
         <div class="review-images-title">上传图片（选填）</div>
+        <input id="reviewImageInput" type="file" accept="image/*" multiple hidden>
         <div class="review-images-list" id="imageList">
-          <div class="review-add-image" onclick="showToast('上传图片功能')">
+          <div class="review-add-image" onclick="chooseReviewImages()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <span>添加图片</span>
           </div>
@@ -76,6 +77,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script type="module" src="./js/pages/reviews.js"></script>
+  <script type="module" src="./js/pages/review.js"></script>
 </body>
 </html>

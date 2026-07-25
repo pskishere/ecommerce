@@ -4,6 +4,9 @@ struct ProfileView: View {
     @EnvironmentObject private var authManager: LoginView
     @State private var user: User?
     @State private var isLoading = true
+    @State private var orderCounts: [OrderStatus: Int] = [:]
+    @State private var couponCount = 0
+    @State private var toast: String? = nil
 
     var body: some View {
         ScrollView {
@@ -13,8 +16,9 @@ struct ProfileView: View {
                 profileBody
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DesignSystem.Colors.pageBackground)
         .ignoresSafeArea(edges: .top)
+        .toast($toast, bottomPadding: 96)
         .task {
             await loadProfile()
         }
@@ -26,7 +30,7 @@ struct ProfileView: View {
             ZStack(alignment: .topLeading) {
                 LinearGradient(
                     colors: [
-                        Color(red: 1.0, green: 0.42, blue: 0.29),
+                        DesignSystem.Colors.accent,
                         Color(red: 1.0, green: 0.54, blue: 0.42),
                         Color(red: 1.0, green: 0.67, blue: 0.53)
                     ],
@@ -89,9 +93,9 @@ struct ProfileView: View {
                                 .foregroundStyle(.white.opacity(0.7))
 
                             HStack(spacing: 20) {
-                                UserStat(number: "128", label: "关注")
-                                UserStat(number: "356", label: "粉丝")
-                                UserStat(number: "2,860", label: "积分")
+                                UserStat(number: "\(user?.followCount ?? 0)", label: "关注")
+                                UserStat(number: "\(user?.fansCount ?? 0)", label: "粉丝")
+                                UserStat(number: "\(user?.points ?? 0)", label: "积分")
                             }
                         }
 
@@ -107,10 +111,27 @@ struct ProfileView: View {
     }
 
     private func loadProfile() async {
+        async let userTask = User.getProfile()
+        async let ordersTask = Order.getList()
+        async let couponsTask = UserCoupon.getCoupons()
         do {
-            user = try await User.getProfile()
+            user = try await userTask
         } catch {
-            print("Failed to load profile: \(error)")
+            toast = userFacingErrorMessage(error, fallback: "个人资料加载失败")
+        }
+        do {
+            let orders = try await ordersTask
+            var counts: [OrderStatus: Int] = [:]
+            for o in orders { counts[o.status, default: 0] += 1 }
+            orderCounts = counts
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "订单统计加载失败")
+        }
+        do {
+            let coupons = try await couponsTask
+            couponCount = coupons.filter { $0.status == "available" }.count
+        } catch {
+            toast = userFacingErrorMessage(error, fallback: "优惠券统计加载失败")
         }
         isLoading = false
     }
@@ -135,36 +156,40 @@ struct ProfileView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("黄金会员")
+                    Text(user?.vipLevelName ?? "普通会员")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.white)
 
-                    Text("有效期至 2027.03")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.7))
+                    if let expire = user?.vipExpireDate {
+                        Text("有效期至 \(expire.prefix(7).replacingOccurrences(of: "-", with: "."))")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.7))
+                    } else {
+                        Text("开通会员享受专属权益")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
 
-                    Text("每月领取专属优惠券包 · 专享价商品 · 生日礼包")
+                    Text("专享优惠券 · 积分加倍 · 免运费")
                         .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.5))
                 }
 
                 Spacer()
 
-                Button(action: {}) {
-                    Text("续费")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 8)
-                        .background(
-                            LinearGradient(
-                                colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 1.0, green: 0.65, blue: 0.0)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                Text(user?.vipLevel == "none" ? "立即开通" : "续费")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 8)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 1.0, green: 0.65, blue: 0.0)],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
-                        .clipShape(Capsule())
-                }
+                    )
+                    .clipShape(Capsule())
             }
             .padding(16)
             .background(
@@ -205,10 +230,10 @@ struct ProfileView: View {
                 }
 
                 HStack(spacing: 0) {
-                    OrderItem(icon: "clock", label: "待付款", badge: nil, destination: .pending)
-                    OrderItem(icon: "shippingbox", label: "待发货", badge: "1", destination: .paid)
-                    OrderItem(icon: "shippingbox.fill", label: "待收货", badge: nil, destination: .shipped)
-                    OrderItem(icon: "message", label: "待评价", badge: nil, destination: .completed)
+                    OrderItem(icon: "clock", label: "待付款", badge: orderCounts[.pending].map { $0 > 0 ? "\($0)" : nil } ?? nil, destination: .pending)
+                    OrderItem(icon: "shippingbox", label: "待发货", badge: orderCounts[.paid].map { $0 > 0 ? "\($0)" : nil } ?? nil, destination: .paid)
+                    OrderItem(icon: "shippingbox.fill", label: "待收货", badge: orderCounts[.shipped].map { $0 > 0 ? "\($0)" : nil } ?? nil, destination: .shipped)
+                    OrderItem(icon: "message", label: "待评价", badge: orderCounts[.completed].map { $0 > 0 ? "\($0)" : nil } ?? nil, destination: .completed)
                     OrderItem(icon: "arrow.uturn.left", label: "退款/售后", badge: nil, destination: .all)
                 }
             }
@@ -219,13 +244,13 @@ struct ProfileView: View {
             // Assets Grid
             NavigationLink(destination: CouponView()) {
                 HStack(spacing: 0) {
-                    AssetItem(number: "4", label: "优惠券")
-                    AssetItem(number: "0", label: "积分")
+                    AssetItem(number: "\(couponCount)", label: "优惠券")
+                    AssetItem(number: "\(user?.points ?? 0)", label: "积分")
                     AssetItem(number: "0", label: "红包")
                     AssetItem(number: "0", label: "礼品卡")
                 }
                 .padding(.vertical, 14)
-                .background(Color(.secondarySystemBackground))
+                .background(DesignSystem.Colors.secondaryBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             .buttonStyle(.plain)
@@ -277,7 +302,7 @@ struct ProfileView: View {
 
                 Spacer()
 
-                Button(action: {}) {
+                ShareLink(item: inviteURL) {
                     Text("立即邀请")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
@@ -286,6 +311,7 @@ struct ProfileView: View {
                         .background(DesignSystem.Colors.accent)
                         .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
             .padding(16)
             .background(
@@ -299,6 +325,14 @@ struct ProfileView: View {
         }
         .padding(16)
         .padding(.top, 12)
+    }
+
+    private var inviteURL: URL {
+        #if DEBUG
+        return URL(string: "http://localhost:5173/index.html")!
+        #else
+        return URL(string: "https://handsome-youth-production-98c5.up.railway.app/index.html")!
+        #endif
     }
 }
 
@@ -369,7 +403,7 @@ struct AssetItem: View {
         VStack(spacing: 2) {
             Text(number)
                 .font(.system(size: 16, weight: .black))
-                .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.29))
+                .foregroundStyle(DesignSystem.Colors.accent)
 
             Text(label)
                 .font(.system(size: 11))

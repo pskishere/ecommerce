@@ -15,8 +15,10 @@ let selectedAddress = null
 let remark = ''
 let paymentMethod = 'wxpay'
 let availableCoupons = []
+let _cachedAddresses = null
 
 async function loadOrderItems() {
+  _cachedAddresses = null // invalidate address cache on page init
   // 1. 从服务器获取购物车数据
   let cartItems = []
   try {
@@ -27,12 +29,15 @@ async function loadOrderItems() {
       cartId: item.cartId,
       id: item.id,
       name: item.name,
-      price: item.price,
-      original: item.original,
-      qty: item.qty,
-      selected: item.selected,
-      img: item.img
-    }))))
+	      price: item.price,
+	      original: item.original,
+	      qty: item.qty,
+	      selected: item.selected,
+	      img: item.img,
+	      skuId: item.skuId,
+	      spec: item.spec,
+	      specValues: item.specValues || []
+	    }))))
   } catch (e) {
     console.error('cart sync failed', e)
     // fallback to localStorage
@@ -41,11 +46,14 @@ async function loadOrderItems() {
       id: item.id,
       name: item.name,
       price: item.price,
-      original: item.original || item.price,
-      qty: item.qty,
-      selected: item.selected !== false,
-      img: item.img
-    }))
+	      original: item.original || item.price,
+	      qty: item.qty,
+	      selected: item.selected !== false,
+	      img: item.img,
+	      skuId: item.skuId,
+	      spec: item.spec || '',
+	      specValues: item.specValues || []
+	    }))
   }
 
   // 过滤已选中的商品（存到模块级变量）
@@ -80,7 +88,7 @@ function updateCouponUsable() {
   const subtotal = orderPreview.subtotal || 0
   availableCoupons = availableCoupons.map(c => ({
     ...c,
-    usable: subtotal >= (parseFloat(c.threshold) || 0)
+    usable: subtotal >= (c.threshold_amount || 0)
   }))
 }
 
@@ -94,17 +102,32 @@ async function renderCheckout() {
     try {
       orderPreview = await api.order.preview({
         cartItemIds,
-        addressId: selectedAddress?.id || ''
+        addressId: selectedAddress?.id || '',
+        couponId: selectedCoupon?.id || ''
       })
       // API 返回空则用本地数据
       if (!orderPreview?.items?.length) throw new Error('preview empty')
     } catch (e) {
       console.error('preview failed, using local', e)
+      const subtotal = selectedItems.reduce((s, i) => s + i.price * i.qty, 0)
+      const discount = selectedCoupon ? Number(selectedCoupon.discount || 0) : 0
       orderPreview = {
-        items: selectedItems,
-        subtotal: selectedItems.reduce((s, i) => s + i.price * i.qty, 0),
+	        items: selectedItems.map(item => ({
+	          cartId: item.cartId,
+	          productId: item.id,
+	          name: item.name,
+	          skuId: item.skuId || '',
+	          spec: item.spec || (item.specValues || []).map(s => s.value).filter(Boolean).join(' / '),
+	          price: Number(item.price || 0),
+	          originalPrice: Number(item.original || item.price || 0),
+	          quantity: item.qty || 1,
+	          image: item.img
+	        })),
+	        subtotal,
         freight: 0,
-        total: selectedItems.reduce((s, i) => s + i.price * i.qty, 0),
+        discount,
+        total: subtotal,
+        payment: Math.max(0, subtotal - discount),
         store: '官方旗舰店'
       }
     }
@@ -112,8 +135,8 @@ async function renderCheckout() {
   }
 
   const { items, subtotal, freight, total, store } = orderPreview
-  const discount = selectedCoupon ? parseFloat(selectedCoupon.discount) || 0 : 0
-  const finalTotal = Math.max(0, total - discount)
+  const discount = Number(orderPreview.discount ?? (selectedCoupon ? parseFloat(selectedCoupon.discount) || 0 : 0))
+  const finalTotal = Number(orderPreview.payment ?? Math.max(0, total - discount))
 
   renderBody(items, subtotal, freight, finalTotal, store)
   renderBottomBar(finalTotal)
@@ -234,13 +257,13 @@ function closeSheet() {
 }
 
 function openAddressSheet() {
-  api.checkout.getAddresses().then(addresses => {
+  const doRender = (addresses) => {
     const list = document.getElementById('addrList')
     if (!addresses?.length) {
       list.innerHTML = '<div style="padding:20px;text-align:center;color:#999">暂无收货地址</div>'
     } else {
-      list.innerHTML = addresses.map(addr => `
-        <div class="addr-item ${addr.id === selectedAddress?.id ? 'selected' : ''}" onclick="selectAddress(${JSON.stringify(addr).replace(/"/g, '&quot;')})">
+      list.innerHTML = addresses.map((addr, i) => `
+        <div class="addr-item ${addr.id === selectedAddress?.id ? 'selected' : ''}" data-addr-index="${i}">
           <div class="addr-item-top">
             <div class="addr-check"></div>
             <div class="addr-item-info">
@@ -255,7 +278,23 @@ function openAddressSheet() {
         </div>
       `).join('')
     }
+    list.onclick = (e) => {
+      const item = e.target.closest('.addr-item')
+      if (!item) return
+      const idx = parseInt(item.dataset.addrIndex)
+      if (!isNaN(idx) && _cachedAddresses?.[idx]) selectAddress(_cachedAddresses[idx])
+    }
     openSheet('addressSheet')
+  }
+
+  if (_cachedAddresses) {
+    doRender(_cachedAddresses)
+    return
+  }
+
+  api.checkout.getAddresses().then(addresses => {
+    _cachedAddresses = addresses
+    doRender(addresses)
   }).catch(err => {
     console.error('openAddressSheet error', err)
     document.getElementById('addrList').innerHTML = '<div style="padding:20px;text-align:center;color:#999">加载失败</div>'
@@ -276,17 +315,16 @@ function openCouponSheet() {
   if (!availableCoupons.length) {
     list.innerHTML = '<div style="padding:20px;text-align:center;color:#999">暂无可用优惠券</div>'
   } else {
-    const usableCoupons = availableCoupons.filter(c => c.usable)
     list.innerHTML = `
-      <div class="coupon-none-item ${!selectedCoupon ? 'selected' : ''}" onclick="selectCoupon(null)">
+      <div class="coupon-none-item ${!selectedCoupon ? 'selected' : ''}" data-coupon-none>
         <div class="coupon-none-radio"></div>
         <span class="coupon-none-text">不使用优惠券</span>
       </div>
-      ${availableCoupons.map(c => `
-        <div class="coupon-item ${c.id === selectedCoupon?.id ? 'selected' : ''} ${!c.usable ? 'disabled' : ''}" onclick="${c.usable ? 'selectCoupon(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')' : ''}">
+      ${availableCoupons.map((c, i) => `
+        <div class="coupon-item ${c.id === selectedCoupon?.id ? 'selected' : ''} ${!c.usable ? 'disabled' : ''}" data-coupon-index="${i}">
           <div class="coupon-item-left">
             <div class="coupon-item-discount"><span>¥</span>${c.discount}</div>
-            <div class="coupon-item-threshold">满${c.threshold}元可用</div>
+            <div class="coupon-item-threshold">满${c.threshold_amount}元可用</div>
           </div>
           <div class="coupon-item-right">
             <div class="coupon-itemName">${c.name}</div>
@@ -297,12 +335,21 @@ function openCouponSheet() {
       `).join('')}
     `
   }
+  list.onclick = (e) => {
+    const noneItem = e.target.closest('[data-coupon-none]')
+    if (noneItem) { selectCoupon(null); return }
+    const item = e.target.closest('.coupon-item:not(.disabled)')
+    if (!item) return
+    const idx = parseInt(item.dataset.couponIndex)
+    if (!isNaN(idx) && availableCoupons[idx]) selectCoupon(availableCoupons[idx])
+  }
   openSheet('couponSheet')
 }
 
 function selectCoupon(coupon) {
   selectedCoupon = coupon
   closeSheet()
+  orderPreview = null
   renderCheckout()
   showToast(coupon ? `已选择：${coupon.name}` : '已取消优惠券')
 }
@@ -313,19 +360,22 @@ async function submitOrder() {
 
   const cartItemIds = orderPreview.items.map(item => item.cartId).filter(Boolean)
   try {
-    await api.order.create({
+    const order = await api.order.create({
       cartItemIds,
       addressId: selectedAddress.id,
       couponId: selectedCoupon?.id || '',
       remark
     })
-    showToast('订单提交成功！')
     // 清除已购买的商品
     const cart = JSON.parse(localStorage.getItem('cart') || '[]')
     const cartItemIdSet = new Set(cartItemIds)
     const remaining = cart.filter(item => !(item.cartId && cartItemIdSet.has(item.cartId)))
     localStorage.setItem('cart', JSON.stringify(remaining))
-    setTimeout(() => { window.location.href = 'order.html' }, 1500)
+    const orderId = order?.id || ''
+    const amount = Number(order?.payment ?? 0).toFixed(2)
+    sessionStorage.setItem('paymentOrderId', orderId)
+    sessionStorage.setItem('paymentAmount', amount)
+    window.location.href = `payment.html?orderId=${orderId}&amount=${amount}`
   } catch (e) {
     showToast('订单提交失败')
     console.error('submitOrder error', e)

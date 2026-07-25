@@ -5,9 +5,29 @@ import { createContentTab } from '../components/content-tab.js'
 
 let allOrders = []
 
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function reviewUrl(order) {
+  const product = order.products?.[0]
+  const params = new URLSearchParams({ orderId: order.id })
+  if (product?.productId) params.set('productId', product.productId)
+  return `review.html?${params.toString()}`
+}
+
+function storeReviewContext(order) {
+  const product = order?.products?.[0]
+  sessionStorage.setItem('reviewOrderId', order.id)
+  if (product?.productId) sessionStorage.setItem('reviewProductId', product.productId)
+}
+
+function orderDetailUrl(id) {
+  return `order-detail.html?id=${id}`
+}
+
 async function loadOrders() {
   allOrders = await api.order.getList()
-  console.log('[Order] allOrders:', JSON.stringify(allOrders.map(o => ({id: o.id, status: o.status, products: o.products.map(p => ({name: p.name, img: p.img}))}))))
   document.getElementById('orderSkeleton')?.classList.add('loaded')
   renderOrders(getTabFromURL())
 }
@@ -25,6 +45,7 @@ createContentTab({
     { value: 'paid', label: '待发货' },
     { value: 'shipped', label: '待收货' },
     { value: 'completed', label: '已完成' },
+    { value: 'refund', label: '售后' },
   ],
   defaultTab: getTabFromURL(),
   onChange: (tab) => renderOrders(tab),
@@ -34,6 +55,8 @@ function renderOrders(currentTab) {
   const orderList = document.getElementById('orderList')
   let orders = currentTab === 'all'
     ? allOrders
+    : currentTab === 'refund'
+      ? allOrders.filter(o => o.afterSaleStatus && o.afterSaleStatus !== 'none')
     : allOrders.filter(o => o.status === currentTab)
 
   if (orders.length === 0) {
@@ -47,22 +70,22 @@ function renderOrders(currentTab) {
   }
 
   orderList.innerHTML = orders.map(order => `
-    <div class="order-card" onclick="sessionStorage.setItem('orderId','${order.id}');location.href='order-detail.html'">
+    <div class="order-card" onclick="window.orderActions.detail('${order.id}')">
       <div class="order-card-header">
         <div class="order-store">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          ${order.store}
+          ${escHtml(order.store)}
         </div>
-        <div class="order-status ${order.status}">${order.statusText}</div>
+        <div class="order-status ${order.status}">${escHtml(order.statusText)}</div>
       </div>
       <div class="order-card-body">
         <div class="order-products">
           ${order.products.map(p => `
             <div class="order-product">
-              <div class="order-product-img"><img src="${p.image}" alt="${p.name}" onerror="this.src='./assets/images/icon-beauty-08.webp'"></div>
+              <div class="order-product-img"><img src="${escHtml(p.image)}" alt="${escHtml(p.name)}" onerror="this.src='./assets/images/icon-beauty-08.webp'"></div>
               <div class="order-product-info">
-                <div class="order-product-name">${p.name}</div>
-                <div class="order-product-spec">${p.spec}</div>
+                <div class="order-product-name">${escHtml(p.name)}</div>
+                <div class="order-product-spec">${escHtml(p.spec)}</div>
                 <div class="order-product-bottom">
                   <div class="order-product-price">¥${p.price}</div>
                   <div class="order-product-qty">x${p.quantity}</div>
@@ -79,11 +102,11 @@ function renderOrders(currentTab) {
             <button class="order-btn order-btn-outline" onclick="window.orderActions.cancel('${order.id}')">取消</button>
             <button class="order-btn order-btn-primary" onclick="window.orderActions.pay('${order.id}')">去付款</button>
           ` : order.status === 'shipped' ? `
-            <button class="order-btn order-btn-outline" onclick="showToast('查看物流')">查看物流</button>
+            <button class="order-btn order-btn-outline" onclick="window.orderActions.detail('${order.id}')">查看物流</button>
             <button class="order-btn order-btn-primary" onclick="window.orderActions.confirmReceipt('${order.id}')">确认收货</button>
           ` : order.status === 'completed' ? `
-            <button class="order-btn order-btn-outline" onclick="sessionStorage.setItem('orderId','${order.id}');location.href='order-detail.html'">查看详情</button>
-            <button class="order-btn order-btn-primary" onclick="location.href='review.html'">去评价</button>
+            <button class="order-btn order-btn-outline" onclick="window.orderActions.buyAgain('${order.id}')">再次购买</button>
+            <button class="order-btn order-btn-primary" onclick="window.orderActions.review('${order.id}')">去评价</button>
           ` : ''}
         </div>
       </div>
@@ -92,9 +115,40 @@ function renderOrders(currentTab) {
 }
 
 window.orderActions = {
-  cancel: async (id) => { await api.order.cancel(id); showToast('已取消订单'); loadOrders() },
-  pay: (id) => { showToast('跳转支付...'); setTimeout(() => api.order.pay(id).then(() => { showToast('支付成功'); loadOrders() }), 500) },
-  confirmReceipt: async (id) => { await api.order.confirmReceipt(id); showToast('已确认收货'); loadOrders() },
+  detail: (id) => {
+    sessionStorage.setItem('orderId', id)
+    window.location.href = orderDetailUrl(id)
+  },
+  cancel: async (id) => {
+    try { await api.order.cancel(id); showToast('已取消订单'); loadOrders() }
+    catch { showToast('取消失败，请重试') }
+  },
+  pay: (id) => {
+    const order = allOrders.find(o => o.id === id)
+    const amount = order?.payment ?? order?.total_amount ?? '0.00'
+    sessionStorage.setItem('paymentOrderId', id)
+    sessionStorage.setItem('paymentAmount', amount)
+    window.location.href = `payment.html?orderId=${id}&amount=${amount}`
+  },
+  review: (id) => {
+    const order = allOrders.find(o => o.id === id)
+    if (!order) return
+    storeReviewContext(order)
+    window.location.href = reviewUrl(order)
+  },
+  confirmReceipt: async (id) => {
+    try { await api.order.confirmReceipt(id); showToast('已确认收货'); loadOrders() }
+    catch { showToast('操作失败，请重试') }
+  },
+  buyAgain: async (id) => {
+    try {
+      await api.order.buyAgain(id)
+      showToast('已加入购物车')
+      setTimeout(() => { window.location.href = 'cart.html' }, 800)
+    } catch {
+      showToast('再次购买失败')
+    }
+  },
 }
 
 loadOrders()

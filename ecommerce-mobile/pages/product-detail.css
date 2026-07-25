@@ -865,10 +865,14 @@
 .spec-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .spec-option {
+  min-width: 56px;
+  min-height: 36px;
   padding: 8px 16px;
   background: #F8F8F8;
   border: 1.5px solid #E5E5E5;
@@ -877,6 +881,17 @@
   font-weight: 500;
   color: #666666;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.2;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
 
 .spec-option:active {

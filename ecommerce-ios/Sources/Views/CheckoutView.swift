@@ -1,20 +1,24 @@
 import SwiftUI
 
 struct CheckoutView: View {
+    var onComplete: (() -> Void)? = nil
+
     @EnvironmentObject private var cart: Cart
     @Environment(\.dismiss) private var dismiss
     @State private var addresses: [Address] = []
     @State private var selectedAddress: Address?
     @State private var coupons: [CheckoutCoupon] = []
     @State private var selectedCoupon: CheckoutCoupon?
-    @State private var selectedPayment: PaymentMethod = PaymentMethod.mockMethods[0]
+    @State private var selectedPayment: PaymentMethod = PaymentMethod.supportedMethods[0]
     @State private var remarkText = ""
     @State private var showAddressSheet = false
     @State private var showCouponSheet = false
     @State private var isLoading = true
     @State private var isSubmitting = false
+    @State private var createdOrder: Order? = nil
+    @State private var showPayment = false
+    @State private var toast: String? = nil
 
-    private let accentColor = DesignSystem.Colors.accent
 
     private var subtotal: Decimal {
         cart.selectedTotalPrice
@@ -25,7 +29,10 @@ struct CheckoutView: View {
     }
 
     private var freight: Decimal {
-        subtotal >= 99 ? 0 : 10
+        if subtotal <= 0 {
+            return 0
+        }
+        return subtotal >= 99 ? 0 : 10
     }
 
     private var totalAmount: Decimal {
@@ -44,22 +51,25 @@ struct CheckoutView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                addressSection
-                orderItemsSection
-                couponSection
-                paymentSection
-                remarkSection
-                priceSummarySection
-                Spacer(minLength: 80)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 10) {
+                    addressSection
+                    orderItemsSection
+                    couponSection
+                    paymentSection
+                    remarkSection
+                    priceSummarySection
+                    Spacer(minLength: 80)
+                }
+                .padding(.top, 8)
             }
-            .padding(.top, 8)
         }
-        .background(Color(hex: "F5F5F5"))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("确认订单")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($toast, bottomPadding: 100)
         .overlay(alignment: .bottom) {
             bottomBar
         }
@@ -75,6 +85,21 @@ struct CheckoutView: View {
                 selectedCoupon: $selectedCoupon
             )
         }
+        .navigationDestination(isPresented: $showPayment) {
+            if let order = createdOrder {
+                PaymentView(
+                    order: order,
+                    onComplete: {
+                        Task { await cart.loadCart() }
+                        showPayment = false
+                        onComplete?()
+                    },
+                    onPaid: { _ in
+                        Task { await cart.loadCart() }
+                    }
+                )
+            }
+        }
         .task {
             do {
                 addresses = try await Address.getAddresses()
@@ -87,13 +112,14 @@ struct CheckoutView: View {
                         name: coupon.name,
                         value: coupon.value,
                         threshold: coupon.threshold,
+                        thresholdAmount: coupon.thresholdAmount,
                         description: coupon.description,
                         time: coupon.time,
                         usable: cart.selectedTotalPrice >= Decimal(coupon.thresholdAmount)
                     )
                 }
             } catch {
-                print("Failed to load checkout data: \(error)")
+                toast = userFacingErrorMessage(error, fallback: "结算信息加载失败")
             }
             isLoading = false
         }
@@ -109,7 +135,7 @@ struct CheckoutView: View {
                     .overlay(
                         Image(systemName: "location.fill")
                             .font(.system(size: 18))
-                            .foregroundStyle(accentColor)
+                            .foregroundStyle(DesignSystem.Colors.accent)
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -128,7 +154,7 @@ struct CheckoutView: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(accentColor)
+                                .background(DesignSystem.Colors.accent)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
                     }
@@ -159,7 +185,7 @@ struct CheckoutView: View {
             HStack(spacing: 10) {
                 Image(systemName: "store")
                     .font(.system(size: 16))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
                 Text("潮流优品官方旗舰店")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color(.label))
@@ -196,14 +222,10 @@ struct CheckoutView: View {
                                 .foregroundStyle(Color(.label))
                                 .lineLimit(2)
 
-                            Text("黑色经典款 / 标准版")
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color(.secondaryLabel))
-
                             HStack {
                                 Text(item.product.formattedPrice)
                                     .font(.system(size: 15, weight: .bold))
-                                    .foregroundStyle(accentColor)
+                                    .foregroundStyle(DesignSystem.Colors.accent)
 
                                 Spacer()
 
@@ -231,7 +253,7 @@ struct CheckoutView: View {
             HStack {
                 HStack(spacing: 10) {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(accentColor)
+                        .fill(DesignSystem.Colors.accent)
                         .frame(width: 28, height: 28)
                         .overlay(
                             Image(systemName: "ticket.fill")
@@ -249,7 +271,7 @@ struct CheckoutView: View {
                 HStack(spacing: 6) {
                     Text(couponStatusText)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(DesignSystem.Colors.accent)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color(.systemGray3))
@@ -271,15 +293,15 @@ struct CheckoutView: View {
                 .padding(.bottom, 12)
 
             VStack(spacing: 12) {
-                ForEach(PaymentMethod.mockMethods) { method in
+                ForEach(PaymentMethod.supportedMethods) { method in
                     Button(action: { selectedPayment = method }) {
                         HStack(spacing: 10) {
                             Circle()
-                                .stroke(selectedPayment.id == method.id ? accentColor : Color(hex: "DDDDDD"), lineWidth: 2)
+                                .stroke(selectedPayment.id == method.id ? DesignSystem.Colors.accent : Color(hex: "DDDDDD"), lineWidth: 2)
                                 .frame(width: 20, height: 20)
                                 .overlay(
                                     Circle()
-                                        .fill(selectedPayment.id == method.id ? accentColor : Color.clear)
+                                        .fill(selectedPayment.id == method.id ? DesignSystem.Colors.accent : Color.clear)
                                         .frame(width: 10, height: 10)
                                 )
 
@@ -289,7 +311,7 @@ struct CheckoutView: View {
                                 .overlay(
                                     Image(systemName: method.icon)
                                         .font(.system(size: 14))
-                                        .foregroundStyle(accentColor)
+                                        .foregroundStyle(DesignSystem.Colors.accent)
                                 )
 
                             Text(method.name)
@@ -301,7 +323,7 @@ struct CheckoutView: View {
                             if method.name == "微信支付" {
                                 Text("推荐")
                                     .font(.system(size: 10, weight: .semibold))
-                                    .foregroundStyle(accentColor)
+                                    .foregroundStyle(DesignSystem.Colors.accent)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(Color(red: 1.0, green: 0.94, blue: 0.92))
@@ -335,9 +357,9 @@ struct CheckoutView: View {
     // MARK: - Price Summary Section
     private var priceSummarySection: some View {
         VStack(spacing: 0) {
-            priceRow(label: "商品金额", value: "¥\(subtotal)")
-            priceRow(label: "优惠券", value: discount > 0 ? "-¥\(discount)" : "-¥0", isDiscount: true)
-            priceRow(label: "运费", value: freight == 0 ? "免运费" : "¥\(freight)")
+            priceRow(label: "商品金额", value: subtotal.rmbText)
+            priceRow(label: "优惠券", value: discount > 0 ? "-\(discount.rmbText)" : "-¥0.00", isDiscount: true)
+            priceRow(label: "运费", value: freight == 0 ? "免运费" : freight.rmbText)
 
             Divider()
                 .padding(.top, 12)
@@ -347,9 +369,9 @@ struct CheckoutView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color(.label))
                 Spacer()
-                Text("¥\(totalAmount)")
+                Text(totalAmount.rmbText)
                     .font(.system(size: 18, weight: .black))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
             }
             .padding(16)
         }
@@ -364,7 +386,7 @@ struct CheckoutView: View {
             Spacer()
             Text(value)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(isDiscount ? accentColor : Color(.label))
+                .foregroundStyle(isDiscount ? DesignSystem.Colors.accent : Color(.label))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -376,9 +398,9 @@ struct CheckoutView: View {
             Divider()
 
             HStack(spacing: 12) {
-                Text("¥\(totalAmount)")
+                Text(totalAmount.rmbText)
                     .font(.system(size: 18, weight: .black))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
 
                 Spacer()
 
@@ -394,7 +416,7 @@ struct CheckoutView: View {
                 .foregroundStyle(.white)
                 .frame(height: 48)
                 .padding(.horizontal, 32)
-                .background(cart.hasSelectedItems ? accentColor : Color.gray)
+                .background(cart.hasSelectedItems ? DesignSystem.Colors.accent : Color.gray)
                 .clipShape(Capsule())
                 .disabled(!cart.hasSelectedItems || isSubmitting)
             }
@@ -408,9 +430,20 @@ struct CheckoutView: View {
         guard let address = selectedAddress else { return }
         isSubmitting = true
         Task {
-            await cart.clearCart()
+            do {
+                let cartItemIds = cart.selectedItems.map { $0.id }
+                let order = try await Order.createOrder(
+                    cartItemIds: cartItemIds,
+                    addressId: address.id,
+                    couponId: selectedCoupon?.id,
+                    remark: remarkText
+                )
+                createdOrder = order
+                showPayment = true
+            } catch {
+                print("Order creation failed: \(error)")
+            }
             isSubmitting = false
-            dismiss()
         }
     }
 }
@@ -421,7 +454,6 @@ struct AddressSelectionSheet: View {
     @Binding var selectedAddress: Address?
     @Environment(\.dismiss) private var dismiss
 
-    private let accentColor = DesignSystem.Colors.accent
 
     var body: some View {
         NavigationStack {
@@ -456,11 +488,11 @@ struct AddressSelectionSheet: View {
         }) {
             HStack(spacing: 10) {
                 Circle()
-                    .stroke(selectedAddress?.id == address.id ? accentColor : Color(hex: "DDDDDD"), lineWidth: 2)
+                    .stroke(selectedAddress?.id == address.id ? DesignSystem.Colors.accent : Color(hex: "DDDDDD"), lineWidth: 2)
                     .frame(width: 20, height: 20)
                     .overlay(
                         Circle()
-                            .fill(selectedAddress?.id == address.id ? accentColor : Color.clear)
+                            .fill(selectedAddress?.id == address.id ? DesignSystem.Colors.accent : Color.clear)
                             .frame(width: 10, height: 10)
                     )
 
@@ -478,7 +510,7 @@ struct AddressSelectionSheet: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(accentColor)
+                                .background(DesignSystem.Colors.accent)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
                     }
@@ -498,7 +530,7 @@ struct AddressSelectionSheet: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(selectedAddress?.id == address.id ? accentColor : Color.clear, lineWidth: 2)
+                    .stroke(selectedAddress?.id == address.id ? DesignSystem.Colors.accent : Color.clear, lineWidth: 2)
             )
         }
     }
@@ -510,7 +542,6 @@ struct CouponSelectionSheet: View {
     @Binding var selectedCoupon: CheckoutCoupon?
     @Environment(\.dismiss) private var dismiss
 
-    private let accentColor = DesignSystem.Colors.accent
 
     var body: some View {
         NavigationStack {
@@ -547,11 +578,11 @@ struct CouponSelectionSheet: View {
         }) {
             HStack(spacing: 10) {
                 Circle()
-                    .stroke(selectedCoupon == nil ? accentColor : Color(hex: "DDDDDD"), lineWidth: 2)
+                    .stroke(selectedCoupon == nil ? DesignSystem.Colors.accent : Color(hex: "DDDDDD"), lineWidth: 2)
                     .frame(width: 20, height: 20)
                     .overlay(
                         Circle()
-                            .fill(selectedCoupon == nil ? accentColor : Color.clear)
+                            .fill(selectedCoupon == nil ? DesignSystem.Colors.accent : Color.clear)
                             .frame(width: 10, height: 10)
                     )
 
@@ -568,7 +599,7 @@ struct CouponSelectionSheet: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(selectedCoupon == nil ? accentColor : Color.clear, lineWidth: 2)
+                    .stroke(selectedCoupon == nil ? DesignSystem.Colors.accent : Color.clear, lineWidth: 2)
             )
         }
     }
@@ -607,7 +638,7 @@ struct CouponSelectionSheet: View {
                                 .font(.system(size: 22, weight: .black))
                                 .foregroundStyle(.white)
                         }
-                        Text("满\(coupon.threshold)元可用")
+                        Text("满\(coupon.thresholdAmount)元可用")
                             .font(.system(size: 10))
                             .foregroundStyle(.white.opacity(0.85))
                     }
@@ -651,7 +682,7 @@ struct CouponSelectionSheet: View {
             .frame(height: 112)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(selectedCoupon?.id == coupon.id ? accentColor : Color.clear, lineWidth: 2)
+                    .stroke(selectedCoupon?.id == coupon.id ? DesignSystem.Colors.accent : Color.clear, lineWidth: 2)
             )
             .opacity(coupon.usable ? 1.0 : 0.5)
         }

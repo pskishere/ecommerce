@@ -1,15 +1,18 @@
+import PhotosUI
 import SwiftUI
+import UIKit
 
 struct ReviewView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var rating: Int = 5
     @State private var reviewText = ""
     @State private var isAnonymous = false
-    @State private var images: [String] = []
+    @State private var selectedPhotoItems: [PhotosPickerItem] = []
+    @State private var selectedImageData: [Data] = []
+    @State private var toast: String?
 
     let product: Product
 
-    private let accentColor = Color(red: 1.0, green: 0.42, blue: 0.29)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,6 +40,10 @@ struct ReviewView: View {
         .navigationTitle("商品评价")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($toast, bottomPadding: 80)
+        .onChange(of: selectedPhotoItems) { _, items in
+            Task { await loadSelectedImages(items) }
+        }
     }
 
     // MARK: - Product Section
@@ -61,7 +68,7 @@ struct ReviewView: View {
                     .foregroundStyle(Color(.label))
                     .lineLimit(2)
 
-                Text("黑色经典款")
+                Text(product.description.isEmpty ? "默认规格" : product.description)
                     .font(.system(size: 12))
                     .foregroundStyle(Color(.secondaryLabel))
                     .padding(.top, 2)
@@ -167,7 +174,7 @@ struct ReviewView: View {
 
                 Toggle("", isOn: $isAnonymous)
                     .labelsHidden()
-                    .tint(accentColor)
+                    .tint(DesignSystem.Colors.accent)
             }
             .padding(12)
         }
@@ -184,7 +191,11 @@ struct ReviewView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     // Add Photo Button
-                    Button(action: {}) {
+                    PhotosPicker(
+                        selection: $selectedPhotoItems,
+                        maxSelectionCount: 6,
+                        matching: .images
+                    ) {
                         VStack(spacing: 4) {
                             Image(systemName: "plus")
                                 .font(.system(size: 20))
@@ -197,15 +208,39 @@ struct ReviewView: View {
                         .background(Color(.secondarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .disabled(selectedImageData.count >= 6)
 
-                    ForEach(images, id: \.self) { image in
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(.secondarySystemBackground))
-                            .frame(width: 70, height: 70)
-                            .overlay(
-                                Image(systemName: "photo")
-                                    .foregroundStyle(Color(.secondaryLabel))
-                            )
+                    ForEach(Array(selectedImageData.enumerated()), id: \.offset) { index, data in
+                        ZStack(alignment: .topTrailing) {
+                            if let uiImage = UIImage(data: data) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 70, height: 70)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            } else {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(.secondarySystemBackground))
+                                    .frame(width: 70, height: 70)
+                                    .overlay(
+                                        Image(systemName: "photo")
+                                            .foregroundStyle(Color(.secondaryLabel))
+                                    )
+                            }
+
+                            Button(action: {
+                                selectedImageData.remove(at: index)
+                                selectedPhotoItems = []
+                            }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 18, height: 18)
+                                    .background(Color.black.opacity(0.55))
+                                    .clipShape(Circle())
+                            }
+                            .offset(x: 5, y: -5)
+                        }
                     }
                 }
             }
@@ -222,7 +257,7 @@ struct ReviewView: View {
             Button(action: submitReview) {
                 Text("提交评价")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(DesignSystem.Colors.accent)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(Color(red: 1.0, green: 0.91, blue: 0.88))
@@ -235,8 +270,49 @@ struct ReviewView: View {
     }
 
     private func submitReview() {
-        // Submit review logic
-        dismiss()
+        guard !reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            toast = "请填写评价内容"
+            return
+        }
+        let imagePayloads = selectedImageData.map { data in
+            "data:image/jpeg;base64,\(data.base64EncodedString())"
+        }
+        Task {
+            do {
+                try await Product.createReview(
+                    productId: product.id,
+                    rating: rating,
+                    content: reviewText,
+                    isAnonymous: isAnonymous,
+                    images: imagePayloads
+                )
+                dismiss()
+            } catch {
+                toast = userFacingErrorMessage(error, fallback: "评价提交失败")
+            }
+        }
+    }
+
+    private func loadSelectedImages(_ items: [PhotosPickerItem]) async {
+        var loaded: [Data] = []
+        var failedCount = 0
+        for item in items.prefix(6) {
+            guard let rawData = try? await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: rawData),
+                  let jpegData = image.jpegData(compressionQuality: 0.82) else {
+                failedCount += 1
+                continue
+            }
+            loaded.append(jpegData)
+        }
+        await MainActor.run {
+            selectedImageData = loaded
+            if failedCount > 0 {
+                toast = "部分图片读取失败"
+            } else if items.count > 6 {
+                toast = "最多选择6张图片"
+            }
+        }
     }
 }
 

@@ -3,6 +3,7 @@ import SwiftUI
 struct FavoritesView: View {
     @State private var favorites: [FavoriteProduct] = []
     @State private var isLoading = true
+    @State private var toast: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     private let shopAccentColor = DesignSystem.Colors.accent
@@ -24,15 +25,16 @@ struct FavoritesView: View {
                 productGrid
             }
         }
-        .background(Color(hex: "F5F5F5"))
+        .background(DesignSystem.Colors.pageBackground)
         .navigationTitle("我的收藏")
         .navigationBarTitleDisplayMode(.inline)
         .hideTabBar()
+        .toast($toast, bottomPadding: 80)
         .task {
             do {
                 favorites = try await FavoriteProduct.getFavorites()
             } catch {
-                print("Failed to load favorites: \(error)")
+                toast = userFacingErrorMessage(error, fallback: "收藏加载失败")
             }
             isLoading = false
         }
@@ -95,8 +97,9 @@ struct FavoritesView: View {
         do {
             try await FavoriteProduct.removeFavorite(id: product.id)
             favorites.removeAll { $0.id == product.id }
+            toast = "已取消收藏"
         } catch {
-            print("Failed to remove favorite: \(error)")
+            toast = userFacingErrorMessage(error, fallback: "取消收藏失败")
         }
     }
 }
@@ -143,7 +146,7 @@ struct FavoriteCard: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack {
-                    Text("¥\(product.price)")
+                    Text(product.price.rmbText)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(Color(hex: "FF6B4A"))
 

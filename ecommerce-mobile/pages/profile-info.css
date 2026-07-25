@@ -76,6 +76,14 @@
   color: #CCCCCC;
 }
 
+.visually-hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Info List */
 .info-list {
   background: white;

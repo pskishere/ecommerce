@@ -35,35 +35,31 @@ async function loadProfile() {
     return
   }
 
-  // Load user data
-  try {
-    userData = await api.user.getInfo()
-  } catch (e) {
-    console.error('Failed to load user:', e)
-    // If token is invalid, clear it
-    if (e.message.includes('invalid') || e.message.includes('Unauthorized')) {
+  const [userResult, ordersResult, couponsResult] = await Promise.allSettled([
+    api.user.getInfo(),
+    api.order.getList(),
+    api.coupon.getList(),
+  ])
+
+  if (userResult.status === 'fulfilled') {
+    userData = userResult.value
+  } else {
+    const msg = userResult.reason?.message ?? ''
+    if (msg.includes('invalid') || msg.includes('Unauthorized')) {
       localStorage.removeItem('token')
       updateLoginState()
     }
   }
 
-  // Load order counts
-  try {
-    const orders = await api.order.getList()
+  if (ordersResult.status === 'fulfilled') {
     orderCounts = { pending: 0, paid: 0, shipped: 0, completed: 0 }
-    orders.forEach(o => {
+    ordersResult.value.forEach(o => {
       if (o.status in orderCounts) orderCounts[o.status]++
     })
-  } catch (e) {
-    console.error('Failed to load orders:', e)
   }
 
-  // Load coupon count
-  try {
-    const coupons = await api.coupon.getList()
-    couponCount = (coupons.available || []).length
-  } catch (e) {
-    console.error('Failed to load coupons:', e)
+  if (couponsResult.status === 'fulfilled') {
+    couponCount = (couponsResult.value.available || []).length
   }
 
   renderProfile()

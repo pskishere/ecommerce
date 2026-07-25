@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     @State private var banners: [Banner] = []
     @State private var flashSaleProducts: [Product] = []
     @State private var hotRankingProducts: [Product] = []
     @State private var recommendedProducts: [Product] = []
+    @State private var selectedProduct: Product?
     @State private var isLoading = true
+    @State private var toast: String? = nil
 
     var body: some View {
         ScrollView {
@@ -13,16 +16,28 @@ struct HomeView: View {
                 if isLoading {
                     skeletonContent
                 } else {
-                    heroBanner
+                    if !banners.isEmpty {
+                        heroBanner
+                    }
                     categoryGrid
-                    flashSaleSection
-                    hotRankingsSection
-                    recommendSection
+                    if !flashSaleProducts.isEmpty {
+                        flashSaleSection
+                    }
+                    if !hotRankingProducts.isEmpty {
+                        hotRankingsSection
+                    }
+                    if !recommendedProducts.isEmpty {
+                        recommendSection
+                    }
                 }
             }
             .padding(.bottom, DesignSystem.Spacing.xxl)
         }
         .navigationTitle("潮流好物")
+        .navigationDestination(item: $selectedProduct) { product in
+            ProductDetailView(product: product)
+        }
+        .toast($toast, bottomPadding: 96)
         .task {
             await loadData()
         }
@@ -65,7 +80,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Button(action: {}) {
+                Button(action: { appNavigation.selectedTab = .category }) {
                     HStack(spacing: 4) {
                         Text("更多")
                             .font(.subheadline)
@@ -81,10 +96,9 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     ForEach(flashSaleProducts) { product in
-                        NavigationLink(destination: ProductDetailView(product: product)) {
+                        productTapArea(product) {
                             FlashSaleCard(product: product)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, DesignSystem.Spacing.md)
@@ -106,7 +120,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Button(action: {}) {
+                Button(action: { appNavigation.selectedTab = .category }) {
                     HStack(spacing: 4) {
                         Text("查看全部")
                             .font(.subheadline)
@@ -121,18 +135,16 @@ struct HomeView: View {
 
             // Bento grid: 1 large card top, 3 small cards bottom
             VStack(spacing: DesignSystem.Spacing.sm) {
-                if hotRankingProducts.count > 0 {
-                    NavigationLink(destination: ProductDetailView(product: hotRankingProducts[0])) {
-                        HotRankingCard(product: hotRankingProducts[0], rank: 1, isLarge: true)
+                if let firstProduct = hotRankingProducts.first {
+                    productTapArea(firstProduct) {
+                        HotRankingCard(product: firstProduct, rank: 1, isLarge: true)
                     }
-                    .buttonStyle(.plain)
 
                     HStack(spacing: DesignSystem.Spacing.sm) {
-                        ForEach(1...min(3, hotRankingProducts.count - 1), id: \.self) { index in
-                            NavigationLink(destination: ProductDetailView(product: hotRankingProducts[index])) {
-                                HotRankingCard(product: hotRankingProducts[index], rank: index + 1, isLarge: false)
+                        ForEach(Array(hotRankingProducts.dropFirst().prefix(3).enumerated()), id: \.element.id) { offset, product in
+                            productTapArea(product) {
+                                HotRankingCard(product: product, rank: offset + 2, isLarge: false)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -165,10 +177,9 @@ struct HomeView: View {
                 GridItem(.flexible(), spacing: DesignSystem.Spacing.sm)
             ], spacing: DesignSystem.Spacing.sm) {
                 ForEach(recommendedProducts) { product in
-                    NavigationLink(destination: ProductDetailView(product: product)) {
-                        RecommendCard(product: product)
+                    RecommendCard(product: product) {
+                        selectedProduct = product
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.md)
@@ -189,9 +200,20 @@ struct HomeView: View {
             hotRankingProducts = try await hotTask
             recommendedProducts = try await recommendTask
         } catch {
-            print("Failed to load home data: \(error)")
+            toast = userFacingErrorMessage(error, fallback: "首页数据加载失败")
         }
         isLoading = false
+    }
+
+    private func productTapArea<Content: View>(
+        _ product: Product,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        content()
+            .contentShape(Rectangle())
+            .onTapGesture {
+                selectedProduct = product
+            }
     }
 }
 
@@ -324,6 +346,7 @@ struct FeaturedCard: View {
 #Preview {
     HomeView()
         .environmentObject(Cart())
+        .environmentObject(AppNavigation())
 }
 
 // MARK: - Hero Banner
@@ -355,6 +378,7 @@ struct HeroBanner: View {
 }
 
 struct BannerSlide: View {
+    @EnvironmentObject private var appNavigation: AppNavigation
     let banner: Banner
 
     var body: some View {
@@ -400,7 +424,7 @@ struct BannerSlide: View {
                         .foregroundStyle(.white)
                         .lineSpacing(4)
 
-                    Button(action: {}) {
+                    Button(action: { appNavigation.selectedTab = .category }) {
                         Text(banner.actionTitle)
                             .font(.subheadline)
                             .fontWeight(.semibold)
@@ -580,7 +604,18 @@ struct HotRankingCard: View {
 // MARK: - Recommend Card
 struct RecommendCard: View {
     let product: Product
+    let onSelect: () -> Void
     @State private var isFavorite = false
+    @State private var favoriteId: String? = nil
+    @State private var toast: String? = nil
+
+    private struct AddFavRequest: Encodable { let productId: String }
+    private struct AddFavResponse: Decodable { let id: String }
+
+    init(product: Product, onSelect: @escaping () -> Void = {}) {
+        self.product = product
+        self.onSelect = onSelect
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -596,8 +631,10 @@ struct RecommendCard: View {
                     Rectangle()
                         .fill(Color.gray.opacity(0.1))
                 }
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onSelect)
 
-                Button(action: { isFavorite.toggle() }) {
+                Button(action: toggleFavorite) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .font(.caption)
                         .foregroundStyle(isFavorite ? .red : .gray)
@@ -605,6 +642,7 @@ struct RecommendCard: View {
                         .background(Color(.systemBackground).opacity(0.9))
                         .clipShape(Circle())
                 }
+                .buttonStyle(.plain)
                 .padding(6)
             }
             .frame(height: 160)
@@ -634,16 +672,61 @@ struct RecommendCard: View {
             }
             .padding(DesignSystem.Spacing.sm)
             .frame(height: 70)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onSelect)
         }
         .frame(maxWidth: .infinity)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
         .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .toast($toast, bottomPadding: 24)
+    }
+
+    private func toggleFavorite() {
+        if isFavorite, let favId = favoriteId {
+            isFavorite = false
+            favoriteId = nil
+            Task {
+                do {
+                    try await APIClient.shared.requestNoData(
+                        endpoint: APIEndpoints.favoriteItem(favId),
+                        method: "DELETE",
+                        requiresAuth: true
+                    )
+                    toast = "已取消收藏"
+                } catch {
+                    isFavorite = true
+                    favoriteId = favId
+                    toast = userFacingErrorMessage(error, fallback: "取消收藏失败")
+                }
+            }
+        } else if !isFavorite {
+            isFavorite = true
+            Task {
+                do {
+                    let resp: AddFavResponse = try await APIClient.shared.request(
+                        endpoint: APIEndpoints.favorites,
+                        method: "POST",
+                        body: AddFavRequest(productId: product.id),
+                        requiresAuth: true
+                    )
+                    favoriteId = resp.id
+                    toast = "已收藏"
+                } catch {
+                    isFavorite = false
+                    toast = userFacingErrorMessage(error, fallback: "收藏失败")
+                }
+            }
+        }
     }
 }
 
 // MARK: - Category Grid View
 struct CategoryGridView: View {
+    @State private var categories: [Category] = []
+    @State private var isLoading = true
+    @State private var hasLoadedRemoteCategories = false
+
     let columns = [
         GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
         GridItem(.flexible(), spacing: DesignSystem.Spacing.sm),
@@ -652,30 +735,89 @@ struct CategoryGridView: View {
     ]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: DesignSystem.Spacing.md) {
-            ForEach(Category.all) { category in
-                CategoryGridItem(category: category)
+        Group {
+            if isLoading {
+                SkeletonCategoryGrid()
+            } else if !categories.isEmpty {
+                LazyVGrid(columns: columns, spacing: DesignSystem.Spacing.md) {
+                    ForEach(categories) { category in
+                        CategoryGridItem(category: category)
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.md)
             }
         }
-        .padding(.horizontal, DesignSystem.Spacing.md)
+        .task {
+            guard !hasLoadedRemoteCategories else { return }
+            hasLoadedRemoteCategories = true
+            defer { isLoading = false }
+            do {
+                let remoteCategories = try await CategoryAPI.getCategories()
+                if !remoteCategories.isEmpty {
+                    categories = remoteCategories
+                }
+            } catch {
+                categories = []
+            }
+        }
     }
 }
 
 struct CategoryGridItem: View {
     let category: Category
+    @EnvironmentObject private var appNavigation: AppNavigation
 
     var body: some View {
-        VStack(spacing: 8) {
+        Button(action: { appNavigation.selectedTab = .category }) {
+            VStack(spacing: 8) {
+                categoryIcon
+                    .frame(width: 44, height: 44)
+
+                Text(category.name)
+                    .font(.caption)
+                    .foregroundStyle(Color(.label))
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var categoryIcon: some View {
+        if category.iconName.hasPrefix("http"), let url = URL(string: category.iconName) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                case .failure:
+                    fallbackIcon
+                case .empty:
+                    Circle()
+                        .fill(Color(.secondarySystemBackground))
+                        .overlay(ProgressView().scaleEffect(0.6))
+                @unknown default:
+                    fallbackIcon
+                }
+            }
+        } else if !category.iconName.isEmpty {
             Image(category.iconName)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 44, height: 44)
-
-            Text(category.name)
-                .font(.caption)
-                .foregroundStyle(Color(.label))
+        } else {
+            fallbackIcon
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    private var fallbackIcon: some View {
+        Circle()
+            .fill(DesignSystem.Colors.accent.opacity(0.1))
+            .overlay(
+                Image(systemName: "square.grid.2x2.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Colors.accent)
+            )
     }
 }
 

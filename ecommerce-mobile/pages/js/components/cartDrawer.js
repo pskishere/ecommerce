@@ -2,8 +2,20 @@
 import { api } from '../data/api.js'
 import { showToast } from './toast.js'
 
-function getCart() { return api.cart._load() }
-function getTotal() { return api.cart._total() }
+const isAuthenticated = () => Boolean(localStorage.getItem('token'))
+
+async function getCartState() {
+  if (!isAuthenticated()) return { items: [], total: 0 }
+  try {
+    const result = await api.cart.getList()
+    return {
+      items: result.items || [],
+      total: Number(result.total || 0)
+    }
+  } catch {
+    return { items: [], total: 0 }
+  }
+}
 
 export function initCartDrawer() {
   updateCartBadge()
@@ -12,22 +24,21 @@ export function initCartDrawer() {
   document.getElementById('cartClose')?.addEventListener('click', closeCartDrawer)
   document.getElementById('cartEmptyBtn')?.addEventListener('click', closeCartDrawer)
 
-  document.getElementById('cartCheckout')?.addEventListener('click', () => {
-    const cart = getCart()
-    if (cart.length === 0) return
-    showToast(`结算 ${cart.length} 件商品，共 ¥${getTotal()}`)
+  document.getElementById('cartCheckout')?.addEventListener('click', async () => {
+    const { items } = await getCartState()
+    if (items.length === 0) return
+    window.location.href = 'cart.html'
   })
 }
 
-export function openCartDrawer() {
+export async function openCartDrawer() {
   const drawer = document.getElementById('cartDrawer')
   if (!drawer) return
 
   drawer.classList.add('open')
   document.body.style.overflow = 'hidden'
 
-  const cart = getCart()
-  const total = getTotal()
+  const { items: cart, total } = await getCartState()
 
   const emptyEl = document.getElementById('cartEmpty')
   const footerEl = document.getElementById('cartFooter')
@@ -36,11 +47,11 @@ export function openCartDrawer() {
 
   if (emptyEl) emptyEl.style.display = cart.length === 0 ? '' : 'none'
   if (footerEl) footerEl.style.display = cart.length === 0 ? 'none' : ''
-  if (totalEl) totalEl.textContent = `¥${total}`
+  if (totalEl) totalEl.textContent = `¥${total.toFixed(2)}`
 
   if (itemsEl) {
     itemsEl.innerHTML = cart.map((item, i) => `
-      <div class="cart-item" data-index="${i}">
+      <div class="cart-item" data-index="${i}" data-cart-id="${item.cartId}">
         <div class="cart-item-img"><img src="${item.img}" alt="${item.name}"></div>
         <div class="cart-item-info">
           <span class="cart-item-name">${item.name}</span>
@@ -73,27 +84,34 @@ window.__cartRemove = function(index) {
   const el = document.querySelector(`.cart-item[data-index="${index}"]`)
   if (el) {
     el.classList.add('removing')
-    setTimeout(() => {
-      api.cart.removeByIndex(index)
-      openCartDrawer()
+    setTimeout(async () => {
+      const cartId = el.dataset.cartId
+      if (cartId) await api.cart.removeItem(cartId).catch(() => showToast('删除失败'))
+      await openCartDrawer()
+      updateCartBadge()
     }, 250)
   }
 }
 
-window.__cartChangeQty = function(index, delta) {
-  const cart = getCart()
-  const newQty = cart[index].qty + delta
-  if (newQty <= 0) {
-    window.__cartRemove(index)
-  } else {
-    api.cart.changeQty(cart[index].id, delta)
-    openCartDrawer()
-  }
+window.__cartChangeQty = async function(index, delta) {
+  const { items: cart } = await getCartState()
+  const item = cart[index]
+  if (!item) return
+  const newQty = item.qty + delta
+  if (newQty <= 0) return window.__cartRemove(index)
+  await api.cart.updateItem(item.cartId, newQty).catch(() => showToast('更新失败'))
+  await openCartDrawer()
+  updateCartBadge()
 }
 
-function updateCartBadge() {
+async function updateCartBadge() {
   const badge = document.getElementById('cartBadge')
-  const count = getCart().reduce((sum, item) => sum + item.qty, 0)
+  if (!badge) return
+  if (!isAuthenticated()) {
+    badge.style.display = 'none'
+    return
+  }
+  const count = await api.cart.getCount().catch(() => 0)
   if (badge) {
     badge.textContent = count > 99 ? '99+' : count
     badge.style.display = count > 0 ? '' : 'none'

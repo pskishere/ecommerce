@@ -25,6 +25,24 @@ enum APIError: Error, LocalizedError {
     }
 }
 
+func userFacingErrorMessage(_ error: Error, fallback: String) -> String {
+    if let message = (error as? LocalizedError)?.errorDescription, !message.isEmpty {
+        return message
+    }
+    return fallback
+}
+
+extension Decimal {
+    var rmbText: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "¥"
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSDecimalNumber(decimal: self)) ?? "¥" + NSDecimalNumber(decimal: self).stringValue
+    }
+}
+
 // MARK: - API Endpoints
 
 enum APIEndpoints {
@@ -54,6 +72,7 @@ enum APIEndpoints {
     static func cartItem(_ id: String) -> String { "cart/\(id)/" }
     static func cartToggle(_ id: String) -> String { "cart/\(id)/toggle/" }
     static let cartSelectAll = "cart/select_all/"
+    static let cartClear = "cart/clear/"
 
     // Orders
     static let orders = "orders/"
@@ -61,15 +80,27 @@ enum APIEndpoints {
     static func order(_ id: String) -> String { "orders/\(id)/" }
     static func orderCancel(_ id: String) -> String { "orders/\(id)/cancel/" }
     static func orderPay(_ id: String) -> String { "orders/\(id)/pay/" }
+    static func orderShip(_ id: String) -> String { "orders/\(id)/ship/" }
+    static func orderLogistics(_ id: String) -> String { "orders/\(id)/logistics/" }
     static func orderConfirm(_ id: String) -> String { "orders/\(id)/confirm/" }
+    static func orderAfterSale(_ id: String) -> String { "orders/\(id)/after-sale/" }
+    static func orderBuyAgain(_ id: String) -> String { "orders/\(id)/buy-again/" }
 
     // Addresses
     static let addresses = "addresses/"
+    static let addressRegion = "addresses/region/"
     static func address(_ id: String) -> String { "addresses/\(id)/" }
     static func addressSetDefault(_ id: String) -> String { "addresses/\(id)/set_default/" }
 
     // Favorites
     static let favorites = "favorites/"
+    static func favoriteItem(_ id: String) -> String { "favorites/\(id)/" }
+    static func favoritesCheck(productId: String) -> String { "favorites/check/?product_id=\(productId)" }
+
+    // Browse History
+    static let browseHistory = "browse-history/"
+    static func browseHistoryItem(_ id: String) -> String { "browse-history/\(id)/" }
+    static let browseHistoryClear = "browse-history/clear/"
 
     // Coupons
     static let coupons = "coupons/"
@@ -81,6 +112,11 @@ enum APIEndpoints {
 
     // User
     static let userProfile = "user/profile/"
+
+    // VIP & Shop
+    static let vip = "vip/"
+    static let vipUpgrade = "vip/upgrade/"
+    static let shopInfo = "shop/"
 }
 
 // MARK: - API Client
@@ -97,7 +133,11 @@ final class APIClient {
     private let encoder: JSONEncoder
 
     private init() {
+        #if DEBUG
+        self.baseURL = "http://localhost:8080/api/h5"
+        #else
         self.baseURL = "https://handsome-youth-production-98c5.up.railway.app/api/h5"
+        #endif
 
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
@@ -222,7 +262,10 @@ final class APIClient {
             guard envelope.code == 0 else {
                 throw APIError.serverError(code: envelope.code, message: envelope.msg)
             }
-            return envelope.data
+            guard let responseData = envelope.data else {
+                throw APIError.serverError(code: envelope.code, message: "响应数据为空")
+            }
+            return responseData
         } catch let error as APIError {
             throw error
         } catch let error as DecodingError {
@@ -291,5 +334,5 @@ final class APIClient {
 private struct ResponseEnvelope<T: Decodable>: Decodable {
     let code: Int
     let msg: String
-    let data: T
+    let data: T?
 }
