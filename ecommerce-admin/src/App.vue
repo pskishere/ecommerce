@@ -260,7 +260,10 @@
         <section v-show="activeView === 'content'" class="view-stack">
           <div class="toolbar">
             <el-segmented v-model="contentKind" :options="contentKindOptions" />
-            <el-button type="primary" :icon="Plus" @click="openContent()">新增内容</el-button>
+            <div class="toolbar-actions">
+              <input ref="mediaInput" class="hidden-file-input" type="file" accept="image/*" @change="uploadMediaFromInput" />
+              <el-button type="primary" :icon="Plus" @click="openContent()">{{ contentPrimaryLabel }}</el-button>
+            </div>
           </div>
           <el-card shadow="never" class="panel-card">
             <el-table v-if="contentKind === 'categories'" :data="categories" stripe height="calc(100vh - 252px)">
@@ -293,7 +296,7 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openSubcategory(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else :data="banners" stripe height="calc(100vh - 252px)">
+            <el-table v-else-if="contentKind === 'banners'" :data="banners" stripe height="calc(100vh - 252px)">
               <template #empty><el-empty description="暂无首页 Banner" /></template>
               <el-table-column label="Banner" min-width="280">
                 <template #default="{ row }">
@@ -308,6 +311,66 @@
               <el-table-column prop="sort_order" label="排序" width="100" />
               <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openBanner(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+
+            <el-table v-else-if="isHomeProductSection" :data="currentHomeSections" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty :description="`暂无${currentContentLabel}`" /></template>
+              <el-table-column prop="title" label="栏目" min-width="180" fixed />
+              <el-table-column v-if="contentKind === 'flashSales'" prop="subtitle" label="副标题" min-width="160" />
+              <el-table-column label="商品" min-width="260">
+                <template #default="{ row }">
+                  <div class="section-products">
+                    <el-avatar
+                      v-for="item in row.products_preview"
+                      :key="item.id"
+                      :size="34"
+                      :src="item.image"
+                      shape="square"
+                    />
+                    <span>{{ row.product_count }} 个商品</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column v-if="contentKind === 'flashSales'" label="时间" min-width="220">
+                <template #default="{ row }">
+                  <span>{{ row.start_time || '-' }}</span>
+                  <span class="subtext">{{ row.end_time || '' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="sort_order" label="排序" width="100" />
+              <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
+              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openHomeSection(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+
+            <el-table v-else-if="contentKind === 'promotions'" :data="promotions" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无促销位" /></template>
+              <el-table-column label="促销位" min-width="280">
+                <template #default="{ row }">
+                  <div class="goods-cell">
+                    <el-image :src="row.image" fit="cover" class="banner-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <div><strong>{{ row.title }}</strong><span>{{ row.subtitle || '-' }}</span></div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="link" label="跳转" min-width="180" />
+              <el-table-column prop="sort_order" label="排序" width="100" />
+              <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
+              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openPromotion(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+
+            <el-table v-else :data="media" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无素材，上传一张图片" /></template>
+              <el-table-column label="素材" min-width="320">
+                <template #default="{ row }">
+                  <div class="goods-cell">
+                    <el-image :src="row.url" fit="cover" class="goods-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <div><strong>{{ row.name }}</strong><span>{{ row.mime_type || '-' }}</span></div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="大小" width="120"><template #default="{ row }">{{ fileSize(row.size) }}</template></el-table-column>
+              <el-table-column prop="uploaded_at" label="上传时间" width="170" />
+              <el-table-column label="地址" min-width="260"><template #default="{ row }"><el-link :href="row.url" target="_blank" type="primary">打开素材</el-link></template></el-table-column>
             </el-table>
           </el-card>
         </section>
@@ -450,7 +513,7 @@
       <el-form-item label="图标"><el-select v-model="subcategoryForm.icon_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="启用"><el-switch v-model="subcategoryForm.is_enabled" /></el-form-item>
     </el-form>
-    <el-form v-else :model="bannerForm" label-position="top">
+    <el-form v-else-if="contentKind === 'banners'" :model="bannerForm" label-position="top">
       <el-form-item label="角标"><el-input v-model="bannerForm.tag" /></el-form-item>
       <el-form-item label="主标题"><el-input v-model="bannerForm.title" /></el-form-item>
       <el-form-item label="按钮文案"><el-input v-model="bannerForm.action_title" /></el-form-item>
@@ -463,6 +526,27 @@
       <el-form-item label="关联商品"><el-select v-model="bannerForm.product_ids" multiple filterable><el-option v-for="item in products" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="会场描述"><el-input v-model="bannerForm.landing_description" type="textarea" :rows="4" /></el-form-item>
       <el-form-item label="启用"><el-switch v-model="bannerForm.is_enabled" /></el-form-item>
+    </el-form>
+    <el-form v-else-if="isHomeProductSection" :model="homeSectionForm" label-position="top">
+      <el-form-item label="栏目标题"><el-input v-model="homeSectionForm.title" /></el-form-item>
+      <el-form-item v-if="contentKind === 'flashSales'" label="副标题"><el-input v-model="homeSectionForm.subtitle" /></el-form-item>
+      <el-form-item v-if="contentKind === 'flashSales'" label="开始时间"><el-input v-model="homeSectionForm.start_time" type="datetime-local" /></el-form-item>
+      <el-form-item v-if="contentKind === 'flashSales'" label="结束时间"><el-input v-model="homeSectionForm.end_time" type="datetime-local" /></el-form-item>
+      <el-form-item label="排序"><el-input-number v-model="homeSectionForm.sort_order" :min="0" /></el-form-item>
+      <el-form-item label="关联商品">
+        <el-select v-model="homeSectionForm.product_ids" multiple filterable collapse-tags collapse-tags-tooltip>
+          <el-option v-for="item in products" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="启用"><el-switch v-model="homeSectionForm.is_enabled" /></el-form-item>
+    </el-form>
+    <el-form v-else-if="contentKind === 'promotions'" :model="promotionForm" label-position="top">
+      <el-form-item label="标题"><el-input v-model="promotionForm.title" /></el-form-item>
+      <el-form-item label="副标题"><el-input v-model="promotionForm.subtitle" /></el-form-item>
+      <el-form-item label="跳转链接"><el-input v-model="promotionForm.link" /></el-form-item>
+      <el-form-item label="图片"><el-select v-model="promotionForm.image_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="排序"><el-input-number v-model="promotionForm.sort_order" :min="0" /></el-form-item>
+      <el-form-item label="启用"><el-switch v-model="promotionForm.is_enabled" /></el-form-item>
     </el-form>
     <div class="drawer-actions"><el-button @click="contentDrawer = false">取消</el-button><el-button type="primary" @click="saveContent">保存内容</el-button></div>
   </el-drawer>
@@ -598,6 +682,7 @@ const orderStatus = ref('')
 const couponStatus = ref('')
 const contentKind = ref('categories')
 const orderChartRef = ref(null)
+const mediaInput = ref(null)
 let orderChart = null
 
 const loginForm = reactive({ username: 'admin', password: 'iole' })
@@ -609,6 +694,11 @@ const coupons = ref([])
 const categories = ref([])
 const subcategories = ref([])
 const banners = ref([])
+const homeFlashSales = ref([])
+const homeHotRanks = ref([])
+const homeRecommends = ref([])
+const homeNewArrivals = ref([])
+const promotions = ref([])
 const media = ref([])
 const shopForm = reactive({})
 
@@ -623,6 +713,8 @@ const productForm = reactive({})
 const categoryForm = reactive({})
 const subcategoryForm = reactive({})
 const bannerForm = reactive({})
+const homeSectionForm = reactive({})
+const promotionForm = reactive({})
 const orderForm = reactive({})
 const userForm = reactive({})
 const couponForm = reactive({})
@@ -643,10 +735,25 @@ const viewMeta = {
 
 const currentMeta = computed(() => viewMeta[activeView.value])
 const searchable = computed(() => ['products', 'orders', 'users', 'coupons'].includes(activeView.value))
+const homeProductSectionKinds = ['flashSales', 'hotRanks', 'recommends', 'newArrivals']
+const isHomeProductSection = computed(() => homeProductSectionKinds.includes(contentKind.value))
+const currentContentLabel = computed(() => contentKindOptions.find(item => item.value === contentKind.value)?.label || '内容')
+const contentPrimaryLabel = computed(() => contentKind.value === 'media' ? '上传素材' : `新增${currentContentLabel.value}`)
+const currentHomeSections = computed(() => ({
+  flashSales: homeFlashSales.value,
+  hotRanks: homeHotRanks.value,
+  recommends: homeRecommends.value,
+  newArrivals: homeNewArrivals.value,
+}[contentKind.value] || []))
 const contentDrawerTitle = computed(() => ({
   categories: categoryForm.id ? '编辑一级分类' : '新增一级分类',
   subcategories: subcategoryForm.id ? '编辑二级分类' : '新增二级分类',
   banners: bannerForm.id ? '编辑 Banner' : '新增 Banner',
+  flashSales: homeSectionForm.id ? '编辑限时秒杀' : '新增限时秒杀',
+  hotRanks: homeSectionForm.id ? '编辑热销榜' : '新增热销榜',
+  recommends: homeSectionForm.id ? '编辑推荐栏目' : '新增推荐栏目',
+  newArrivals: homeSectionForm.id ? '编辑新品栏目' : '新增新品栏目',
+  promotions: promotionForm.id ? '编辑促销位' : '新增促销位',
 }[contentKind.value]))
 const orderDrawerTitle = computed(() => ({
   ship: '订单发货',
@@ -677,6 +784,12 @@ const contentKindOptions = [
   { label: '一级分类', value: 'categories' },
   { label: '二级分类', value: 'subcategories' },
   { label: '首页 Banner', value: 'banners' },
+  { label: '限时秒杀', value: 'flashSales' },
+  { label: '热销榜', value: 'hotRanks' },
+  { label: '新品上市', value: 'newArrivals' },
+  { label: '为你推荐', value: 'recommends' },
+  { label: '促销位', value: 'promotions' },
+  { label: '素材库', value: 'media' },
 ]
 const couponStatusOptions = [
   { label: '全部', value: '' },
@@ -844,14 +957,15 @@ async function loadUsers() {
 }
 
 async function loadContent() {
-  const [categoryData, subcategoryData, bannerData] = await Promise.all([
-    adminApi.categories(),
-    adminApi.subcategories(),
-    adminApi.banners(),
-  ])
-  categories.value = categoryData || []
-  subcategories.value = subcategoryData || []
-  banners.value = bannerData || []
+  if (contentKind.value === 'categories') categories.value = await adminApi.categories()
+  else if (contentKind.value === 'subcategories') subcategories.value = await adminApi.subcategories()
+  else if (contentKind.value === 'banners') banners.value = await adminApi.banners()
+  else if (contentKind.value === 'flashSales') homeFlashSales.value = await adminApi.homeFlashSales()
+  else if (contentKind.value === 'hotRanks') homeHotRanks.value = await adminApi.homeHotRanks()
+  else if (contentKind.value === 'recommends') homeRecommends.value = await adminApi.homeRecommends()
+  else if (contentKind.value === 'newArrivals') homeNewArrivals.value = await adminApi.homeNewArrivals()
+  else if (contentKind.value === 'promotions') promotions.value = await adminApi.homePromotions()
+  else if (contentKind.value === 'media') media.value = await adminApi.media()
 }
 
 async function loadCoupons() {
@@ -1068,9 +1182,13 @@ function buildProductPayload() {
 }
 
 function openContent() {
-  if (contentKind.value === 'categories') openCategory()
+  if (contentKind.value === 'media') {
+    mediaInput.value?.click()
+  } else if (contentKind.value === 'categories') openCategory()
   else if (contentKind.value === 'subcategories') openSubcategory()
-  else openBanner()
+  else if (contentKind.value === 'banners') openBanner()
+  else if (isHomeProductSection.value) openHomeSection()
+  else if (contentKind.value === 'promotions') openPromotion()
 }
 
 function openCategory(row = null) {
@@ -1116,6 +1234,39 @@ function openBanner(row = null) {
   contentDrawer.value = true
 }
 
+function openHomeSection(row = null) {
+  const defaultTitles = {
+    flashSales: '限时秒杀',
+    hotRanks: '热销榜单',
+    recommends: '为你推荐',
+    newArrivals: '新品上市',
+  }
+  Object.assign(homeSectionForm, {
+    id: row?.id || '',
+    title: row?.title || defaultTitles[contentKind.value] || '',
+    subtitle: row?.subtitle || '',
+    start_time: row?.start_time || '',
+    end_time: row?.end_time || '',
+    sort_order: Number(row?.sort_order || 0),
+    product_ids: row?.product_ids || [],
+    is_enabled: row ? Boolean(row.is_enabled) : true,
+  })
+  contentDrawer.value = true
+}
+
+function openPromotion(row = null) {
+  Object.assign(promotionForm, {
+    id: row?.id || '',
+    title: row?.title || '优惠活动',
+    subtitle: row?.subtitle || '',
+    link: row?.link || 'category.html',
+    image_id: row?.image_id || '',
+    sort_order: Number(row?.sort_order || 0),
+    is_enabled: row ? Boolean(row.is_enabled) : true,
+  })
+  contentDrawer.value = true
+}
+
 async function saveContent() {
   await run(async () => {
     if (contentKind.value === 'categories') {
@@ -1124,12 +1275,50 @@ async function saveContent() {
     } else if (contentKind.value === 'subcategories') {
       if (!subcategoryForm.name || !subcategoryForm.category_id) throw new Error('子分类名称和所属分类不能为空')
       subcategoryForm.id ? await adminApi.updateSubcategory(subcategoryForm.id, subcategoryForm) : await adminApi.createSubcategory(subcategoryForm)
-    } else {
+    } else if (contentKind.value === 'banners') {
       bannerForm.id ? await adminApi.updateBanner(bannerForm.id, bannerForm) : await adminApi.createBanner(bannerForm)
+    } else if (isHomeProductSection.value) {
+      await saveHomeSection()
+    } else if (contentKind.value === 'promotions') {
+      if (!promotionForm.title) throw new Error('促销位标题不能为空')
+      promotionForm.id ? await adminApi.updateHomePromotion(promotionForm.id, promotionForm) : await adminApi.createHomePromotion(promotionForm)
     }
     contentDrawer.value = false
     await loadContent()
     ElMessage.success('内容已保存')
+  })
+}
+
+async function saveHomeSection() {
+  if (!homeSectionForm.title) throw new Error('栏目标题不能为空')
+  const apiMap = {
+    flashSales: [adminApi.createHomeFlashSale, adminApi.updateHomeFlashSale],
+    hotRanks: [adminApi.createHomeHotRank, adminApi.updateHomeHotRank],
+    recommends: [adminApi.createHomeRecommend, adminApi.updateHomeRecommend],
+    newArrivals: [adminApi.createHomeNewArrival, adminApi.updateHomeNewArrival],
+  }
+  const [createFn, updateFn] = apiMap[contentKind.value]
+  homeSectionForm.id ? await updateFn(homeSectionForm.id, homeSectionForm) : await createFn(homeSectionForm)
+}
+
+async function uploadMediaFromInput(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  await run(async () => {
+    const dataUrl = await fileToDataUrl(file)
+    await adminApi.uploadMedia({ file: dataUrl, name: file.name })
+    media.value = await adminApi.media()
+    ElMessage.success('素材已上传')
+  })
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('素材读取失败'))
+    reader.readAsDataURL(file)
   })
 }
 
@@ -1248,6 +1437,13 @@ async function saveShop() {
 function money(value) {
   const number = Number(value || 0)
   return `¥${Number.isFinite(number) ? number.toFixed(2) : '0.00'}`
+}
+
+function fileSize(value) {
+  const size = Number(value || 0)
+  if (!Number.isFinite(size) || size <= 0) return '-'
+  if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`
+  return `${Math.ceil(size / 1024)} KB`
 }
 
 function addressText(order) {

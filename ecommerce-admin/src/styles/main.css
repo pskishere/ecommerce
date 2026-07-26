@@ -276,6 +276,11 @@ select {
   min-height: 44px;
 }
 
+.toolbar .el-segmented {
+  max-width: calc(100vw - 520px);
+  overflow-x: auto;
+}
+
 .toolbar-left,
 .toolbar-actions {
   display: flex;
@@ -286,6 +291,10 @@ select {
 
 .category-filter {
   width: 180px;
+}
+
+.hidden-file-input {
+  display: none;
 }
 
 .chart-box {
@@ -303,6 +312,23 @@ select {
   align-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+.section-products {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-products .el-avatar {
+  border: 1px solid #e5e7eb;
+  background: #eef2f7;
+}
+
+.section-products span {
+  margin-left: 4px;
+  color: var(--admin-muted);
+  font-size: 12px;
 }
 
 .rank-item {

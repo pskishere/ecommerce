@@ -854,6 +854,54 @@ def _admin_banner_payload(banner, request):
     }
 
 
+def _datetime_input(value):
+    if not value:
+        return ''
+    return timezone.localtime(value).strftime('%Y-%m-%dT%H:%M')
+
+
+def _parse_datetime_input(value):
+    if value in (None, ''):
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+        return parsed if timezone.is_aware(parsed) else timezone.make_aware(parsed)
+    except (TypeError, ValueError):
+        return None
+
+
+def _admin_home_product_section_payload(section, request):
+    products = section.products.select_related('image', 'subcategory__category').order_by('-sales_count', 'name')
+    data = {
+        'id': section.id,
+        'title': section.title,
+        'sort_order': section.sort_order,
+        'is_enabled': section.is_enabled,
+        'product_ids': list(products.values_list('id', flat=True)),
+        'product_count': products.count(),
+        'products_preview': [_admin_product_payload(product, request) for product in products[:4]],
+    }
+    if hasattr(section, 'subtitle'):
+        data['subtitle'] = section.subtitle
+    if hasattr(section, 'start_time'):
+        data['start_time'] = _datetime_input(section.start_time)
+        data['end_time'] = _datetime_input(section.end_time)
+    return data
+
+
+def _admin_promotion_payload(promotion, request):
+    return {
+        'id': promotion.id,
+        'title': promotion.title,
+        'subtitle': promotion.subtitle,
+        'image': get_image_url(promotion.image, context={'request': request}),
+        'image_id': promotion.image_id or '',
+        'link': promotion.link,
+        'sort_order': promotion.sort_order,
+        'is_enabled': promotion.is_enabled,
+    }
+
+
 def _admin_order_payload(order, request):
     data = OrderSerializer(order, context={'request': request}).data
     data['user'] = {
@@ -1272,6 +1320,124 @@ class AdminBannerViewSet(viewsets.ViewSet):
         if isinstance(ids, str):
             ids = [item.strip() for item in ids.split(',') if item.strip()]
         banner.products.set(Product.objects.filter(id__in=ids))
+
+
+class AdminHomeProductSectionViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+    model = None
+    allow_subtitle = False
+    allow_time = False
+    default_title = '首页栏目'
+
+    def get_queryset(self):
+        return self.model.objects.prefetch_related(
+            Prefetch('products', queryset=Product.objects.select_related('image', 'subcategory__category'))
+        ).order_by('sort_order', 'id')
+
+    def list(self, request):
+        return api_response([_admin_home_product_section_payload(item, request) for item in self.get_queryset()])
+
+    def create(self, request):
+        section = self.model(title=str(request.data.get('title') or self.default_title).strip())
+        self._apply_section_data(section, request.data)
+        section.save()
+        self._sync_products(section, request.data)
+        return api_response(_admin_home_product_section_payload(section, request), msg='created')
+
+    def partial_update(self, request, pk=None):
+        section = self.model.objects.get(pk=pk)
+        self._apply_section_data(section, request.data)
+        section.save()
+        self._sync_products(section, request.data)
+        return api_response(_admin_home_product_section_payload(section, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        section = self.model.objects.get(pk=pk)
+        section.is_enabled = False
+        section.save(update_fields=['is_enabled'])
+        return api_response(_admin_home_product_section_payload(section, request), msg='disabled')
+
+    def _apply_section_data(self, section, data):
+        if 'title' in data:
+            section.title = str(data.get('title') or '').strip()
+        if self.allow_subtitle and 'subtitle' in data:
+            section.subtitle = str(data.get('subtitle') or '').strip()
+        if 'sort_order' in data:
+            section.sort_order = int(data.get('sort_order') or 0)
+        if 'is_enabled' in data:
+            section.is_enabled = _bool_value(data.get('is_enabled'), section.is_enabled)
+        if self.allow_time:
+            if 'start_time' in data:
+                section.start_time = _parse_datetime_input(data.get('start_time'))
+            if 'end_time' in data:
+                section.end_time = _parse_datetime_input(data.get('end_time'))
+
+    def _sync_products(self, section, data):
+        if 'product_ids' not in data:
+            return
+        ids = data.get('product_ids') or []
+        if isinstance(ids, str):
+            ids = [item.strip() for item in ids.split(',') if item.strip()]
+        section.products.set(Product.objects.filter(id__in=ids))
+
+
+class AdminHomeFlashSaleViewSet(AdminHomeProductSectionViewSet):
+    model = HomeFlashSale
+    allow_subtitle = True
+    allow_time = True
+    default_title = '限时秒杀'
+
+
+class AdminHomeHotRankViewSet(AdminHomeProductSectionViewSet):
+    model = HomeHotRank
+    default_title = '热销榜单'
+
+
+class AdminHomeRecommendViewSet(AdminHomeProductSectionViewSet):
+    model = HomeRecommend
+    default_title = '为你推荐'
+
+
+class AdminHomeNewArrivalViewSet(AdminHomeProductSectionViewSet):
+    model = HomeNewArrival
+    default_title = '新品上市'
+
+
+class AdminHomePromotionViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        promotions = HomePromotion.objects.select_related('image').order_by('sort_order', 'id')
+        return api_response([_admin_promotion_payload(item, request) for item in promotions])
+
+    def create(self, request):
+        promotion = HomePromotion(title=str(request.data.get('title') or '优惠活动').strip())
+        self._apply_promotion_data(promotion, request.data)
+        promotion.save()
+        return api_response(_admin_promotion_payload(promotion, request), msg='created')
+
+    def partial_update(self, request, pk=None):
+        promotion = HomePromotion.objects.get(pk=pk)
+        self._apply_promotion_data(promotion, request.data)
+        promotion.save()
+        return api_response(_admin_promotion_payload(promotion, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        promotion = HomePromotion.objects.get(pk=pk)
+        promotion.is_enabled = False
+        promotion.save(update_fields=['is_enabled'])
+        return api_response(_admin_promotion_payload(promotion, request), msg='disabled')
+
+    def _apply_promotion_data(self, promotion, data):
+        for field in ['title', 'subtitle', 'link']:
+            if field in data:
+                setattr(promotion, field, str(data.get(field) or '').strip())
+        if 'sort_order' in data:
+            promotion.sort_order = int(data.get('sort_order') or 0)
+        if 'is_enabled' in data:
+            promotion.is_enabled = _bool_value(data.get('is_enabled'), promotion.is_enabled)
+        if 'image_id' in data:
+            _set_media(promotion, 'image', data.get('image_id'))
 
 
 class AdminOrderViewSet(viewsets.ViewSet):

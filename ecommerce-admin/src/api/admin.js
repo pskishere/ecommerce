@@ -57,6 +57,7 @@ export const adminApi = {
   }),
   overview: () => request('/api/admin/overview/'),
   media: () => request('/api/admin/media/'),
+  uploadMedia: (payload) => request('/api/admin/media/', { method: 'POST', ...json(payload) }),
 
   products: (params = {}) => request(`/api/admin/products/?${new URLSearchParams(params)}`),
   product: (id) => request(`/api/admin/products/${id}/`),
@@ -79,6 +80,26 @@ export const adminApi = {
   banners: () => request('/api/admin/banners/'),
   createBanner: (payload) => request('/api/admin/banners/', { method: 'POST', ...json(payload) }),
   updateBanner: (id, payload) => request(`/api/admin/banners/${id}/`, { method: 'PATCH', ...json(payload) }),
+
+  homeFlashSales: () => request('/api/admin/home/flash-sales/'),
+  createHomeFlashSale: (payload) => request('/api/admin/home/flash-sales/', { method: 'POST', ...json(payload) }),
+  updateHomeFlashSale: (id, payload) => request(`/api/admin/home/flash-sales/${id}/`, { method: 'PATCH', ...json(payload) }),
+
+  homeHotRanks: () => request('/api/admin/home/hot-ranks/'),
+  createHomeHotRank: (payload) => request('/api/admin/home/hot-ranks/', { method: 'POST', ...json(payload) }),
+  updateHomeHotRank: (id, payload) => request(`/api/admin/home/hot-ranks/${id}/`, { method: 'PATCH', ...json(payload) }),
+
+  homeRecommends: () => request('/api/admin/home/recommends/'),
+  createHomeRecommend: (payload) => request('/api/admin/home/recommends/', { method: 'POST', ...json(payload) }),
+  updateHomeRecommend: (id, payload) => request(`/api/admin/home/recommends/${id}/`, { method: 'PATCH', ...json(payload) }),
+
+  homeNewArrivals: () => request('/api/admin/home/new-arrivals/'),
+  createHomeNewArrival: (payload) => request('/api/admin/home/new-arrivals/', { method: 'POST', ...json(payload) }),
+  updateHomeNewArrival: (id, payload) => request(`/api/admin/home/new-arrivals/${id}/`, { method: 'PATCH', ...json(payload) }),
+
+  homePromotions: () => request('/api/admin/home/promotions/'),
+  createHomePromotion: (payload) => request('/api/admin/home/promotions/', { method: 'POST', ...json(payload) }),
+  updateHomePromotion: (id, payload) => request(`/api/admin/home/promotions/${id}/`, { method: 'PATCH', ...json(payload) }),
 
   orders: (params = {}) => request(`/api/admin/orders/?${new URLSearchParams(params)}`),
   order: (id) => request(`/api/admin/orders/${id}/`),
