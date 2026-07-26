@@ -308,15 +308,19 @@ async function renderHomePage() {
     if (promotions.length > 0) {
       promotionTrack.innerHTML = promotions.map(p => {
         const href = p.link || 'coupon.html'
-        const image = p.img ? `<img src="${p.img}" alt="${p.title}" class="promotion-card__img">` : ''
         return `
           <a href="${href}" class="promotion-card">
-            ${image}
-            <div class="promotion-card__overlay"></div>
+            <div class="promotion-card__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12a2 2 0 0 0 0-4V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 0 0-4v-2z"/></svg>
+            </div>
             <div class="promotion-card__body">
               <span class="promotion-card__title">${p.title || '优惠活动'}</span>
               <span class="promotion-card__sub">${p.subtitle || '限时福利，立即领取'}</span>
-              <span class="promotion-card__cta">去领取</span>
+              <span class="promotion-card__tags">全场可用 · 会员同享</span>
+            </div>
+            <div class="promotion-card__cta">
+              <span>领券</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </a>`
       }).join('')

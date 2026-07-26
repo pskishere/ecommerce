@@ -133,17 +133,15 @@ struct HomeView: View {
             .padding(.horizontal, DesignSystem.Spacing.md)
             .padding(.top, DesignSystem.Spacing.sm)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(promotions) { promotion in
-                        Button(action: { openPromotion(promotion) }) {
-                            PromotionCard(promotion: promotion)
-                        }
-                        .buttonStyle(.plain)
+            VStack(spacing: DesignSystem.Spacing.sm) {
+                ForEach(promotions.prefix(1)) { promotion in
+                    Button(action: { openPromotion(promotion) }) {
+                        PromotionCard(promotion: promotion)
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, DesignSystem.Spacing.md)
             }
+            .padding(.horizontal, DesignSystem.Spacing.md)
         }
     }
 
@@ -489,58 +487,70 @@ struct PromotionCard: View {
     let promotion: HomePromotion
 
     var body: some View {
-        ZStack(alignment: .leading) {
-            AsyncImage(url: promotion.imageURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                LinearGradient(
-                    colors: [
-                        DesignSystem.Colors.accent.opacity(0.18),
-                        Color(red: 0.18, green: 0.52, blue: 0.43).opacity(0.18)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-            .frame(width: 260, height: 92)
-            .clipped()
+        HStack(spacing: DesignSystem.Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(DesignSystem.Colors.accent)
+                    .frame(width: 44, height: 44)
 
+                Image(systemName: "ticket.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(promotion.title.isEmpty ? "优惠活动" : promotion.title)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(DesignSystem.Colors.dark)
+                    .lineLimit(1)
+
+                Text(promotion.subtitle.isEmpty ? "满减福利，立即领取" : promotion.subtitle)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(DesignSystem.Colors.gray1)
+                    .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    Text("全场可用")
+                    Text("会员同享")
+                }
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundStyle(DesignSystem.Colors.accent)
+            }
+
+            Spacer(minLength: DesignSystem.Spacing.sm)
+
+            VStack(spacing: 4) {
+                Text("领券")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .frame(width: 62, height: 58)
+            .background(DesignSystem.Colors.accent)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
+        }
+        .padding(DesignSystem.Spacing.md)
+        .frame(maxWidth: .infinity, minHeight: 96)
+        .background(
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.52),
-                    Color.black.opacity(0.18),
-                    Color.black.opacity(0.02)
+                    DesignSystem.Colors.accentSoft,
+                    Color(red: 0.95, green: 0.99, blue: 0.97)
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
             )
-
-            VStack(alignment: .leading, spacing: 7) {
-                Text(promotion.title.isEmpty ? "优惠活动" : promotion.title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-
-                Text(promotion.subtitle.isEmpty ? "限时福利，立即领取" : promotion.subtitle)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineLimit(1)
-
-                Text("去领取")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(DesignSystem.Colors.accent)
-                    .padding(.horizontal, 10)
-                    .frame(height: 24)
-                    .background(Color.white)
-                    .clipShape(Capsule())
-            }
-            .padding(.horizontal, DesignSystem.Spacing.md)
-        }
-        .frame(width: 260, height: 92)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg)
+                .stroke(DesignSystem.Colors.accent.opacity(0.12), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg))
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
