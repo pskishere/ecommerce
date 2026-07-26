@@ -135,11 +135,24 @@
 
         <section v-show="activeView === 'products'" class="view-stack">
           <div class="toolbar">
-            <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
-            <el-button type="primary" :icon="Plus" @click="openProduct()">新增商品</el-button>
+            <div class="toolbar-left">
+              <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
+              <el-select v-model="productCategory" clearable class="category-filter" placeholder="按分类筛选" @change="loadProducts">
+                <el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+            </div>
+            <div class="toolbar-actions">
+              <el-button-group>
+                <el-button :disabled="!selectedProducts.length" @click="bulkSetProductStatus(true)">批量上架</el-button>
+                <el-button :disabled="!selectedProducts.length" @click="bulkSetProductStatus(false)">批量下架</el-button>
+              </el-button-group>
+              <el-button type="primary" :icon="Plus" @click="openProduct()">新增商品</el-button>
+            </div>
           </div>
           <el-card shadow="never" class="panel-card">
-            <el-table :data="products" stripe height="calc(100vh - 252px)">
+            <el-table :data="products" stripe height="calc(100vh - 252px)" @selection-change="selectedProducts = $event">
+              <template #empty><el-empty description="暂无商品，先新增一个商品" /></template>
+              <el-table-column type="selection" width="46" fixed />
               <el-table-column label="商品" min-width="300" fixed>
                 <template #default="{ row }">
                   <div class="goods-cell">
@@ -148,7 +161,7 @@
                     </el-image>
                     <div>
                       <strong>{{ row.name }}</strong>
-                      <span>{{ row.tag || '无标签' }} · 库存 {{ row.stock_total }}</span>
+                      <span>{{ row.tag || '无标签' }} · {{ row.sku_count || 0 }} SKU · 库存 {{ row.stock_total }}</span>
                     </div>
                   </div>
                 </template>
@@ -160,6 +173,12 @@
                 <template #default="{ row }">{{ money(row.price) }}</template>
               </el-table-column>
               <el-table-column prop="sales_count" label="销量" width="100" sortable />
+              <el-table-column label="库存" width="120" sortable>
+                <template #default="{ row }">
+                  <span :class="{ danger: row.low_stock_count > 0 }">{{ row.stock_total }}</span>
+                  <span v-if="row.low_stock_count > 0" class="subtext danger">{{ row.low_stock_count }} 个低库存</span>
+                </template>
+              </el-table-column>
               <el-table-column label="状态" width="100">
                 <template #default="{ row }"><el-tag :type="row.is_in_stock ? 'success' : 'danger'">{{ row.is_in_stock ? '上架' : '下架' }}</el-tag></template>
               </el-table-column>
@@ -179,6 +198,7 @@
           </div>
           <el-card shadow="never" class="panel-card">
             <el-table :data="orders" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无订单" /></template>
               <el-table-column prop="id" label="订单号" min-width="190" fixed />
               <el-table-column label="用户" width="130">
                 <template #default="{ row }">{{ row.user?.username || '-' }}</template>
@@ -201,8 +221,9 @@
                   <span class="subtext">{{ row.tracking_number || row.after_sale_status_text || '' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="260" fixed="right">
+              <el-table-column label="操作" width="300" fixed="right">
                 <template #default="{ row }">
+                  <el-button link type="primary" @click="openOrderDetail(row)">详情</el-button>
                   <el-button v-if="row.status === 'pending'" link type="success" @click="markPaid(row)">标记支付</el-button>
                   <el-button v-if="row.status === 'paid'" link type="primary" @click="openShip(row)">发货</el-button>
                   <el-button link type="primary" @click="openOrderStatus(row)">改状态</el-button>
@@ -216,6 +237,7 @@
         <section v-show="activeView === 'users'" class="view-stack">
           <el-card shadow="never" class="panel-card">
             <el-table :data="users" stripe height="calc(100vh - 190px)">
+              <template #empty><el-empty description="暂无用户" /></template>
               <el-table-column prop="username" label="用户" min-width="150" fixed />
               <el-table-column prop="phone" label="手机号" width="150" />
               <el-table-column prop="email" label="邮箱" min-width="210" />
@@ -242,6 +264,7 @@
           </div>
           <el-card shadow="never" class="panel-card">
             <el-table v-if="contentKind === 'categories'" :data="categories" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无一级分类" /></template>
               <el-table-column label="分类" min-width="240">
                 <template #default="{ row }">
                   <div class="goods-cell">
@@ -261,6 +284,7 @@
             </el-table>
 
             <el-table v-else-if="contentKind === 'subcategories'" :data="subcategories" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无二级分类" /></template>
               <el-table-column prop="name" label="子分类" min-width="180" />
               <el-table-column prop="category_name" label="所属分类" width="160" />
               <el-table-column prop="sort_order" label="排序" width="100" />
@@ -270,6 +294,7 @@
             </el-table>
 
             <el-table v-else :data="banners" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无首页 Banner" /></template>
               <el-table-column label="Banner" min-width="280">
                 <template #default="{ row }">
                   <div class="goods-cell">
@@ -294,6 +319,7 @@
           </div>
           <el-card shadow="never" class="panel-card">
             <el-table :data="coupons" stripe height="calc(100vh - 252px)">
+              <template #empty><el-empty description="暂无优惠券" /></template>
               <el-table-column prop="name" label="优惠券" min-width="180" />
               <el-table-column prop="username" label="用户" width="130" />
               <el-table-column label="优惠" width="110"><template #default="{ row }">减 {{ row.value }}</template></el-table-column>
@@ -327,7 +353,7 @@
     </el-container>
   </el-container>
 
-  <el-drawer v-model="productDrawer" :title="productForm.id ? '编辑商品' : '新增商品'" size="560px">
+  <el-drawer v-model="productDrawer" :title="productForm.id ? '编辑商品' : '新增商品'" size="720px">
     <el-form :model="productForm" label-position="top">
       <el-form-item label="商品名称"><el-input v-model="productForm.name" /></el-form-item>
       <el-form-item label="标签"><el-input v-model="productForm.tag" /></el-form-item>
@@ -346,6 +372,64 @@
         </el-select>
       </el-form-item>
       <el-form-item label="上架状态"><el-switch v-model="productForm.is_in_stock" active-text="上架" inactive-text="下架" /></el-form-item>
+      <div class="form-section">
+        <div class="section-title">
+          <div>
+            <strong>规格与库存</strong>
+            <span>用于商品详情页、购物车和订单价格库存联动</span>
+          </div>
+          <el-button size="small" @click="addSpecGroup">新增规格组</el-button>
+        </div>
+
+        <div v-if="productForm.spec_groups?.length" class="spec-stack">
+          <div v-for="(group, groupIndex) in productForm.spec_groups" :key="group.local_id || group.id" class="spec-editor">
+            <div class="spec-row">
+              <el-input v-model="group.name" placeholder="规格名，例如 尺码 / 颜色" @input="rebuildSkuRows" />
+              <el-button link type="danger" @click="removeSpecGroup(groupIndex)">删除</el-button>
+            </div>
+            <div class="spec-value-row">
+              <el-tag
+                v-for="(value, valueIndex) in group.values"
+                :key="value.local_id || value.id"
+                closable
+                effect="plain"
+                @close="removeSpecValue(groupIndex, valueIndex)"
+              >
+                {{ value.value }}
+              </el-tag>
+              <el-input
+                v-model="group.draft"
+                class="spec-value-input"
+                size="small"
+                placeholder="输入规格值"
+                @keyup.enter="addSpecValue(groupIndex)"
+              />
+              <el-button size="small" @click="addSpecValue(groupIndex)">添加</el-button>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无规格，单规格商品可不配置" :image-size="70" />
+
+        <el-table v-if="productForm.skus?.length" :data="productForm.skus" border size="small" class="sku-table">
+          <el-table-column prop="spec_text" label="SKU" min-width="150" />
+          <el-table-column label="售价" width="130">
+            <template #default="{ row }"><el-input-number v-model="row.price" :min="0" :precision="2" controls-position="right" /></template>
+          </el-table-column>
+          <el-table-column label="划线价" width="130">
+            <template #default="{ row }"><el-input-number v-model="row.original_price" :min="0" :precision="2" controls-position="right" /></template>
+          </el-table-column>
+          <el-table-column label="库存" width="120">
+            <template #default="{ row }"><el-input-number v-model="row.stock" :min="0" controls-position="right" /></template>
+          </el-table-column>
+          <el-table-column label="图片" min-width="150">
+            <template #default="{ row }">
+              <el-select v-model="row.image_id" filterable clearable placeholder="默认商品图">
+                <el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
       <el-form-item label="商品描述"><el-input v-model="productForm.description" type="textarea" :rows="4" /></el-form-item>
       <div class="drawer-actions"><el-button @click="productDrawer = false">取消</el-button><el-button type="primary" @click="saveProduct">保存商品</el-button></div>
     </el-form>
@@ -408,6 +492,59 @@
     </el-form>
   </el-drawer>
 
+  <el-drawer v-model="orderDetailDrawer" title="订单详情" size="620px">
+    <div v-if="orderDetail" class="order-detail">
+      <div class="detail-summary">
+        <div>
+          <span>订单号</span>
+          <strong>{{ orderDetail.id }}</strong>
+        </div>
+        <el-tag :type="statusType(orderDetail.status)">{{ statusText(orderDetail.status) }}</el-tag>
+      </div>
+
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="用户">{{ orderDetail.user?.username || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="实付金额">{{ money(orderDetail.payment || orderDetail.total_amount) }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ orderDetail.created_display || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="支付时间">{{ orderDetail.pay_display || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="物流公司">{{ orderDetail.carrier || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="运单号">{{ orderDetail.tracking_number || '-' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <section class="detail-section">
+        <h3>收货地址</h3>
+        <p>{{ orderDetail.address_name || '-' }} {{ orderDetail.address_phone || '' }}</p>
+        <p>{{ addressText(orderDetail) || '-' }}</p>
+      </section>
+
+      <section class="detail-section">
+        <h3>商品明细</h3>
+        <div v-for="item in orderDetail.products" :key="item.id" class="order-product">
+          <el-image :src="item.image" fit="cover" class="goods-image">
+            <template #error><div class="image-fallback">IMG</div></template>
+          </el-image>
+          <div>
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.spec || '默认规格' }} · x{{ item.quantity }}</span>
+          </div>
+          <b>{{ money(item.price) }}</b>
+        </div>
+      </section>
+
+      <section v-if="orderDetail.after_sale_status && orderDetail.after_sale_status !== 'none'" class="detail-section warning-section">
+        <h3>售后记录</h3>
+        <p>{{ statusText(orderDetail.after_sale_status) }}</p>
+        <p>{{ orderDetail.after_sale_reason || '暂无备注' }}</p>
+      </section>
+
+      <div class="drawer-actions">
+        <el-button v-if="orderDetail.status === 'pending'" type="success" @click="markPaid(orderDetail)">标记支付</el-button>
+        <el-button v-if="orderDetail.status === 'paid'" type="primary" @click="openShip(orderDetail)">发货</el-button>
+        <el-button @click="openAfterSale(orderDetail)">处理售后</el-button>
+      </div>
+    </div>
+  </el-drawer>
+
   <el-drawer v-model="userDrawer" title="编辑用户" size="460px">
     <el-form :model="userForm" label-position="top">
       <el-form-item label="邮箱"><el-input v-model="userForm.email" /></el-form-item>
@@ -456,6 +593,7 @@ const isAuthed = ref(Boolean(getToken()))
 const activeView = ref('dashboard')
 const keyword = ref('')
 const productStatus = ref('')
+const productCategory = ref('')
 const orderStatus = ref('')
 const couponStatus = ref('')
 const contentKind = ref('categories')
@@ -477,6 +615,7 @@ const shopForm = reactive({})
 const productDrawer = ref(false)
 const contentDrawer = ref(false)
 const orderDrawer = ref(false)
+const orderDetailDrawer = ref(false)
 const userDrawer = ref(false)
 const couponDrawer = ref(false)
 
@@ -489,6 +628,8 @@ const userForm = reactive({})
 const couponForm = reactive({})
 const orderAction = ref('')
 const editingOrderId = ref('')
+const selectedProducts = ref([])
+const orderDetail = ref(null)
 
 const viewMeta = {
   dashboard: { kicker: 'Dashboard', title: '经营概览' },
@@ -687,8 +828,9 @@ function renderOrderChart() {
 }
 
 async function loadProducts() {
-  const data = await adminApi.products({ q: keyword.value, status: productStatus.value })
+  const data = await adminApi.products({ q: keyword.value, status: productStatus.value, category: productCategory.value })
   products.value = data.items || []
+  selectedProducts.value = []
 }
 
 async function loadOrders() {
@@ -734,6 +876,8 @@ function openProduct(row = null) {
     subcategory_id: row?.subcategory_id || '',
     image_id: row?.image_id || '',
     is_in_stock: row ? Boolean(row.is_in_stock) : true,
+    spec_groups: cloneSpecGroups(row?.spec_groups || []),
+    skus: cloneSkus(row?.skus || [], row || {}),
   })
   productDrawer.value = true
 }
@@ -741,7 +885,7 @@ function openProduct(row = null) {
 async function saveProduct() {
   await run(async () => {
     if (!productForm.name) throw new Error('商品名称不能为空')
-    const payload = { ...productForm }
+    const payload = buildProductPayload()
     if (!payload.original_price) payload.original_price = ''
     if (productForm.id) {
       await adminApi.updateProduct(productForm.id, payload)
@@ -754,12 +898,173 @@ async function saveProduct() {
   })
 }
 
+async function bulkSetProductStatus(isInStock) {
+  const actionText = isInStock ? '上架' : '下架'
+  await ElMessageBox.confirm(`确认${actionText}选中的 ${selectedProducts.value.length} 个商品？`, '批量操作', { type: 'warning' })
+  await run(async () => {
+    await adminApi.bulkProductStatus(selectedProducts.value.map(item => item.id), isInStock)
+    await loadProducts()
+    await loadDashboard()
+    ElMessage.success(`已批量${actionText}`)
+  })
+}
+
 async function toggleProduct(row) {
   await run(async () => {
     await adminApi.toggleProduct(row.id)
     await loadProducts()
     ElMessage.success(row.is_in_stock ? '商品已下架' : '商品已上架')
   })
+}
+
+function cloneSpecGroups(groups) {
+  return groups.map((group, groupIndex) => ({
+    id: group.id || '',
+    local_id: group.id || makeTempId('group'),
+    name: group.name || '',
+    sort_order: Number(group.sort_order ?? groupIndex),
+    draft: '',
+    values: (group.values || []).map((value, valueIndex) => ({
+      id: value.id || '',
+      client_id: value.client_id || value.id || makeTempId('value'),
+      local_id: value.id || value.client_id || makeTempId('value'),
+      value: value.value || '',
+      image_id: value.image_id || '',
+      sort_order: Number(value.sort_order ?? valueIndex),
+    })),
+  }))
+}
+
+function cloneSkus(skus, product = {}) {
+  return skus.map(sku => ({
+    id: sku.id || '',
+    spec_value_ids: [...(sku.spec_value_ids || [])],
+    spec_text: sku.spec_text || '',
+    price: Number(sku.price || product.price || 0),
+    original_price: Number(sku.original_price || product.original_price || 0),
+    stock: Number(sku.stock || 0),
+    image_id: sku.image_id || '',
+  }))
+}
+
+function addSpecGroup() {
+  productForm.spec_groups ||= []
+  productForm.spec_groups.push({
+    id: '',
+    local_id: makeTempId('group'),
+    name: '',
+    sort_order: productForm.spec_groups.length,
+    draft: '',
+    values: [],
+  })
+}
+
+function removeSpecGroup(index) {
+  productForm.spec_groups.splice(index, 1)
+  rebuildSkuRows()
+}
+
+function addSpecValue(groupIndex) {
+  const group = productForm.spec_groups[groupIndex]
+  const text = (group?.draft || '').trim()
+  if (!text) return
+  if (group.values.some(item => item.value === text)) {
+    group.draft = ''
+    return
+  }
+  const clientId = makeTempId('value')
+  group.values.push({
+    id: clientId,
+    client_id: clientId,
+    local_id: clientId,
+    value: text,
+    image_id: '',
+    sort_order: group.values.length,
+  })
+  group.draft = ''
+  rebuildSkuRows()
+}
+
+function removeSpecValue(groupIndex, valueIndex) {
+  productForm.spec_groups[groupIndex].values.splice(valueIndex, 1)
+  rebuildSkuRows()
+}
+
+function rebuildSkuRows() {
+  const groups = (productForm.spec_groups || []).filter(group => group.name?.trim() && group.values?.length)
+  if (!groups.length || groups.some(group => !group.values.length)) {
+    productForm.skus = []
+    return
+  }
+
+  const existing = new Map((productForm.skus || []).map(sku => [skuKey(sku.spec_value_ids), sku]))
+  const combinations = buildCombinations(groups)
+  productForm.skus = combinations.map(combo => {
+    const old = existing.get(skuKey(combo.ids))
+    return {
+      id: old?.id || '',
+      spec_value_ids: combo.ids,
+      spec_text: combo.text,
+      price: Number(old?.price ?? productForm.price ?? 0),
+      original_price: Number(old?.original_price ?? productForm.original_price ?? 0),
+      stock: Number(old?.stock ?? 99),
+      image_id: old?.image_id || '',
+    }
+  })
+}
+
+function buildCombinations(groups) {
+  return groups.reduce((rows, group) => {
+    const values = group.values.filter(item => item.value?.trim())
+    return rows.flatMap(row => values.map(value => ({
+      ids: [...row.ids, value.id || value.client_id],
+      labels: [...row.labels, value.value],
+    })))
+  }, [{ ids: [], labels: [] }]).map(row => ({ ...row, text: row.labels.join(' / ') }))
+}
+
+function skuKey(ids) {
+  return (ids || []).join('|')
+}
+
+function makeTempId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`
+}
+
+function buildProductPayload() {
+  return {
+    id: productForm.id,
+    name: productForm.name,
+    description: productForm.description,
+    tag: productForm.tag,
+    price: productForm.price,
+    original_price: productForm.original_price,
+    sales_count: productForm.sales_count,
+    rating: productForm.rating,
+    subcategory_id: productForm.subcategory_id,
+    image_id: productForm.image_id,
+    is_in_stock: productForm.is_in_stock,
+    spec_groups: (productForm.spec_groups || []).map((group, groupIndex) => ({
+      id: group.id || '',
+      name: group.name,
+      sort_order: groupIndex,
+      values: (group.values || []).map((value, valueIndex) => ({
+        id: value.id || '',
+        client_id: value.client_id || value.id || '',
+        value: value.value,
+        image_id: value.image_id || '',
+        sort_order: valueIndex,
+      })),
+    })),
+    skus: (productForm.skus || []).map(sku => ({
+      id: sku.id || '',
+      spec_value_ids: sku.spec_value_ids || [],
+      price: sku.price,
+      original_price: sku.original_price || '',
+      stock: sku.stock,
+      image_id: sku.image_id || '',
+    })),
+  }
 }
 
 function openContent() {
@@ -832,6 +1137,8 @@ async function markPaid(row) {
   await run(async () => {
     await adminApi.markPaid(row.id)
     await loadOrders()
+    await refreshOrderDetail(row.id)
+    await loadDashboard()
     ElMessage.success('订单已标记支付')
   })
 }
@@ -867,8 +1174,23 @@ async function saveOrderAction() {
     else await adminApi.updateAfterSale(editingOrderId.value, orderForm)
     orderDrawer.value = false
     await loadOrders()
+    await refreshOrderDetail(editingOrderId.value)
+    await loadDashboard()
     ElMessage.success('订单已更新')
   })
+}
+
+async function openOrderDetail(row) {
+  await run(async () => {
+    orderDetail.value = await adminApi.order(row.id)
+    orderDetailDrawer.value = true
+  })
+}
+
+async function refreshOrderDetail(id) {
+  if (orderDetailDrawer.value && orderDetail.value?.id === id) {
+    orderDetail.value = await adminApi.order(id)
+  }
 }
 
 function openUser(row) {
@@ -926,6 +1248,12 @@ async function saveShop() {
 function money(value) {
   const number = Number(value || 0)
   return `¥${Number.isFinite(number) ? number.toFixed(2) : '0.00'}`
+}
+
+function addressText(order) {
+  return [order.address_province, order.address_city, order.address_district, order.address_detail]
+    .filter(Boolean)
+    .join('')
 }
 
 function statusText(status) {

@@ -744,6 +744,8 @@ def _media_payload(media, request):
 
 def _admin_product_payload(product, request):
     sku_stock = product.skus.aggregate(total=Sum('stock')).get('total')
+    skus = product.skus.select_related('image').prefetch_related('spec_values__group').order_by('id')
+    spec_groups = product.spec_groups.prefetch_related('values__image').order_by('sort_order', 'id')
     subcategory = product.subcategory
     category = subcategory.category if subcategory and subcategory.category else None
     return {
@@ -764,7 +766,42 @@ def _admin_product_payload(product, request):
         'is_in_stock': product.is_in_stock,
         'tag': product.tag,
         'sku_count': product.skus.count(),
+        'low_stock_count': product.skus.filter(stock__lte=5).count(),
         'stock_total': sku_stock if sku_stock is not None else (999 if product.is_in_stock else 0),
+        'spec_groups': [_admin_spec_group_payload(group, request) for group in spec_groups],
+        'skus': [_admin_sku_payload(sku, request) for sku in skus],
+    }
+
+
+def _admin_spec_group_payload(group, request):
+    return {
+        'id': group.id,
+        'name': group.name,
+        'sort_order': group.sort_order,
+        'values': [_admin_spec_value_payload(value, request) for value in group.values.all().order_by('sort_order', 'id')],
+    }
+
+
+def _admin_spec_value_payload(value, request):
+    return {
+        'id': value.id,
+        'value': value.value,
+        'image': get_image_url(value.image, context={'request': request}),
+        'image_id': value.image_id or '',
+        'sort_order': value.sort_order,
+    }
+
+
+def _admin_sku_payload(sku, request):
+    return {
+        'id': sku.id,
+        'price': str(sku.price),
+        'original_price': str(sku.original_price or ''),
+        'stock': sku.stock,
+        'image': get_image_url(sku.image, context={'request': request}),
+        'image_id': sku.image_id or '',
+        'spec_text': sku_spec_text(sku),
+        'spec_value_ids': list(sku.spec_values.values_list('id', flat=True)),
     }
 
 
@@ -921,7 +958,11 @@ class AdminProductViewSet(viewsets.ViewSet):
     permission_classes = [IsAdminProfile]
 
     def get_queryset(self):
-        qs = Product.objects.select_related('image', 'subcategory__category').prefetch_related('skus')
+        qs = Product.objects.select_related('image', 'subcategory__category').prefetch_related(
+            'skus__spec_values__group',
+            'skus__image',
+            'spec_groups__values__image',
+        )
         q = (self.request.GET.get('q') or '').strip()
         status = self.request.GET.get('status')
         category_id = self.request.GET.get('category')
@@ -950,15 +991,19 @@ class AdminProductViewSet(viewsets.ViewSet):
         name = str(request.data.get('name') or '').strip()
         if not name:
             return api_response(msg='商品名称不能为空', code=400)
-        product = Product(name=name, price=_money(request.data.get('price') or '0'))
-        self._apply_product_data(product, request.data)
-        product.save()
+        with transaction.atomic():
+            product = Product(name=name, price=_money(request.data.get('price') or '0'))
+            self._apply_product_data(product, request.data)
+            product.save()
+            self._sync_product_specs_and_skus(product, request.data)
         return api_response(_admin_product_payload(product, request), msg='created')
 
     def partial_update(self, request, pk=None):
-        product = Product.objects.get(pk=pk)
-        self._apply_product_data(product, request.data)
-        product.save()
+        with transaction.atomic():
+            product = Product.objects.get(pk=pk)
+            self._apply_product_data(product, request.data)
+            product.save()
+            self._sync_product_specs_and_skus(product, request.data)
         return api_response(_admin_product_payload(product, request), msg='updated')
 
     def destroy(self, request, pk=None):
@@ -973,6 +1018,17 @@ class AdminProductViewSet(viewsets.ViewSet):
         product.is_in_stock = not product.is_in_stock
         product.save(update_fields=['is_in_stock'])
         return api_response(_admin_product_payload(product, request), msg='updated')
+
+    @action(detail=False, methods=['post'], url_path='bulk-status')
+    def bulk_status(self, request):
+        ids = request.data.get('ids') or []
+        if isinstance(ids, str):
+            ids = [item.strip() for item in ids.split(',') if item.strip()]
+        if not ids:
+            return api_response(msg='请选择商品', code=400)
+        is_in_stock = _bool_value(request.data.get('is_in_stock'), True)
+        updated = Product.objects.filter(id__in=ids).update(is_in_stock=is_in_stock)
+        return api_response({'updated': updated}, msg='updated')
 
     def _apply_product_data(self, product, data):
         for field in ['name', 'description', 'tag']:
@@ -991,6 +1047,89 @@ class AdminProductViewSet(viewsets.ViewSet):
             product.subcategory = Subcategory.objects.filter(id=data.get('subcategory_id')).first() if data.get('subcategory_id') else None
         if 'image_id' in data:
             _set_media(product, 'image', data.get('image_id'))
+
+    def _sync_product_specs_and_skus(self, product, data):
+        value_id_map = {}
+        if 'spec_groups' in data:
+            value_id_map = self._sync_product_specs(product, data.get('spec_groups') or [])
+        if 'skus' in data:
+            self._sync_product_skus(product, data.get('skus') or [], value_id_map)
+
+    def _sync_product_specs(self, product, groups_payload):
+        kept_group_ids = []
+        value_id_map = {}
+
+        for group_index, group_payload in enumerate(groups_payload):
+            name = str(group_payload.get('name') or '').strip()
+            if not name:
+                continue
+
+            group_id = group_payload.get('id')
+            group = SpecGroup.objects.filter(id=group_id, product=product).first() if group_id else None
+            if not group:
+                group = SpecGroup(product=product)
+            group.name = name
+            group.sort_order = int(group_payload.get('sort_order') if group_payload.get('sort_order') not in (None, '') else group_index)
+            group.save()
+            kept_group_ids.append(group.id)
+
+            kept_value_ids = []
+            for value_index, value_payload in enumerate(group_payload.get('values') or []):
+                text = str(value_payload.get('value') or '').strip()
+                if not text:
+                    continue
+
+                incoming_id = str(value_payload.get('id') or value_payload.get('client_id') or '').strip()
+                value = SpecValue.objects.filter(id=incoming_id, group=group).first() if incoming_id else None
+                if not value:
+                    value = SpecValue(group=group)
+                value.value = text
+                value.sort_order = int(value_payload.get('sort_order') if value_payload.get('sort_order') not in (None, '') else value_index)
+                if 'image_id' in value_payload:
+                    _set_media(value, 'image', value_payload.get('image_id'))
+                value.save()
+                kept_value_ids.append(value.id)
+
+                if incoming_id:
+                    value_id_map[incoming_id] = value.id
+                client_id = str(value_payload.get('client_id') or '').strip()
+                if client_id:
+                    value_id_map[client_id] = value.id
+
+            group.values.exclude(id__in=kept_value_ids).delete()
+
+        product.spec_groups.exclude(id__in=kept_group_ids).delete()
+        return value_id_map
+
+    def _sync_product_skus(self, product, skus_payload, value_id_map):
+        valid_value_ids = set(product.spec_groups.values_list('values__id', flat=True))
+        kept_sku_ids = []
+
+        for sku_payload in skus_payload:
+            raw_ids = sku_payload.get('spec_value_ids') or []
+            if isinstance(raw_ids, str):
+                raw_ids = [item.strip() for item in raw_ids.split(',') if item.strip()]
+            spec_value_ids = [
+                value_id_map.get(str(value_id), str(value_id))
+                for value_id in raw_ids
+            ]
+            spec_value_ids = [value_id for value_id in spec_value_ids if value_id in valid_value_ids]
+
+            sku_id = sku_payload.get('id')
+            sku = SKU.objects.filter(id=sku_id, product=product).first() if sku_id else None
+            if not sku:
+                sku = SKU(product=product)
+            sku.price = _money(sku_payload.get('price') or product.price)
+            original_price = sku_payload.get('original_price')
+            sku.original_price = None if original_price in (None, '') else _money(original_price)
+            sku.stock = max(0, int(sku_payload.get('stock') or 0))
+            if 'image_id' in sku_payload:
+                _set_media(sku, 'image', sku_payload.get('image_id'))
+            sku.save()
+            sku.spec_values.set(SpecValue.objects.filter(id__in=spec_value_ids, group__product=product))
+            kept_sku_ids.append(sku.id)
+
+        product.skus.exclude(id__in=kept_sku_ids).delete()
 
 
 class AdminCategoryViewSet(viewsets.ViewSet):

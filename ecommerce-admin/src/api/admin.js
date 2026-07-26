@@ -59,9 +59,14 @@ export const adminApi = {
   media: () => request('/api/admin/media/'),
 
   products: (params = {}) => request(`/api/admin/products/?${new URLSearchParams(params)}`),
+  product: (id) => request(`/api/admin/products/${id}/`),
   createProduct: (payload) => request('/api/admin/products/', { method: 'POST', ...json(payload) }),
   updateProduct: (id, payload) => request(`/api/admin/products/${id}/`, { method: 'PATCH', ...json(payload) }),
   toggleProduct: (id) => request(`/api/admin/products/${id}/toggle/`, { method: 'POST', ...json({}) }),
+  bulkProductStatus: (ids, isInStock) => request('/api/admin/products/bulk-status/', {
+    method: 'POST',
+    ...json({ ids, is_in_stock: isInStock }),
+  }),
 
   categories: () => request('/api/admin/categories/'),
   createCategory: (payload) => request('/api/admin/categories/', { method: 'POST', ...json(payload) }),
@@ -76,6 +81,7 @@ export const adminApi = {
   updateBanner: (id, payload) => request(`/api/admin/banners/${id}/`, { method: 'PATCH', ...json(payload) }),
 
   orders: (params = {}) => request(`/api/admin/orders/?${new URLSearchParams(params)}`),
+  order: (id) => request(`/api/admin/orders/${id}/`),
   markPaid: (id) => request(`/api/admin/orders/${id}/mark-paid/`, { method: 'POST', ...json({}) }),
   shipOrder: (id, payload) => request(`/api/admin/orders/${id}/ship/`, { method: 'POST', ...json(payload) }),
   setOrderStatus: (id, payload) => request(`/api/admin/orders/${id}/set-status/`, { method: 'POST', ...json(payload) }),
