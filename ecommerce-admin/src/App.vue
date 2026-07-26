@@ -22,38 +22,62 @@
     </div>
   </section>
 
-  <el-container v-else class="admin-layout">
-    <el-aside width="248px" class="admin-aside">
+  <el-container v-else class="admin-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+    <el-aside :width="isSidebarCollapsed ? '84px' : '248px'" class="admin-aside" :class="{ collapsed: isSidebarCollapsed }">
       <div class="aside-brand">
         <div class="brand-mark">潮</div>
-        <div>
+        <div class="brand-copy">
           <strong>潮流好物</strong>
           <span>Admin console</span>
         </div>
+        <el-button
+          class="aside-collapse-button"
+          :icon="isSidebarCollapsed ? Expand : Fold"
+          circle
+          text
+          :aria-label="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
+          @click="toggleSidebar"
+        />
       </div>
 
-      <el-menu :default-active="activeView" class="admin-menu" @select="switchView">
-        <el-menu-item index="dashboard"><el-icon><DataBoard /></el-icon><span>经营概览</span></el-menu-item>
-        <el-menu-item index="products"><el-icon><Goods /></el-icon><span>商品管理</span></el-menu-item>
-        <el-menu-item index="orders"><el-icon><Tickets /></el-icon><span>订单履约</span></el-menu-item>
-        <el-menu-item index="users"><el-icon><User /></el-icon><span>用户会员</span></el-menu-item>
-        <el-menu-item index="content"><el-icon><Grid /></el-icon><span>首页内容</span></el-menu-item>
-        <el-menu-item index="coupons"><el-icon><Ticket /></el-icon><span>优惠券</span></el-menu-item>
-        <el-menu-item index="shop"><el-icon><Shop /></el-icon><span>店铺设置</span></el-menu-item>
+      <el-menu
+        :default-active="activeView"
+        :collapse="isSidebarCollapsed"
+        :collapse-transition="false"
+        class="admin-menu"
+        @select="switchView"
+      >
+        <el-menu-item v-for="item in navItems" :key="item.index" :index="item.index" :title="item.label">
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span class="menu-label">{{ item.label }}</span>
+        </el-menu-item>
       </el-menu>
 
-      <a class="front-link" href="http://localhost:3000/index.html" target="_blank" rel="noreferrer">打开商城前台</a>
+      <a class="front-link" href="http://localhost:3000/index.html" target="_blank" rel="noreferrer" title="打开商城前台">
+        <el-icon><Shop /></el-icon>
+        <span>打开商城前台</span>
+      </a>
     </el-aside>
 
     <el-container>
       <el-header height="82px" class="admin-header">
-        <div>
-          <p class="eyebrow">{{ currentMeta.kicker }}</p>
-          <h2>{{ currentMeta.title }}</h2>
+        <div class="header-title-row">
+          <el-button
+            class="header-collapse-button"
+            :icon="isSidebarCollapsed ? Expand : Fold"
+            circle
+            :aria-label="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
+            @click="toggleSidebar"
+          />
+          <div>
+            <p class="eyebrow">{{ currentMeta.kicker }}</p>
+            <h2>{{ currentMeta.title }}</h2>
+          </div>
         </div>
         <div class="header-actions">
           <el-input
             v-if="searchable"
+            ref="searchInput"
             v-model="keyword"
             clearable
             class="global-search"
@@ -63,7 +87,22 @@
           >
             <template #prefix><el-icon><Search /></el-icon></template>
           </el-input>
-          <el-button :icon="Refresh" circle @click="loadCurrentView" />
+          <el-tag v-if="formattedLastSynced" class="sync-tag" type="info" effect="plain">已同步 {{ formattedLastSynced }}</el-tag>
+          <el-dropdown trigger="click" @command="handleQuickCreate">
+            <el-button type="primary">
+              快速新建
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="product">新增商品</el-dropdown-item>
+                <el-dropdown-item command="banner">新增 Banner</el-dropdown-item>
+                <el-dropdown-item command="coupon">发放优惠券</el-dropdown-item>
+                <el-dropdown-item command="media">上传素材</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-button :icon="Refresh" :loading="loading" circle @click="loadCurrentView" />
           <el-button @click="logout">退出</el-button>
         </div>
       </el-header>
@@ -655,11 +694,14 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as echarts from 'echarts'
 import {
+  ArrowDown,
   DataBoard,
+  Expand,
+  Fold,
   Goods,
   Grid,
   Plus,
@@ -672,9 +714,14 @@ import {
 } from '@element-plus/icons-vue'
 import { adminApi, clearToken, getToken, setToken } from './api/admin'
 
+const ACTIVE_VIEW_KEY = 'ecommerce_admin_active_view'
+const SIDEBAR_COLLAPSED_KEY = 'ecommerce_admin_sidebar_collapsed'
+
 const loading = ref(false)
 const isAuthed = ref(Boolean(getToken()))
-const activeView = ref('dashboard')
+const activeView = ref(localStorage.getItem(ACTIVE_VIEW_KEY) || 'dashboard')
+const isSidebarCollapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true')
+const lastSyncedAt = ref(null)
 const keyword = ref('')
 const productStatus = ref('')
 const productCategory = ref('')
@@ -683,6 +730,7 @@ const couponStatus = ref('')
 const contentKind = ref('categories')
 const orderChartRef = ref(null)
 const mediaInput = ref(null)
+const searchInput = ref(null)
 let orderChart = null
 
 const loginForm = reactive({ username: 'admin', password: 'iole' })
@@ -733,8 +781,22 @@ const viewMeta = {
   shop: { kicker: 'Shop profile', title: '店铺设置' },
 }
 
-const currentMeta = computed(() => viewMeta[activeView.value])
+const navItems = [
+  { index: 'dashboard', label: '经营概览', icon: DataBoard },
+  { index: 'products', label: '商品管理', icon: Goods },
+  { index: 'orders', label: '订单履约', icon: Tickets },
+  { index: 'users', label: '用户会员', icon: User },
+  { index: 'content', label: '首页内容', icon: Grid },
+  { index: 'coupons', label: '优惠券', icon: Ticket },
+  { index: 'shop', label: '店铺设置', icon: Shop },
+]
+
+const currentMeta = computed(() => viewMeta[activeView.value] || viewMeta.dashboard)
 const searchable = computed(() => ['products', 'orders', 'users', 'coupons'].includes(activeView.value))
+const formattedLastSynced = computed(() => {
+  if (!lastSyncedAt.value) return ''
+  return lastSyncedAt.value.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+})
 const homeProductSectionKinds = ['flashSales', 'hotRanks', 'recommends', 'newArrivals']
 const isHomeProductSection = computed(() => homeProductSectionKinds.includes(contentKind.value))
 const currentContentLabel = computed(() => contentKindOptions.find(item => item.value === contentKind.value)?.label || '内容')
@@ -828,8 +890,18 @@ watch(contentKind, () => {
   if (activeView.value === 'content') loadContent()
 })
 
+watch(isSidebarCollapsed, (value) => {
+  localStorage.setItem(SIDEBAR_COLLAPSED_KEY, value ? 'true' : 'false')
+  window.setTimeout(() => orderChart?.resize(), 180)
+})
+
 onMounted(async () => {
+  window.addEventListener('keydown', handleGlobalKeydown)
   if (isAuthed.value) await bootstrap()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
 })
 
 async function run(task) {
@@ -885,11 +957,12 @@ async function loadMeta() {
 
 async function switchView(view) {
   activeView.value = view
+  localStorage.setItem(ACTIVE_VIEW_KEY, view)
   keyword.value = ''
   await loadCurrentView()
 }
 
-function loadCurrentView() {
+async function loadCurrentView() {
   const loaders = {
     dashboard: loadDashboard,
     products: loadProducts,
@@ -899,7 +972,48 @@ function loadCurrentView() {
     coupons: loadCoupons,
     shop: loadShop,
   }
-  return run(loaders[activeView.value])
+  const loader = loaders[activeView.value] || loadDashboard
+  const result = await run(loader)
+  lastSyncedAt.value = new Date()
+  return result
+}
+
+function toggleSidebar() {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
+
+async function handleQuickCreate(command) {
+  if (command === 'product') {
+    await switchView('products')
+    openProduct()
+  } else if (command === 'banner') {
+    contentKind.value = 'banners'
+    await switchView('content')
+    openBanner()
+  } else if (command === 'coupon') {
+    await switchView('coupons')
+    openCoupon()
+  } else if (command === 'media') {
+    contentKind.value = 'media'
+    await switchView('content')
+    await nextTick()
+    mediaInput.value?.click()
+  }
+}
+
+function handleGlobalKeydown(event) {
+  if (!isAuthed.value) return
+  const target = event.target
+  const isEditing = target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)
+  if (isEditing) return
+  const key = event.key.toLowerCase()
+  if ((event.metaKey || event.ctrlKey) && key === 'b') {
+    event.preventDefault()
+    toggleSidebar()
+  } else if ((event.metaKey || event.ctrlKey) && key === 'k' && searchable.value) {
+    event.preventDefault()
+    searchInput.value?.focus?.()
+  }
 }
 
 async function loadDashboard() {

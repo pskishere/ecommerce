@@ -112,6 +112,8 @@ select {
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  transition: width 0.2s ease;
 }
 
 .aside-brand {
@@ -121,19 +123,60 @@ select {
   gap: 12px;
   padding: 0 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: padding 0.2s ease;
 }
 
-.aside-brand strong {
+.brand-copy {
+  min-width: 0;
+}
+
+.brand-copy strong {
   display: block;
   font-size: 16px;
   line-height: 1.1;
 }
 
-.aside-brand span {
+.brand-copy span {
   display: block;
   color: rgba(255, 255, 255, 0.55);
   font-size: 12px;
   margin-top: 4px;
+}
+
+.aside-collapse-button {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.aside-collapse-button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.admin-aside.collapsed .aside-brand {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 10px;
+}
+
+.admin-aside.collapsed .brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.admin-aside.collapsed .brand-copy {
+  display: none;
+}
+
+.admin-aside.collapsed .aside-collapse-button {
+  width: 26px;
+  height: 26px;
+  margin-left: 0;
 }
 
 .admin-menu {
@@ -143,11 +186,33 @@ select {
   padding: 14px 12px;
 }
 
+.admin-menu.el-menu--collapse {
+  width: auto;
+}
+
 .admin-menu .el-menu-item {
   height: 46px;
   border-radius: var(--admin-radius);
   margin-bottom: 6px;
   color: rgba(255, 255, 255, 0.72);
+}
+
+.admin-menu .el-menu-item .el-icon {
+  flex-shrink: 0;
+}
+
+.menu-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-aside.collapsed .admin-menu {
+  padding: 12px 10px;
+}
+
+.admin-aside.collapsed .admin-menu .el-menu-item {
+  justify-content: center;
+  padding: 0 !important;
 }
 
 .admin-menu .el-menu-item:hover,
@@ -168,6 +233,23 @@ select {
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.2s ease, margin 0.2s ease;
+}
+
+.front-link .el-icon {
+  flex-shrink: 0;
+}
+
+.admin-aside.collapsed .front-link {
+  width: 44px;
+  margin: 16px auto;
+}
+
+.admin-aside.collapsed .front-link span {
+  display: none;
 }
 
 .admin-header {
@@ -177,6 +259,17 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.header-collapse-button {
+  flex-shrink: 0;
 }
 
 .admin-header h2 {
@@ -190,10 +283,17 @@ select {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .global-search {
   width: 320px;
+}
+
+.sync-tag {
+  height: 32px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .admin-main {
