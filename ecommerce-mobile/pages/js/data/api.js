@@ -97,6 +97,14 @@ const mapBanner = (b) => ({
   link: b.link || 'category.html'
 })
 
+const mapBannerLanding = (b) => ({
+  ...mapBanner(b),
+  badge: b.landing_badge || b.landingBadge || b.tag || '',
+  subtitle: b.landing_subtitle || b.landingSubtitle || '',
+  description: b.landing_description || b.landingDescription || '',
+  products: (b.products || []).map(mapProduct)
+})
+
 const mapFlashSale = (fs) => ({
   id: fs.id,
   title: fs.title || '',
@@ -470,6 +478,7 @@ const api = {
   home: {
     // 新接口 - 独立模块
     getBanners: () => request('/api/h5/home/banners/').then(bs => (bs || []).map(mapBanner)),
+    getBannerLanding: (id) => request('/api/h5/home/banners/' + encodeURIComponent(id) + '/landing/').then(mapBannerLanding),
     getCategories: () => request('/api/h5/categories/').then(cs => (cs || []).map(mapCategory)),
     getFlashSale: () => request('/api/h5/home/flash-sales/').then(data => (data || []).map(mapFlashSale)),
     getHotRank: () => request('/api/h5/home/hot-ranks/').then(data => (data || []).map(mapHotRank)),

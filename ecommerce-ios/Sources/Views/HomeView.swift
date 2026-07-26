@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var newArrivalProducts: [Product] = []
     @State private var promotions: [HomePromotion] = []
     @State private var selectedProduct: Product?
+    @State private var selectedBanner: Banner?
     @State private var showCoupons = false
     @State private var isLoading = true
     @State private var loadError: String? = nil
@@ -58,6 +59,9 @@ struct HomeView: View {
         .navigationDestination(item: $selectedProduct) { product in
             ProductDetailView(product: product)
         }
+        .navigationDestination(item: $selectedBanner) { banner in
+            BannerLandingView(banner: banner)
+        }
         .navigationDestination(isPresented: $showCoupons) {
             CouponView()
         }
@@ -92,7 +96,9 @@ struct HomeView: View {
 
     // MARK: - Hero Banner
     private var heroBanner: some View {
-        HeroBanner(banners: banners)
+        HeroBanner(banners: banners) { banner in
+            selectedBanner = banner
+        }
     }
 
     // MARK: - Category Grid
@@ -613,13 +619,14 @@ struct NewArrivalCard: View {
 // MARK: - Hero Banner
 struct HeroBanner: View {
     let banners: [Banner]
+    let onSelect: (Banner) -> Void
     @State private var currentIndex = 0
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.sm) {
             TabView(selection: $currentIndex) {
                 ForEach(Array(banners.enumerated()), id: \.element.id) { index, banner in
-                    BannerSlide(banner: banner)
+                    BannerSlide(banner: banner, onSelect: onSelect)
                         .tag(index)
                 }
             }
@@ -639,8 +646,8 @@ struct HeroBanner: View {
 }
 
 struct BannerSlide: View {
-    @EnvironmentObject private var appNavigation: AppNavigation
     let banner: Banner
+    let onSelect: (Banner) -> Void
 
     var body: some View {
         GeometryReader { geometry in
@@ -685,7 +692,7 @@ struct BannerSlide: View {
                         .foregroundStyle(.white)
                         .lineSpacing(4)
 
-                    Button(action: { appNavigation.selectedTab = .category }) {
+                    Button(action: { onSelect(banner) }) {
                         Text(banner.actionTitle)
                             .font(.subheadline)
                             .fontWeight(.semibold)
@@ -697,6 +704,10 @@ struct BannerSlide: View {
                     }
                 }
                 .padding(DesignSystem.Spacing.md)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onSelect(banner)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg))

@@ -213,10 +213,25 @@ class HomeBannerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HomeBanner
-        fields = ['id', 'image', 'tag', 'title', 'action_title', 'gradient_type', 'sort_order', 'is_enabled']
+        fields = ['id', 'image', 'tag', 'title', 'action_title', 'link', 'gradient_type', 'sort_order', 'is_enabled']
 
     def get_image(self, obj):
         return get_image_url(obj.image, self.context)
+
+
+class HomeBannerLandingSerializer(HomeBannerSerializer):
+    products = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HomeBanner
+        fields = [
+            'id', 'image', 'tag', 'title', 'action_title', 'link', 'landing_badge',
+            'landing_subtitle', 'landing_description', 'gradient_type', 'sort_order',
+            'is_enabled', 'products'
+        ]
+
+    def get_products(self, obj):
+        return ProductListSerializer(obj.products.all(), many=True, context=self.context).data
 
 
 # ============== 首页限时秒杀序列化器 ==============

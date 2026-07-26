@@ -392,20 +392,74 @@ class Command(BaseCommand):
     def _create_home_content(self):
         self.stdout.write('\nCreating home banners...')
         banners_data = [
-            ('banner-1-summer-1710.webp', '夏装新品', '清凉一夏', '立即选购', 0),
-            ('banner-2-newarrival-1710.webp', '美妆节', '焕新美妆', '查看详情', 1),
-            ('banner-3-discount-1710.webp', '限时特惠', '折扣专区', '马上抢', 2),
+            {
+                'image': 'banner-1-summer-1710.webp',
+                'tag': '夏装新品',
+                'title': '清凉一夏',
+                'action': '立即选购',
+                'gradient': 0,
+                'badge': 'SUMMER DROP',
+                'subtitle': '轻薄、透气、明亮色系',
+                'description': '精选适合夏季通勤、周末出游和户外运动的轻量单品，覆盖穿搭、防晒、运动与随身配饰。',
+            },
+            {
+                'image': 'banner-2-newarrival-1710.webp',
+                'tag': '美妆节',
+                'title': '焕新美妆',
+                'action': '查看详情',
+                'gradient': 1,
+                'badge': 'BEAUTY EDIT',
+                'subtitle': '补水修护与日常洁面精选',
+                'description': '围绕换季护肤和日常个护场景，组合高复购面膜、洁面与便携护理商品，适合直接加入购物车。',
+            },
+            {
+                'image': 'banner-3-discount-1710.webp',
+                'tag': '限时特惠',
+                'title': '折扣专区',
+                'action': '马上抢',
+                'gradient': 2,
+                'badge': 'LIMITED DEALS',
+                'subtitle': '热卖款集中放价',
+                'description': '按销量和优惠力度筛选出的折扣商品会场，覆盖服饰、数码、家居和食品，适合快速凑单。',
+            },
         ]
-        for img, tag, title, action, gradient in banners_data:
-            banner_media = self._get_media(img)
+        for data in banners_data:
+            banner_media = self._get_media(data['image'])
             ban, created = HomeBanner.objects.get_or_create(
-                tag=tag,
-                defaults={'title': title, 'action_title': action, 'gradient_type': gradient, 'sort_order': gradient, 'is_enabled': True}
+                tag=data['tag'],
+                defaults={
+                    'title': data['title'],
+                    'action_title': data['action'],
+                    'gradient_type': data['gradient'],
+                    'sort_order': data['gradient'],
+                    'is_enabled': True,
+                }
             )
+            ban.title = data['title']
+            ban.action_title = data['action']
+            ban.gradient_type = data['gradient']
+            ban.sort_order = data['gradient']
+            ban.landing_badge = data['badge']
+            ban.landing_subtitle = data['subtitle']
+            ban.landing_description = data['description']
+            ban.link = f'campaign.html?banner_id={ban.id}'
+            ban.is_enabled = True
             if banner_media:
                 ban.image = banner_media
-                ban.save()
-            self.stdout.write(f'  {"Created" if created else "Exists"}: {tag}')
+            ban.save()
+
+            if data['tag'] == '夏装新品':
+                products = list(Product.objects.filter(
+                    subcategory__category__name__in=['女装', '男装', '运动户外', '潮流配饰']
+                ).order_by('-sales_count')[:8])
+            elif data['tag'] == '美妆节':
+                products = list(Product.objects.filter(
+                    subcategory__category__name='美妆护肤'
+                ).order_by('-rating', '-sales_count')[:8])
+            else:
+                products = list(Product.objects.order_by('-sales_count')[:8])
+            ban.products.set(products)
+            self.stdout.write(f'  {"Created" if created else "Exists"}: {data["tag"]} ({len(products)} products)')
 
         self.stdout.write('\nCreating home sections...')
         flashsale, _ = HomeFlashSale.objects.get_or_create(

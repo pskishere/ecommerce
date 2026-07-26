@@ -37,9 +37,10 @@ class ProductDetailAdmin(admin.ModelAdmin):
 
 @admin.register(HomeBanner)
 class HomeBannerAdmin(admin.ModelAdmin):
-    list_display = ['id', 'tag', 'title', 'sort_order', 'is_enabled']
+    list_display = ['id', 'tag', 'title', 'landing_badge', 'sort_order', 'is_enabled']
     list_filter = ['is_enabled']
     ordering = ['sort_order']
+    filter_horizontal = ['products']
 
 
 @admin.register(HomeFlashSale)

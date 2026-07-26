@@ -128,9 +128,14 @@ class HomeBanner(models.Model):
     tag = models.CharField(max_length=100, blank=True)
     title = models.TextField(blank=True)
     action_title = models.CharField(max_length=100, blank=True)
+    link = models.CharField(max_length=255, blank=True)
+    landing_badge = models.CharField(max_length=100, blank=True)
+    landing_subtitle = models.CharField(max_length=150, blank=True)
+    landing_description = models.TextField(blank=True)
     gradient_type = models.IntegerField(default=0)
     sort_order = models.IntegerField(default=0)
     is_enabled = models.BooleanField(default=True)
+    products = models.ManyToManyField(Product, related_name='banner_landings', blank=True)
 
     class Meta:
         db_table = 'home_banners'

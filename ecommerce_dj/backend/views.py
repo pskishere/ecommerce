@@ -191,7 +191,7 @@ from .models import (
 from .serializers import (
     ProductListSerializer, ProductDetailSerializer, SpecValueSerializer, SpecGroupSerializer,
     CategorySerializer, CategoryWithSubcategoriesSerializer, SubcategorySerializer, SubcategoryWithProductsSerializer,
-    HomeBannerSerializer, HomeFlashSaleSerializer, HomeHotRankSerializer,
+    HomeBannerSerializer, HomeBannerLandingSerializer, HomeFlashSaleSerializer, HomeHotRankSerializer,
     HomeRecommendSerializer, HomeNewArrivalSerializer, HomePromotionSerializer,
     CartItemSerializer, OrderSerializer, OrderProductSerializer, AddressSerializer,
     FavoriteSerializer, BrowseHistorySerializer, CouponSerializer, NotificationSerializer,
@@ -619,8 +619,13 @@ class CategoryViewSet(ResponseMixin, viewsets.ModelViewSet):
         return api_response(ProductListSerializer(products, many=True, context={'request': request}).data)
 
 
+_product_qs = Product.objects.select_related('image', 'subcategory__category')
+
+
 class HomeBannerViewSet(viewsets.ModelViewSet):
-    queryset = HomeBanner.objects.filter(is_enabled=True).select_related('image')
+    queryset = HomeBanner.objects.filter(is_enabled=True).select_related('image').prefetch_related(
+        Prefetch('products', queryset=_product_qs)
+    )
     serializer_class = HomeBannerSerializer
     permission_classes = [AllowAny]
 
@@ -629,8 +634,11 @@ class HomeBannerViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True, context={'request': request})
         return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
-
-_product_qs = Product.objects.select_related('image', 'subcategory__category')
+    @action(detail=True, methods=['get'])
+    def landing(self, request, pk=None):
+        banner = self.get_object()
+        serializer = HomeBannerLandingSerializer(banner, context={'request': request})
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
 
 
 class HomeFlashSaleViewSet(viewsets.ModelViewSet):

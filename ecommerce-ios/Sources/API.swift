@@ -66,6 +66,7 @@ enum APIEndpoints {
 
     // Home
     static let homeBanners = "home/banners/"
+    static func homeBannerLanding(_ id: String) -> String { "home/banners/\(id)/landing/" }
     static let homeFlashSales = "home/flash-sales/"
     static let homeHotRanks = "home/hot-ranks/"
     static let homeRecommends = "home/recommends/"

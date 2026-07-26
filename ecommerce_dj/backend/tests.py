@@ -47,7 +47,17 @@ class H5APISmokeTests(APITestCase):
             is_in_stock=True,
             tag='热卖',
         )
-        HomeBanner.objects.create(tag='新品', title='测试 Banner', action_title='立即选购', is_enabled=True)
+        self.banner = HomeBanner.objects.create(
+            tag='新品',
+            title='测试 Banner',
+            action_title='立即选购',
+            link='campaign.html?banner_id=test',
+            landing_badge='TEST',
+            landing_subtitle='测试专题',
+            landing_description='测试专题描述',
+            is_enabled=True,
+        )
+        self.banner.products.add(self.product)
         flash = HomeFlashSale.objects.create(title='限时秒杀', is_enabled=True)
         flash.products.add(self.product)
         hot = HomeHotRank.objects.create(title='热销榜单', is_enabled=True)
@@ -82,6 +92,7 @@ class H5APISmokeTests(APITestCase):
         detail = self.assert_success(self.client.get(f'/api/h5/products/{self.product.id}/'))
         search = self.assert_success(self.client.get('/api/h5/products/search/?q=连衣裙'))
         banners = self.assert_success(self.client.get('/api/h5/home/banners/'))
+        banner_landing = self.assert_success(self.client.get(f'/api/h5/home/banners/{self.banner.id}/landing/'))
         flash = self.assert_success(self.client.get('/api/h5/home/flash-sales/'))
         hot = self.assert_success(self.client.get('/api/h5/home/hot-ranks/'))
         recommends = self.assert_success(self.client.get('/api/h5/home/recommends/'))
@@ -91,6 +102,9 @@ class H5APISmokeTests(APITestCase):
         self.assertEqual(detail['id'], self.product.id)
         self.assertEqual(len(search), 1)
         self.assertEqual(len(banners), 1)
+        self.assertEqual(banners[0]['link'], 'campaign.html?banner_id=test')
+        self.assertEqual(banner_landing['landing_badge'], 'TEST')
+        self.assertEqual(len(banner_landing['products']), 1)
         self.assertEqual(len(flash[0]['products']), 1)
         self.assertEqual(len(hot[0]['products']), 1)
         self.assertEqual(len(recommends[0]['products']), 1)

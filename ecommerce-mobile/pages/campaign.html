@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>专题会场 - 潮流好物</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./campaign.css">
+</head>
+<body class="page-transition">
+  <div class="campaign-page">
+    <nav class="campaign-nav">
+      <button class="campaign-back" id="backBtn" aria-label="返回">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <span class="campaign-nav-title" id="navTitle">专题会场</span>
+      <a class="campaign-search" href="search.html" aria-label="搜索">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </a>
+    </nav>
+
+    <main class="campaign-main" id="campaignRoot">
+      <section class="campaign-skeleton">
+        <div class="skeleton-hero"></div>
+        <div class="skeleton-line skeleton-line-sm"></div>
+        <div class="skeleton-line skeleton-line-lg"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-product"></div>
+          <div class="skeleton-product"></div>
+          <div class="skeleton-product"></div>
+          <div class="skeleton-product"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"><span id="toastText"></span></div>
+
+  <script type="module" src="./js/pages/campaign.js"></script>
+</body>
+</html>

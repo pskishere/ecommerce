@@ -251,6 +251,7 @@ struct Banner: Identifiable, Hashable, Codable {
     let tag: String
     let title: String
     let actionTitle: String
+    let link: String
     let gradientType: GradientType
 
     enum GradientType: Int, Hashable, Codable {
@@ -262,6 +263,7 @@ struct Banner: Identifiable, Hashable, Codable {
     enum CodingKeys: String, CodingKey {
         case id, image, tag, title
         case actionTitle = "action_title"
+        case link
         case gradientType = "gradient_type"
     }
 
@@ -270,11 +272,30 @@ struct Banner: Identifiable, Hashable, Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        image = try container.decode(String.self, forKey: .image)
-        tag = try container.decode(String.self, forKey: .tag)
-        title = try container.decode(String.self, forKey: .title)
-        actionTitle = try container.decode(String.self, forKey: .actionTitle)
-        gradientType = try container.decode(GradientType.self, forKey: .gradientType)
+        image = try container.decodeIfPresent(String.self, forKey: .image) ?? ""
+        tag = try container.decodeIfPresent(String.self, forKey: .tag) ?? ""
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        actionTitle = try container.decodeIfPresent(String.self, forKey: .actionTitle) ?? "查看详情"
+        link = try container.decodeIfPresent(String.self, forKey: .link) ?? ""
+        gradientType = (try? container.decode(GradientType.self, forKey: .gradientType)) ?? .summer
+    }
+
+    init(
+        id: String,
+        image: String,
+        tag: String,
+        title: String,
+        actionTitle: String,
+        link: String,
+        gradientType: GradientType
+    ) {
+        self.id = id
+        self.image = image
+        self.tag = tag
+        self.title = title
+        self.actionTitle = actionTitle
+        self.link = link
+        self.gradientType = gradientType
     }
 
     func encode(to encoder: Encoder) throws {
@@ -284,6 +305,7 @@ struct Banner: Identifiable, Hashable, Codable {
         try container.encode(tag, forKey: .tag)
         try container.encode(title, forKey: .title)
         try container.encode(actionTitle, forKey: .actionTitle)
+        try container.encode(link, forKey: .link)
         try container.encode(gradientType, forKey: .gradientType)
     }
 
@@ -296,6 +318,81 @@ struct Banner: Identifiable, Hashable, Codable {
         case .flashSale:
             return [Color.orange.opacity(0.8), Color.red.opacity(0.6)]
         }
+    }
+}
+
+struct BannerLanding: Identifiable, Hashable, Codable {
+    let id: String
+    let image: String
+    let tag: String
+    let title: String
+    let actionTitle: String
+    let link: String
+    let landingBadge: String
+    let landingSubtitle: String
+    let landingDescription: String
+    let gradientType: Banner.GradientType
+    let products: [Product]
+
+    enum CodingKeys: String, CodingKey {
+        case id, image, tag, title, link, products
+        case actionTitle = "action_title"
+        case landingBadge = "landing_badge"
+        case landingSubtitle = "landing_subtitle"
+        case landingDescription = "landing_description"
+        case gradientType = "gradient_type"
+    }
+
+    var imageURL: URL? { URL(string: image) }
+
+    var badgeText: String {
+        landingBadge.isEmpty ? tag : landingBadge
+    }
+
+    var subtitleText: String {
+        landingSubtitle.isEmpty ? tag : landingSubtitle
+    }
+
+    var gradientColors: [Color] {
+        Banner(
+            id: id,
+            image: image,
+            tag: tag,
+            title: title,
+            actionTitle: actionTitle,
+            link: link,
+            gradientType: gradientType
+        ).gradientColors
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        image = try container.decodeIfPresent(String.self, forKey: .image) ?? ""
+        tag = try container.decodeIfPresent(String.self, forKey: .tag) ?? ""
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        actionTitle = try container.decodeIfPresent(String.self, forKey: .actionTitle) ?? "查看详情"
+        link = try container.decodeIfPresent(String.self, forKey: .link) ?? ""
+        landingBadge = try container.decodeIfPresent(String.self, forKey: .landingBadge) ?? ""
+        landingSubtitle = try container.decodeIfPresent(String.self, forKey: .landingSubtitle) ?? ""
+        landingDescription = try container.decodeIfPresent(String.self, forKey: .landingDescription) ?? ""
+        gradientType = (try? container.decode(Banner.GradientType.self, forKey: .gradientType)) ?? .summer
+        products = try container.decodeIfPresent([Product].self, forKey: .products) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(image, forKey: .image)
+        try container.encode(tag, forKey: .tag)
+        try container.encode(title, forKey: .title)
+        try container.encode(actionTitle, forKey: .actionTitle)
+        try container.encode(link, forKey: .link)
+        try container.encode(landingBadge, forKey: .landingBadge)
+        try container.encode(landingSubtitle, forKey: .landingSubtitle)
+        try container.encode(landingDescription, forKey: .landingDescription)
+        try container.encode(gradientType, forKey: .gradientType)
+        try container.encode(products, forKey: .products)
     }
 }
 
@@ -342,6 +439,13 @@ extension Product {
     static func getBanners() async throws -> [Banner] {
         return try await APIClient.shared.request(
             endpoint: APIEndpoints.homeBanners,
+            requiresAuth: false
+        )
+    }
+
+    static func getBannerLanding(id: String) async throws -> BannerLanding {
+        return try await APIClient.shared.request(
+            endpoint: APIEndpoints.homeBannerLanding(id),
             requiresAuth: false
         )
     }
