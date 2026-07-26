@@ -7,10 +7,8 @@ struct HomeView: View {
     @State private var hotRankingProducts: [Product] = []
     @State private var recommendedProducts: [Product] = []
     @State private var newArrivalProducts: [Product] = []
-    @State private var promotions: [HomePromotion] = []
     @State private var selectedProduct: Product?
     @State private var selectedBanner: Banner?
-    @State private var showCoupons = false
     @State private var isLoading = true
     @State private var loadError: String? = nil
     @State private var toast: String? = nil
@@ -36,9 +34,6 @@ struct HomeView: View {
                         heroBanner
                     }
                     categoryGrid
-                    if !promotions.isEmpty {
-                        promotionSection
-                    }
                     if !flashSaleProducts.isEmpty {
                         flashSaleSection
                     }
@@ -62,9 +57,6 @@ struct HomeView: View {
         .navigationDestination(item: $selectedBanner) { banner in
             BannerLandingView(banner: banner)
         }
-        .navigationDestination(isPresented: $showCoupons) {
-            CouponView()
-        }
         .toast($toast, bottomPadding: 96)
         .task {
             await loadData()
@@ -77,8 +69,7 @@ struct HomeView: View {
         flashSaleProducts.isEmpty &&
         hotRankingProducts.isEmpty &&
         recommendedProducts.isEmpty &&
-        newArrivalProducts.isEmpty &&
-        promotions.isEmpty
+        newArrivalProducts.isEmpty
     }
 
     // MARK: - Skeleton Loading Content
@@ -86,7 +77,6 @@ struct HomeView: View {
         VStack(spacing: DesignSystem.Spacing.md) {
             SkeletonBanner()
             SkeletonCategoryGrid()
-            SkeletonPromotionStrip()
             SkeletonFlashSale()
             SkeletonNewArrival()
             SkeletonHotRanking()
@@ -104,45 +94,6 @@ struct HomeView: View {
     // MARK: - Category Grid
     private var categoryGrid: some View {
         CategoryGridView()
-    }
-
-    // MARK: - Promotion Section
-    private var promotionSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "ticket.fill")
-                        .foregroundStyle(DesignSystem.Colors.accent)
-                    Text("活动会场")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                }
-
-                Spacer()
-
-                Button(action: { showCoupons = true }) {
-                    HStack(spacing: 4) {
-                        Text("领券")
-                            .font(.subheadline)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                    }
-                    .foregroundStyle(DesignSystem.Colors.accent)
-                }
-            }
-            .padding(.horizontal, DesignSystem.Spacing.md)
-            .padding(.top, DesignSystem.Spacing.sm)
-
-            VStack(spacing: DesignSystem.Spacing.sm) {
-                ForEach(promotions.prefix(1)) { promotion in
-                    Button(action: { openPromotion(promotion) }) {
-                        PromotionCard(promotion: promotion)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, DesignSystem.Spacing.md)
-        }
     }
 
     // MARK: - Flash Sale Section
@@ -317,14 +268,12 @@ struct HomeView: View {
             async let hotTask = Product.getHotRankingProducts()
             async let recommendTask = Product.getRecommendProducts()
             async let newArrivalTask = Product.getNewArrivalProducts()
-            async let promotionTask = Product.getPromotions()
 
             banners = try await bannersTask
             flashSaleProducts = try await flashTask
             hotRankingProducts = try await hotTask
             recommendedProducts = try await recommendTask
             newArrivalProducts = try await newArrivalTask
-            promotions = try await promotionTask
         } catch {
             let message = userFacingErrorMessage(error, fallback: "首页数据加载失败")
             loadError = message
@@ -344,16 +293,6 @@ struct HomeView: View {
             }
     }
 
-    private func openPromotion(_ promotion: HomePromotion) {
-        let link = promotion.link.lowercased()
-        if link.contains("coupon") {
-            showCoupons = true
-        } else if link.contains("category") {
-            appNavigation.selectedTab = .category
-        } else {
-            showCoupons = true
-        }
-    }
 }
 
 // MARK: - Recommend Tab
@@ -479,80 +418,6 @@ struct FeaturedCard: View {
             }
         }
         .padding(DesignSystem.Spacing.sm)
-    }
-}
-
-// MARK: - Promotion Card
-struct PromotionCard: View {
-    let promotion: HomePromotion
-
-    var body: some View {
-        HStack(spacing: DesignSystem.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(DesignSystem.Colors.accent)
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: "ticket.fill")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(promotion.title.isEmpty ? "优惠活动" : promotion.title)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(DesignSystem.Colors.dark)
-                    .lineLimit(1)
-
-                Text(promotion.subtitle.isEmpty ? "满减福利，立即领取" : promotion.subtitle)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(DesignSystem.Colors.gray1)
-                    .lineLimit(1)
-
-                HStack(spacing: 6) {
-                    Text("全场可用")
-                    Text("会员同享")
-                }
-                .font(.caption2)
-                .fontWeight(.bold)
-                .foregroundStyle(DesignSystem.Colors.accent)
-            }
-
-            Spacer(minLength: DesignSystem.Spacing.sm)
-
-            VStack(spacing: 4) {
-                Text("领券")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white)
-
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white.opacity(0.9))
-            }
-            .frame(width: 62, height: 58)
-            .background(DesignSystem.Colors.accent)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.md))
-        }
-        .padding(DesignSystem.Spacing.md)
-        .frame(maxWidth: .infinity, minHeight: 96)
-        .background(
-            LinearGradient(
-                colors: [
-                    DesignSystem.Colors.accentSoft,
-                    Color(red: 0.95, green: 0.99, blue: 0.97)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.lg)
-                .stroke(DesignSystem.Colors.accent.opacity(0.12), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.lg))
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -1169,31 +1034,6 @@ struct SkeletonCategoryGrid: View {
             }
         }
         .padding(.horizontal, DesignSystem.Spacing.md)
-    }
-}
-
-struct SkeletonPromotionStrip: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-            HStack {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.15))
-                    .frame(width: 82, height: 20)
-                Spacer()
-            }
-            .padding(.horizontal, DesignSystem.Spacing.md)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
-                    ForEach(0..<2, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: DesignSystem.Radius.lg)
-                            .fill(Color.gray.opacity(0.15))
-                            .frame(width: 260, height: 92)
-                    }
-                }
-                .padding(.horizontal, DesignSystem.Spacing.md)
-            }
-        }
     }
 }
 

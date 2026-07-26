@@ -493,15 +493,13 @@ const api = {
       request('/api/h5/home/hot-ranks/'),
       request('/api/h5/home/recommends/'),
       request('/api/h5/home/new-arrivals/'),
-      request('/api/h5/home/promotions/'),
-    ]).then(([banners, categories, flashSales, hotRanks, recommends, newArrivals, promotions]) => ({
+    ]).then(([banners, categories, flashSales, hotRanks, recommends, newArrivals]) => ({
       banners: (banners || []).map(mapBanner),
       categories: (categories || []).map(mapCategory),
       flashSales: (flashSales || []).map(mapFlashSale),
       hotRanks: (hotRanks || []).map(mapHotRank),
       recommends: (recommends || []).map(mapRecommend),
       newArrivals: (newArrivals || []).map(mapNewArrival),
-      promotions: (promotions || []).map(mapPromotion),
     })),
   },
 

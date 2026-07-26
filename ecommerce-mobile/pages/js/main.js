@@ -251,14 +251,13 @@ async function renderHomePage() {
     if (el) el.style.display = 'none'
   }
 
-  const [banners, cats, flashSales, hotRanks, recommends, newArrivals, promotions] = await Promise.all([
+  const [banners, cats, flashSales, hotRanks, recommends, newArrivals] = await Promise.all([
     api.home.getBanners().catch(() => []),
     api.home.getCategories().catch(() => []),
     api.home.getFlashSale().catch(() => []),
     api.home.getHotRank().catch(() => []),
     api.home.getRecommend().catch(() => []),
     api.home.getNewArrival().catch(() => []),
-    api.home.getPromotions().catch(() => []),
   ])
 
   if (flashSales.length > 0 && flashSales[0].endTime) {
@@ -299,34 +298,6 @@ async function renderHomePage() {
         <span class="category-name">${c.name}</span>
       </a>`).join('')
     window.dispatchEvent(new Event('scroll'))
-  }
-
-  // 活动会场
-  const promotionTrack = document.getElementById('promotionTrack')
-  if (promotionTrack) {
-    hideSkeleton('skeletonPromotion')
-    if (promotions.length > 0) {
-      promotionTrack.innerHTML = promotions.map(p => {
-        const href = p.link || 'coupon.html'
-        return `
-          <a href="${href}" class="promotion-card">
-            <div class="promotion-card__icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12a2 2 0 0 0 0-4V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 0 0-4v-2z"/></svg>
-            </div>
-            <div class="promotion-card__body">
-              <span class="promotion-card__title">${p.title || '优惠活动'}</span>
-              <span class="promotion-card__sub">${p.subtitle || '限时福利，立即领取'}</span>
-              <span class="promotion-card__tags">全场可用 · 会员同享</span>
-            </div>
-            <div class="promotion-card__cta">
-              <span>领券</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-          </a>`
-      }).join('')
-    } else {
-      promotionTrack.innerHTML = '<div class="empty-tip">暂无活动</div>'
-    }
   }
 
   // 限时抢购
