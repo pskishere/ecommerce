@@ -11,11 +11,15 @@ from .models import (
     HomeFlashSale,
     HomeHotRank,
     HomeRecommend,
+    Order,
+    OrderProduct,
     PaymentTransaction,
     Product,
     Subcategory,
     UserCoupon,
     UserProfile,
+    VIPMembership,
+    ShopInfo,
 )
 from mediafiles.models import MediaFile
 
@@ -253,3 +257,185 @@ class H5APISmokeTests(APITestCase):
         self.assertEqual(unread_after['count'], 0)
         self.assert_success(self.client.delete('/api/h5/browse-history/clear/'))
         self.assertEqual(BrowseHistory.objects.filter(user=self.user).count(), 0)
+
+
+class AdminAPITests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin',
+            email='admin@example.com',
+            password='iole',
+        )
+        UserProfile.objects.create(user=self.admin, user_type='admin')
+
+        self.buyer = User.objects.create_user(
+            username='buyer',
+            email='buyer@example.com',
+            password='iole',
+        )
+        UserProfile.objects.create(user=self.buyer, user_type='user')
+        VIPMembership.objects.create(user=self.buyer, points=80)
+
+        self.category = Category.objects.create(name='女装', is_enabled=True)
+        self.subcategory = Subcategory.objects.create(
+            name='连衣裙',
+            category=self.category,
+            is_enabled=True,
+        )
+        self.product = Product.objects.create(
+            name='后台测试商品',
+            description='后台测试商品描述',
+            price=Decimal('88.00'),
+            original_price=Decimal('128.00'),
+            subcategory=self.subcategory,
+            rating=Decimal('4.9'),
+            review_count=3,
+            sales_count=99,
+            is_in_stock=True,
+            tag='测试',
+        )
+        self.banner = HomeBanner.objects.create(
+            tag='TEST',
+            title='后台测试 Banner',
+            action_title='查看',
+            link='campaign.html?banner_id=test',
+            is_enabled=True,
+        )
+        self.banner.products.add(self.product)
+        self.order = Order.objects.create(
+            user=self.buyer,
+            id='ORADMIN001',
+            store='潮流优品官方旗舰店',
+            status='pending',
+            total_amount=Decimal('88.00'),
+            payment=Decimal('88.00'),
+            address_name='测试买家',
+            address_phone='13800138000',
+            address_province='广东省',
+            address_city='深圳市',
+            address_district='南山区',
+            address_detail='科技园',
+        )
+        OrderProduct.objects.create(
+            order=self.order,
+            product_id=self.product.id,
+            name=self.product.name,
+            price=self.product.price,
+            quantity=1,
+        )
+        UserCoupon.objects.create(
+            user=self.buyer,
+            name='已有优惠券',
+            value=10,
+            threshold='满50可用',
+            description='测试',
+            time='2026-12-31',
+        )
+
+    def assert_success(self, response):
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.data['code'], 0, response.data)
+        return response.data.get('data')
+
+    def login_admin(self):
+        response = self.client.post('/api/admin/login/', {'username': 'admin', 'password': 'iole'}, format='json')
+        data = self.assert_success(response)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {data['token']}")
+
+    def test_admin_permission_and_overview(self):
+        self.assertEqual(self.client.get('/api/admin/overview/').status_code, 401)
+
+        user_login = self.client.post('/api/h5/login/', {'username': 'buyer', 'password': 'iole'}, format='json')
+        token = self.assert_success(user_login)['token']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+        self.assertEqual(self.client.get('/api/admin/overview/').status_code, 403)
+
+        self.login_admin()
+        overview = self.assert_success(self.client.get('/api/admin/overview/'))
+        self.assertEqual(overview['metrics']['orders'], 1)
+        self.assertEqual(overview['metrics']['products'], 1)
+        self.assertEqual(overview['recent_orders'][0]['id'], self.order.id)
+
+    def test_admin_catalog_content_management(self):
+        self.login_admin()
+        product_list = self.assert_success(self.client.get('/api/admin/products/'))
+        self.assertEqual(product_list['total'], 1)
+
+        updated_product = self.assert_success(self.client.patch(f'/api/admin/products/{self.product.id}/', {
+            'price': '99.00',
+            'is_in_stock': False,
+            'tag': '已调整',
+        }, format='json'))
+        self.assertEqual(updated_product['price'], '99.00')
+        self.assertFalse(updated_product['is_in_stock'])
+        h5_products = self.assert_success(self.client.get('/api/h5/products/'))
+        self.assertEqual(h5_products, [])
+
+        new_category = self.assert_success(self.client.post('/api/admin/categories/', {
+            'name': '鞋包配饰',
+            'sort_order': 9,
+            'is_enabled': True,
+        }, format='json'))
+        new_subcategory = self.assert_success(self.client.post('/api/admin/subcategories/', {
+            'name': '通勤包',
+            'category_id': new_category['id'],
+            'sort_order': 1,
+            'is_enabled': True,
+        }, format='json'))
+        self.assertEqual(new_subcategory['category_name'], '鞋包配饰')
+
+        banner = self.assert_success(self.client.patch(f'/api/admin/banners/{self.banner.id}/', {
+            'title': '新版 Banner',
+            'product_ids': [self.product.id],
+            'is_enabled': True,
+        }, format='json'))
+        self.assertEqual(banner['title'], '新版 Banner')
+        self.assertEqual(banner['product_count'], 1)
+
+    def test_admin_order_user_coupon_and_shop_flow(self):
+        self.login_admin()
+
+        paid = self.assert_success(self.client.post(f'/api/admin/orders/{self.order.id}/mark-paid/', {}, format='json'))
+        self.assertEqual(paid['status'], 'paid')
+
+        shipped = self.assert_success(self.client.post(f'/api/admin/orders/{self.order.id}/ship/', {
+            'carrier': '顺丰速运',
+            'tracking_number': 'SFADMIN001',
+        }, format='json'))
+        self.assertEqual(shipped['status'], 'shipped')
+        self.assertEqual(shipped['tracking_number'], 'SFADMIN001')
+
+        after_sale = self.assert_success(self.client.post(f'/api/admin/orders/{self.order.id}/after-sale/', {
+            'after_sale_status': 'processing',
+            'after_sale_reason': '后台处理中',
+        }, format='json'))
+        self.assertEqual(after_sale['after_sale_status'], 'processing')
+
+        user = self.assert_success(self.client.patch(f'/api/admin/users/{self.buyer.id}/', {
+            'vip_level': 'gold',
+            'points': 500,
+            'is_active': True,
+        }, format='json'))
+        self.assertEqual(user['vip_level'], 'gold')
+        self.assertEqual(user['points'], 500)
+
+        coupon = self.assert_success(self.client.post('/api/admin/coupons/', {
+            'username': 'buyer',
+            'name': '后台发放券',
+            'value': 30,
+            'threshold': '满120可用',
+            'time': '2026-12-31',
+        }, format='json'))
+        self.assertEqual(coupon['username'], 'buyer')
+        self.assertEqual(UserCoupon.objects.filter(user=self.buyer).count(), 2)
+
+        shop = self.assert_success(self.client.patch('/api/admin/shop/save/', {
+            'name': '潮流好物测试店',
+            'description': '后台保存',
+            'score': '4.8',
+            'product_count': 12,
+            'sales': '99万',
+            'fans_count': '88万',
+        }, format='json'))
+        self.assertEqual(shop['name'], '潮流好物测试店')
+        self.assertEqual(ShopInfo.objects.get(pk=1).product_count, 12)

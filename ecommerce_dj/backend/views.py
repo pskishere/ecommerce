@@ -1,14 +1,14 @@
 from rest_framework import viewsets, serializers, mixins
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Avg, Prefetch
+from django.db.models import Avg, Count, Prefetch, Q, Sum
 from django.utils import timezone
 from mediafiles.models import MediaFile
 import base64
@@ -185,7 +185,7 @@ from .models import (
     HomeBanner, HomeFlashSale, HomeHotRank, HomeRecommend, HomeNewArrival, HomePromotion,
     CartItem, Order, OrderProduct, Address, Review, Favorite, BrowseHistory, UserCoupon, Notification, UserProfile,
     PaymentTransaction, SpecGroup, SpecValue, SKU, SKUSpec,
-    ShopInfo, VIPMembership, VIP_LEVEL_ORDER
+    ShopInfo, VIPMembership, VIP_LEVEL_NAMES, VIP_LEVEL_ORDER
 )
 
 from .serializers import (
@@ -702,6 +702,654 @@ class HomePromotionViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True, context={'request': request})
         return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
+
+class IsAdminProfile(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        profile = getattr(user, 'profile', None)
+        return user.is_staff or user.is_superuser or (profile and profile.user_type == 'admin')
+
+
+def _money(value):
+    if value in (None, ''):
+        return Decimal('0')
+    return Decimal(str(value))
+
+
+def _bool_value(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in ('1', 'true', 'yes', 'on', 'enabled')
+
+
+def _date_time(value):
+    return value.strftime('%Y-%m-%d %H:%M') if value else ''
+
+
+def _media_payload(media, request):
+    return {
+        'id': media.id,
+        'url': get_image_url(media, context={'request': request}),
+        'name': media.original_name or media.file.name,
+        'mime_type': media.mime_type,
+        'size': media.size,
+        'uploaded_at': _date_time(media.uploaded_at),
+    }
+
+
+def _admin_product_payload(product, request):
+    sku_stock = product.skus.aggregate(total=Sum('stock')).get('total')
+    subcategory = product.subcategory
+    category = subcategory.category if subcategory and subcategory.category else None
+    return {
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price': str(product.price),
+        'original_price': str(product.original_price or ''),
+        'image': get_image_url(product.image, context={'request': request}),
+        'image_id': product.image_id or '',
+        'subcategory_id': product.subcategory_id or '',
+        'subcategory_name': subcategory.name if subcategory else '',
+        'category_id': category.id if category else '',
+        'category_name': category.name if category else '',
+        'rating': str(product.rating),
+        'review_count': product.review_count,
+        'sales_count': product.sales_count,
+        'is_in_stock': product.is_in_stock,
+        'tag': product.tag,
+        'sku_count': product.skus.count(),
+        'stock_total': sku_stock if sku_stock is not None else (999 if product.is_in_stock else 0),
+    }
+
+
+def _admin_category_payload(category, request):
+    return {
+        'id': category.id,
+        'name': category.name,
+        'icon': get_image_url(category.icon, context={'request': request}),
+        'icon_id': category.icon_id or '',
+        'banner': get_image_url(category.banner, context={'request': request}),
+        'banner_id': category.banner_id or '',
+        'sort_order': category.sort_order,
+        'is_enabled': category.is_enabled,
+        'subcategory_count': category.subcategories.count(),
+        'product_count': Product.objects.filter(subcategory__category=category).count(),
+    }
+
+
+def _admin_subcategory_payload(subcategory, request):
+    return {
+        'id': subcategory.id,
+        'name': subcategory.name,
+        'image': get_image_url(subcategory.icon, context={'request': request}),
+        'icon_id': subcategory.icon_id or '',
+        'category_id': subcategory.category_id,
+        'category_name': subcategory.category.name if subcategory.category else '',
+        'sort_order': subcategory.sort_order,
+        'is_enabled': subcategory.is_enabled,
+        'product_count': subcategory.products.count(),
+    }
+
+
+def _admin_banner_payload(banner, request):
+    return {
+        'id': banner.id,
+        'tag': banner.tag,
+        'title': banner.title,
+        'action_title': banner.action_title,
+        'link': banner.link,
+        'landing_badge': banner.landing_badge,
+        'landing_subtitle': banner.landing_subtitle,
+        'landing_description': banner.landing_description,
+        'gradient_type': banner.gradient_type,
+        'sort_order': banner.sort_order,
+        'is_enabled': banner.is_enabled,
+        'image': get_image_url(banner.image, context={'request': request}),
+        'image_id': banner.image_id or '',
+        'product_ids': list(banner.products.values_list('id', flat=True)),
+        'product_count': banner.products.count(),
+    }
+
+
+def _admin_order_payload(order, request):
+    data = OrderSerializer(order, context={'request': request}).data
+    data['user'] = {
+        'id': order.user_id,
+        'username': order.user.username,
+        'email': order.user.email or '',
+    }
+    data['item_count'] = sum(item.quantity for item in order.products.all())
+    data['created_display'] = _date_time(order.created_at)
+    data['pay_display'] = _date_time(order.pay_time)
+    data['shipped_display'] = _date_time(order.shipped_at)
+    return data
+
+
+def _admin_user_payload(user):
+    profile = getattr(user, 'profile', None)
+    vip = getattr(user, 'vip', None)
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email or '',
+        'is_active': user.is_active,
+        'is_staff': user.is_staff,
+        'user_type': profile.user_type if profile else 'user',
+        'phone': profile.phone if profile else '',
+        'gender': profile.gender if profile else 'secret',
+        'points': (vip.points if vip else (profile.points if profile else 0)),
+        'vip_level': vip.level if vip else 'none',
+        'vip_level_name': VIP_LEVEL_NAMES.get(vip.level, '普通会员') if vip else '普通会员',
+        'order_count': getattr(user, 'order_count', user.orders.count()),
+        'total_spent': str(getattr(user, 'total_spent', None) or 0),
+        'coupon_count': getattr(user, 'coupon_count', user.coupons.count()),
+        'date_joined': _date_time(user.date_joined),
+    }
+
+
+def _admin_coupon_payload(coupon):
+    return {
+        'id': coupon.id,
+        'user_id': coupon.user_id,
+        'username': coupon.user.username,
+        'name': coupon.name,
+        'value': coupon.value,
+        'threshold': coupon.threshold,
+        'threshold_amount': str(coupon_threshold_amount(coupon)),
+        'description': coupon.description,
+        'time': coupon.time,
+        'status': coupon.status,
+    }
+
+
+def _set_media(instance, field, value):
+    if value is None:
+        return
+    media = MediaFile.objects.filter(id=value).first() if value else None
+    setattr(instance, field, media)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminProfile])
+def admin_overview(request):
+    orders = Order.objects.all()
+    paid_orders = orders.exclude(status='cancelled')
+    revenue = paid_orders.aggregate(total=Sum('payment')).get('total') or Decimal('0')
+    status_counts = {row['status']: row['count'] for row in orders.values('status').annotate(count=Count('id'))}
+    recent_orders = orders.select_related('user').prefetch_related('products__image').order_by('-created_at')[:6]
+    top_products = Product.objects.select_related('image', 'subcategory__category').order_by('-sales_count')[:6]
+    return api_response({
+        'metrics': {
+            'revenue': str(revenue),
+            'orders': orders.count(),
+            'pending_orders': status_counts.get('pending', 0),
+            'paid_orders': status_counts.get('paid', 0),
+            'after_sale_orders': orders.exclude(after_sale_status='none').count(),
+            'products': Product.objects.count(),
+            'active_products': Product.objects.filter(is_in_stock=True).count(),
+            'users': User.objects.count(),
+            'coupons': UserCoupon.objects.count(),
+        },
+        'order_status': status_counts,
+        'recent_orders': [_admin_order_payload(order, request) for order in recent_orders],
+        'top_products': [_admin_product_payload(product, request) for product in top_products],
+    })
+
+
+class AdminMediaViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        items = MediaFile.objects.all()[:80]
+        return api_response([_media_payload(item, request) for item in items])
+
+    def create(self, request):
+        data_url = request.data.get('file')
+        media = media_from_data_url(data_url, original_prefix=request.data.get('name') or 'admin-upload')
+        if not media:
+            return api_response(msg='图片格式无效', code=400)
+        return api_response(_media_payload(media, request), msg='uploaded')
+
+
+class AdminProductViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def get_queryset(self):
+        qs = Product.objects.select_related('image', 'subcategory__category').prefetch_related('skus')
+        q = (self.request.GET.get('q') or '').strip()
+        status = self.request.GET.get('status')
+        category_id = self.request.GET.get('category')
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(tag__icontains=q))
+        if status == 'active':
+            qs = qs.filter(is_in_stock=True)
+        elif status == 'inactive':
+            qs = qs.filter(is_in_stock=False)
+        if category_id:
+            qs = qs.filter(subcategory__category_id=category_id)
+        return qs.order_by('-sales_count', 'name')
+
+    def list(self, request):
+        products = self.get_queryset()
+        return api_response({
+            'items': [_admin_product_payload(product, request) for product in products],
+            'total': products.count(),
+        })
+
+    def retrieve(self, request, pk=None):
+        product = Product.objects.select_related('image', 'subcategory__category').prefetch_related('skus').get(pk=pk)
+        return api_response(_admin_product_payload(product, request))
+
+    def create(self, request):
+        name = str(request.data.get('name') or '').strip()
+        if not name:
+            return api_response(msg='商品名称不能为空', code=400)
+        product = Product(name=name, price=_money(request.data.get('price') or '0'))
+        self._apply_product_data(product, request.data)
+        product.save()
+        return api_response(_admin_product_payload(product, request), msg='created')
+
+    def partial_update(self, request, pk=None):
+        product = Product.objects.get(pk=pk)
+        self._apply_product_data(product, request.data)
+        product.save()
+        return api_response(_admin_product_payload(product, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        product = Product.objects.get(pk=pk)
+        product.is_in_stock = False
+        product.save(update_fields=['is_in_stock'])
+        return api_response(_admin_product_payload(product, request), msg='off shelf')
+
+    @action(detail=True, methods=['post'])
+    def toggle(self, request, pk=None):
+        product = Product.objects.get(pk=pk)
+        product.is_in_stock = not product.is_in_stock
+        product.save(update_fields=['is_in_stock'])
+        return api_response(_admin_product_payload(product, request), msg='updated')
+
+    def _apply_product_data(self, product, data):
+        for field in ['name', 'description', 'tag']:
+            if field in data:
+                setattr(product, field, str(data.get(field) or '').strip())
+        for field in ['price', 'original_price', 'rating']:
+            if field in data:
+                value = data.get(field)
+                setattr(product, field, None if value == '' and field == 'original_price' else _money(value))
+        for field in ['review_count', 'sales_count']:
+            if field in data:
+                setattr(product, field, int(data.get(field) or 0))
+        if 'is_in_stock' in data:
+            product.is_in_stock = _bool_value(data.get('is_in_stock'), product.is_in_stock)
+        if 'subcategory_id' in data:
+            product.subcategory = Subcategory.objects.filter(id=data.get('subcategory_id')).first() if data.get('subcategory_id') else None
+        if 'image_id' in data:
+            _set_media(product, 'image', data.get('image_id'))
+
+
+class AdminCategoryViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        categories = Category.objects.select_related('icon', 'banner').prefetch_related('subcategories').order_by('sort_order', 'name')
+        return api_response([_admin_category_payload(category, request) for category in categories])
+
+    def create(self, request):
+        name = str(request.data.get('name') or '').strip()
+        if not name:
+            return api_response(msg='分类名称不能为空', code=400)
+        category = Category.objects.create(
+            name=name,
+            sort_order=int(request.data.get('sort_order') or 0),
+            is_enabled=_bool_value(request.data.get('is_enabled'), True),
+        )
+        _set_media(category, 'icon', request.data.get('icon_id'))
+        _set_media(category, 'banner', request.data.get('banner_id'))
+        category.save()
+        return api_response(_admin_category_payload(category, request), msg='created')
+
+    def partial_update(self, request, pk=None):
+        category = Category.objects.get(pk=pk)
+        if 'name' in request.data:
+            category.name = str(request.data.get('name') or '').strip()
+        if 'sort_order' in request.data:
+            category.sort_order = int(request.data.get('sort_order') or 0)
+        if 'is_enabled' in request.data:
+            category.is_enabled = _bool_value(request.data.get('is_enabled'), category.is_enabled)
+        if 'icon_id' in request.data:
+            _set_media(category, 'icon', request.data.get('icon_id'))
+        if 'banner_id' in request.data:
+            _set_media(category, 'banner', request.data.get('banner_id'))
+        category.save()
+        return api_response(_admin_category_payload(category, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        category = Category.objects.get(pk=pk)
+        category.is_enabled = False
+        category.save(update_fields=['is_enabled'])
+        return api_response(_admin_category_payload(category, request), msg='disabled')
+
+
+class AdminSubcategoryViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        qs = Subcategory.objects.select_related('category', 'icon').order_by('category__sort_order', 'sort_order', 'name')
+        category_id = request.GET.get('category')
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        return api_response([_admin_subcategory_payload(item, request) for item in qs])
+
+    def create(self, request):
+        name = str(request.data.get('name') or '').strip()
+        category_id = request.data.get('category_id')
+        category = Category.objects.filter(id=category_id).first()
+        if not name or not category:
+            return api_response(msg='子分类名称和所属分类不能为空', code=400)
+        subcategory = Subcategory.objects.create(
+            name=name,
+            category=category,
+            sort_order=int(request.data.get('sort_order') or 0),
+            is_enabled=_bool_value(request.data.get('is_enabled'), True),
+        )
+        _set_media(subcategory, 'icon', request.data.get('icon_id'))
+        subcategory.save()
+        return api_response(_admin_subcategory_payload(subcategory, request), msg='created')
+
+    def partial_update(self, request, pk=None):
+        subcategory = Subcategory.objects.get(pk=pk)
+        if 'name' in request.data:
+            subcategory.name = str(request.data.get('name') or '').strip()
+        if 'category_id' in request.data:
+            category = Category.objects.filter(id=request.data.get('category_id')).first()
+            if category:
+                subcategory.category = category
+        if 'sort_order' in request.data:
+            subcategory.sort_order = int(request.data.get('sort_order') or 0)
+        if 'is_enabled' in request.data:
+            subcategory.is_enabled = _bool_value(request.data.get('is_enabled'), subcategory.is_enabled)
+        if 'icon_id' in request.data:
+            _set_media(subcategory, 'icon', request.data.get('icon_id'))
+        subcategory.save()
+        return api_response(_admin_subcategory_payload(subcategory, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        subcategory = Subcategory.objects.get(pk=pk)
+        subcategory.is_enabled = False
+        subcategory.save(update_fields=['is_enabled'])
+        return api_response(_admin_subcategory_payload(subcategory, request), msg='disabled')
+
+
+class AdminBannerViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        banners = HomeBanner.objects.select_related('image').prefetch_related('products').order_by('sort_order', 'id')
+        return api_response([_admin_banner_payload(banner, request) for banner in banners])
+
+    def create(self, request):
+        banner = HomeBanner()
+        self._apply_banner_data(banner, request.data)
+        banner.save()
+        self._sync_banner_products(banner, request.data)
+        return api_response(_admin_banner_payload(banner, request), msg='created')
+
+    def partial_update(self, request, pk=None):
+        banner = HomeBanner.objects.get(pk=pk)
+        self._apply_banner_data(banner, request.data)
+        banner.save()
+        self._sync_banner_products(banner, request.data)
+        return api_response(_admin_banner_payload(banner, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        banner = HomeBanner.objects.get(pk=pk)
+        banner.is_enabled = False
+        banner.save(update_fields=['is_enabled'])
+        return api_response(_admin_banner_payload(banner, request), msg='disabled')
+
+    def _apply_banner_data(self, banner, data):
+        for field in ['tag', 'title', 'action_title', 'link', 'landing_badge', 'landing_subtitle', 'landing_description']:
+            if field in data:
+                setattr(banner, field, str(data.get(field) or '').strip())
+        if 'gradient_type' in data:
+            banner.gradient_type = int(data.get('gradient_type') or 0)
+        if 'sort_order' in data:
+            banner.sort_order = int(data.get('sort_order') or 0)
+        if 'is_enabled' in data:
+            banner.is_enabled = _bool_value(data.get('is_enabled'), banner.is_enabled)
+        if 'image_id' in data:
+            _set_media(banner, 'image', data.get('image_id'))
+
+    def _sync_banner_products(self, banner, data):
+        if 'product_ids' not in data:
+            return
+        ids = data.get('product_ids') or []
+        if isinstance(ids, str):
+            ids = [item.strip() for item in ids.split(',') if item.strip()]
+        banner.products.set(Product.objects.filter(id__in=ids))
+
+
+class AdminOrderViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def get_queryset(self):
+        qs = Order.objects.select_related('user').prefetch_related('products__image', 'payment_transactions')
+        q = (self.request.GET.get('q') or '').strip()
+        status = self.request.GET.get('status')
+        if q:
+            qs = qs.filter(Q(id__icontains=q) | Q(user__username__icontains=q) | Q(address_phone__icontains=q))
+        if status == 'after_sale':
+            qs = qs.exclude(after_sale_status='none')
+        elif status:
+            qs = qs.filter(status=status)
+        return qs.order_by('-created_at')
+
+    def list(self, request):
+        orders = self.get_queryset()
+        return api_response({
+            'items': [_admin_order_payload(order, request) for order in orders],
+            'total': orders.count(),
+        })
+
+    def retrieve(self, request, pk=None):
+        order = Order.objects.select_related('user').prefetch_related('products__image', 'payment_transactions').get(pk=pk)
+        return api_response(_admin_order_payload(order, request))
+
+    @action(detail=True, methods=['post'], url_path='mark-paid')
+    def mark_paid(self, request, pk=None):
+        order = Order.objects.select_related('user').get(pk=pk)
+        if order.status != 'pending':
+            return api_response(msg='只有待付款订单可以标记为已支付', code=400)
+        order.status = 'paid'
+        order.pay_time = timezone.now()
+        order.payment = order.payment or order.total_amount
+        order.save(update_fields=['status', 'pay_time', 'payment'])
+        Notification.objects.create(
+            user=order.user,
+            type='order',
+            name='订单已支付',
+            time='刚刚',
+            content=f'订单 {order.id} 已支付，商家正在准备商品。',
+            action='查看订单'
+        )
+        return api_response(_admin_order_payload(order, request), msg='paid')
+
+    @action(detail=True, methods=['post'])
+    def ship(self, request, pk=None):
+        order = Order.objects.select_related('user').get(pk=pk)
+        if order.status != 'paid':
+            return api_response(msg='只有待发货订单可以发货', code=400)
+        now = timezone.now()
+        order.status = 'shipped'
+        order.shipped_at = now
+        order.carrier = request.data.get('carrier') or '顺丰速运'
+        order.tracking_number = request.data.get('tracking_number') or request.data.get('trackingNumber') or f"SF{now.strftime('%Y%m%d%H%M%S')}{order.id[-4:]}"
+        order.save(update_fields=['status', 'shipped_at', 'carrier', 'tracking_number'])
+        Notification.objects.create(
+            user=order.user,
+            type='logistics',
+            name='订单已发货',
+            time='刚刚',
+            content=f'订单 {order.id} 已由 {order.carrier} 发出，运单号 {order.tracking_number}。',
+            action='查看物流'
+        )
+        return api_response(_admin_order_payload(order, request), msg='shipped')
+
+    @action(detail=True, methods=['post'], url_path='set-status')
+    def set_status(self, request, pk=None):
+        order = Order.objects.select_related('user').get(pk=pk)
+        status = request.data.get('status')
+        valid_statuses = [value for value, _ in Order.STATUS_CHOICES]
+        if status not in valid_statuses:
+            return api_response(msg='订单状态无效', code=400)
+        order.status = status
+        if status == 'paid' and not order.pay_time:
+            order.pay_time = timezone.now()
+        if status == 'completed' and not order.shipped_at:
+            order.shipped_at = timezone.now()
+        order.save()
+        return api_response(_admin_order_payload(order, request), msg='updated')
+
+    @action(detail=True, methods=['post'], url_path='after-sale')
+    def after_sale(self, request, pk=None):
+        order = Order.objects.select_related('user').get(pk=pk)
+        status = request.data.get('after_sale_status')
+        valid = ['none', 'requested', 'processing', 'refunded', 'rejected']
+        if status not in valid:
+            return api_response(msg='售后状态无效', code=400)
+        order.after_sale_status = status
+        if 'after_sale_reason' in request.data:
+            order.after_sale_reason = str(request.data.get('after_sale_reason') or '').strip()
+        if status != 'none' and not order.after_sale_applied_at:
+            order.after_sale_applied_at = timezone.now()
+        order.save(update_fields=['after_sale_status', 'after_sale_reason', 'after_sale_applied_at'])
+        return api_response(_admin_order_payload(order, request), msg='updated')
+
+
+class AdminUserViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def get_queryset(self):
+        qs = User.objects.select_related('profile', 'vip').annotate(
+            order_count=Count('orders', distinct=True),
+            total_spent=Sum('orders__payment'),
+            coupon_count=Count('coupons', distinct=True),
+        )
+        q = (self.request.GET.get('q') or '').strip()
+        user_type = self.request.GET.get('type')
+        if q:
+            qs = qs.filter(Q(username__icontains=q) | Q(email__icontains=q) | Q(profile__phone__icontains=q))
+        if user_type:
+            qs = qs.filter(profile__user_type=user_type)
+        return qs.order_by('-date_joined')
+
+    def list(self, request):
+        users = self.get_queryset()
+        return api_response({
+            'items': [_admin_user_payload(user) for user in users],
+            'total': users.count(),
+        })
+
+    def partial_update(self, request, pk=None):
+        user = User.objects.get(pk=pk)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        vip, _ = VIPMembership.objects.get_or_create(user=user)
+        if 'email' in request.data:
+            user.email = str(request.data.get('email') or '').strip()
+        if 'is_active' in request.data:
+            user.is_active = _bool_value(request.data.get('is_active'), user.is_active)
+        if 'phone' in request.data:
+            profile.phone = str(request.data.get('phone') or '').strip()
+        if 'gender' in request.data and request.data.get('gender') in GENDER_INPUT_MAP:
+            profile.gender = GENDER_INPUT_MAP.get(request.data.get('gender'))
+        if 'vip_level' in request.data and request.data.get('vip_level') in VIP_LEVEL_ORDER:
+            vip.level = request.data.get('vip_level')
+        if 'points' in request.data:
+            vip.points = int(request.data.get('points') or 0)
+            profile.points = vip.points
+        user.save()
+        profile.save()
+        vip.save()
+        return api_response(_admin_user_payload(user), msg='updated')
+
+
+class AdminCouponViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        coupons = UserCoupon.objects.select_related('user').order_by('-id')
+        status = request.GET.get('status')
+        q = (request.GET.get('q') or '').strip()
+        if status:
+            coupons = coupons.filter(status=status)
+        if q:
+            coupons = coupons.filter(Q(name__icontains=q) | Q(user__username__icontains=q))
+        return api_response({
+            'items': [_admin_coupon_payload(coupon) for coupon in coupons],
+            'total': coupons.count(),
+        })
+
+    def create(self, request):
+        user_id = request.data.get('user_id')
+        username = request.data.get('username')
+        user = User.objects.filter(id=user_id).first() if user_id else User.objects.filter(username=username).first()
+        if not user:
+            return api_response(msg='用户不存在', code=400)
+        coupon = UserCoupon.objects.create(
+            user=user,
+            name=str(request.data.get('name') or '专属优惠券').strip(),
+            value=int(request.data.get('value') or 0),
+            threshold=str(request.data.get('threshold') or '无门槛').strip(),
+            description=str(request.data.get('description') or '').strip(),
+            time=str(request.data.get('time') or '').strip(),
+            status=request.data.get('status') or 'available',
+        )
+        Notification.objects.create(
+            user=user,
+            type='promo',
+            name='获得优惠券',
+            time='刚刚',
+            content=f'你获得了 {coupon.name}，可在结算时使用。',
+            action='去使用'
+        )
+        return api_response(_admin_coupon_payload(coupon), msg='created')
+
+    def partial_update(self, request, pk=None):
+        coupon = UserCoupon.objects.select_related('user').get(pk=pk)
+        for field in ['name', 'threshold', 'description', 'time', 'status']:
+            if field in request.data:
+                setattr(coupon, field, str(request.data.get(field) or '').strip())
+        if 'value' in request.data:
+            coupon.value = int(request.data.get('value') or 0)
+        coupon.save()
+        return api_response(_admin_coupon_payload(coupon), msg='updated')
+
+
+class AdminShopViewSet(viewsets.ViewSet):
+    permission_classes = [IsAdminProfile]
+
+    def list(self, request):
+        info, _ = ShopInfo.objects.get_or_create(pk=1)
+        return api_response(ShopInfoSerializer(info).data)
+
+    @action(detail=False, methods=['patch'])
+    def save(self, request):
+        info, _ = ShopInfo.objects.get_or_create(pk=1)
+        for field in ['name', 'description', 'sales', 'fans_count']:
+            if field in request.data:
+                setattr(info, field, str(request.data.get(field) or '').strip())
+        if 'score' in request.data:
+            info.score = _money(request.data.get('score'))
+        if 'product_count' in request.data:
+            info.product_count = int(request.data.get('product_count') or 0)
+        info.save()
+        return api_response(ShopInfoSerializer(info).data, msg='updated')
 
 
 class CartViewSet(viewsets.ModelViewSet):

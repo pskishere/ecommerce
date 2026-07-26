@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>潮流好物后台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <section class="admin-login" id="loginPanel">
+    <form class="login-console" id="adminLoginForm">
+      <div class="login-console__mark">CLHW</div>
+      <div>
+        <p class="admin-kicker">Commerce ops</p>
+        <h1>潮流好物后台</h1>
+        <p class="login-console__sub">商品、订单、会员和首页内容的统一管理台。</p>
+      </div>
+      <label class="admin-field">
+        <span>管理员账号</span>
+        <input id="adminUsername" type="text" autocomplete="username" value="admin" required>
+      </label>
+      <label class="admin-field">
+        <span>密码</span>
+        <input id="adminPassword" type="password" autocomplete="current-password" required>
+      </label>
+      <div class="admin-error" id="loginError" hidden></div>
+      <button class="admin-primary-btn" type="submit">
+        登录后台
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <div class="admin-shell" id="adminApp" hidden>
+    <aside class="admin-sidebar">
+      <div class="admin-brand">
+        <span class="admin-brand__stamp">潮</span>
+        <div>
+          <strong>潮流好物</strong>
+          <span>后台管理</span>
+        </div>
+      </div>
+      <nav class="admin-nav" aria-label="后台模块">
+        <button class="admin-nav__item active" data-view="dashboard" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z"/></svg>
+          概览
+        </button>
+        <button class="admin-nav__item" data-view="products" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10-4 4 7-10 4L7 7Zm0 0-4 7 10 7 8-11m-18 4 10 7"/></svg>
+          商品
+        </button>
+        <button class="admin-nav__item" data-view="orders" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Zm3 5h6M9 11h6M9 15h4"/></svg>
+          订单
+        </button>
+        <button class="admin-nav__item" data-view="users" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"/></svg>
+          用户
+        </button>
+        <button class="admin-nav__item" data-view="content" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v5H4V5Zm0 9h7v5H4v-5Zm11 0h5v5h-5v-5Z"/></svg>
+          内容
+        </button>
+        <button class="admin-nav__item" data-view="coupons" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a2 2 0 0 0 0-4V5H4v3a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4v1h16v-1a2 2 0 0 0 0-4v-2Z"/></svg>
+          优惠券
+        </button>
+        <button class="admin-nav__item" data-view="shop" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1 10H5L4 10Zm1-6h14l1 6H4l1-6Zm4 10h6"/></svg>
+          店铺
+        </button>
+      </nav>
+      <a class="admin-front-link" href="index.html" target="_blank" rel="noreferrer">打开商城前台</a>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div>
+          <p class="admin-kicker" id="viewKicker">Dashboard</p>
+          <h2 id="viewTitle">概览</h2>
+        </div>
+        <div class="admin-topbar__tools">
+          <label class="admin-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"/></svg>
+            <input id="globalSearch" type="search" placeholder="搜索当前模块">
+          </label>
+          <button class="admin-icon-btn" id="refreshBtn" type="button" aria-label="刷新">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6"/></svg>
+          </button>
+          <button class="admin-ghost-btn" id="logoutBtn" type="button">退出</button>
+        </div>
+      </header>
+
+      <section class="admin-view active" id="dashboardView">
+        <div class="metric-grid" id="metricGrid"></div>
+        <div class="admin-columns">
+          <section class="admin-panel">
+            <div class="panel-head">
+              <h3>最近订单</h3>
+              <button class="admin-text-btn" data-view="orders" type="button">查看全部</button>
+            </div>
+            <div id="recentOrders"></div>
+          </section>
+          <section class="admin-panel">
+            <div class="panel-head">
+              <h3>热卖商品</h3>
+              <button class="admin-text-btn" data-view="products" type="button">管理商品</button>
+            </div>
+            <div id="topProducts"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="admin-view" id="productsView">
+        <div class="list-toolbar">
+          <div class="segment-control" id="productStatus">
+            <button class="active" data-value="" type="button">全部</button>
+            <button data-value="active" type="button">上架</button>
+            <button data-value="inactive" type="button">下架</button>
+          </div>
+          <button class="admin-primary-btn compact" data-action="new-product" type="button">新增商品</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>商品</th>
+                <th>分类</th>
+                <th>价格</th>
+                <th>销量</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="productsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-view" id="ordersView">
+        <div class="list-toolbar">
+          <div class="segment-control" id="orderStatus">
+            <button class="active" data-value="" type="button">全部</button>
+            <button data-value="pending" type="button">待付款</button>
+            <button data-value="paid" type="button">待发货</button>
+            <button data-value="shipped" type="button">待收货</button>
+            <button data-value="completed" type="button">已完成</button>
+            <button data-value="after_sale" type="button">售后</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>订单</th>
+                <th>用户</th>
+                <th>金额</th>
+                <th>状态</th>
+                <th>履约</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-view" id="usersView">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>联系方式</th>
+                <th>会员</th>
+                <th>订单</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-view" id="contentView">
+        <div class="list-toolbar">
+          <div class="segment-control" id="contentKind">
+            <button class="active" data-value="categories" type="button">一级分类</button>
+            <button data-value="subcategories" type="button">二级分类</button>
+            <button data-value="banners" type="button">首页 Banner</button>
+          </div>
+          <button class="admin-primary-btn compact" data-action="new-content" type="button">新增内容</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead id="contentHead"></thead>
+            <tbody id="contentTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-view" id="couponsView">
+        <div class="list-toolbar">
+          <div class="segment-control" id="couponStatus">
+            <button class="active" data-value="" type="button">全部</button>
+            <button data-value="available" type="button">可用</button>
+            <button data-value="used" type="button">已使用</button>
+            <button data-value="expired" type="button">已失效</button>
+          </div>
+          <button class="admin-primary-btn compact" data-action="new-coupon" type="button">发券</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>优惠券</th>
+                <th>用户</th>
+                <th>门槛</th>
+                <th>有效期</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="couponsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-view" id="shopView">
+        <form class="shop-form admin-panel" id="shopForm">
+          <div class="panel-head">
+            <h3>店铺资料</h3>
+            <button class="admin-primary-btn compact" type="submit">保存店铺</button>
+          </div>
+          <div class="form-grid">
+            <label class="admin-field">
+              <span>店铺名称</span>
+              <input name="name" type="text" required>
+            </label>
+            <label class="admin-field">
+              <span>评分</span>
+              <input name="score" type="number" step="0.1" min="0" max="5">
+            </label>
+            <label class="admin-field">
+              <span>商品数</span>
+              <input name="product_count" type="number" min="0">
+            </label>
+            <label class="admin-field">
+              <span>销售额展示</span>
+              <input name="sales" type="text">
+            </label>
+            <label class="admin-field">
+              <span>粉丝数展示</span>
+              <input name="fans_count" type="text">
+            </label>
+            <label class="admin-field form-grid__full">
+              <span>店铺简介</span>
+              <textarea name="description" rows="4"></textarea>
+            </label>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div class="admin-drawer" id="drawer" hidden>
+    <div class="drawer-backdrop" data-action="close-drawer"></div>
+    <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-head">
+        <div>
+          <p class="admin-kicker">Edit</p>
+          <h3 id="drawerTitle">编辑</h3>
+        </div>
+        <button class="admin-icon-btn" data-action="close-drawer" type="button" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="drawerForm" class="drawer-form">
+        <div id="drawerFields"></div>
+        <div class="drawer-actions">
+          <button class="admin-ghost-btn" data-action="close-drawer" type="button">取消</button>
+          <button class="admin-primary-btn compact" id="drawerSubmit" type="submit">保存</button>
+        </div>
+      </form>
+    </aside>
+  </div>
+
+  <div class="admin-toast" id="adminToast" role="status"></div>
+  <script type="module" src="./js/pages/admin.js"></script>
+</body>
+</html>

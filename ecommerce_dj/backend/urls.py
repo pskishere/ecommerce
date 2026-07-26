@@ -24,6 +24,17 @@ router.register(r'user', views.UserViewSet, basename='user')
 router.register(r'shop', views.ShopInfoViewSet, basename='shop')
 router.register(r'vip', views.VIPViewSet, basename='vip')
 
+admin_router = DefaultRouter()
+admin_router.register(r'media', views.AdminMediaViewSet, basename='admin-media')
+admin_router.register(r'products', views.AdminProductViewSet, basename='admin-product')
+admin_router.register(r'categories', views.AdminCategoryViewSet, basename='admin-category')
+admin_router.register(r'subcategories', views.AdminSubcategoryViewSet, basename='admin-subcategory')
+admin_router.register(r'banners', views.AdminBannerViewSet, basename='admin-banner')
+admin_router.register(r'orders', views.AdminOrderViewSet, basename='admin-order')
+admin_router.register(r'users', views.AdminUserViewSet, basename='admin-user')
+admin_router.register(r'coupons', views.AdminCouponViewSet, basename='admin-coupon')
+admin_router.register(r'shop', views.AdminShopViewSet, basename='admin-shop')
+
 urlpatterns = [
     path('h5/', include(router.urls)),
     path('h5/login/', views.h5_login, name='h5_login'),
@@ -32,4 +43,6 @@ urlpatterns = [
     path('ios/login/', views.ios_login, name='ios_login'),
     path('ios/user/', views.user_profile, name='ios_user_profile'),
     path('admin/login/', views.admin_login, name='admin_login'),
+    path('admin/overview/', views.admin_overview, name='admin_overview'),
+    path('admin/', include(admin_router.urls)),
 ]
