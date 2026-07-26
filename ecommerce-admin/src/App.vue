@@ -117,6 +117,34 @@
             </el-card>
           </div>
 
+          <div class="operations-grid">
+            <el-card shadow="never" class="panel-card">
+              <template #header>
+                <div class="panel-head">
+                  <span>7 天销售趋势</span>
+                  <el-tag type="success" effect="plain">订单 / GMV</el-tag>
+                </div>
+              </template>
+              <div ref="salesChartRef" class="chart-box compact"></div>
+            </el-card>
+
+            <el-card shadow="never" class="panel-card">
+              <template #header>
+                <div class="panel-head">
+                  <span>运营待办</span>
+                  <el-button text type="primary" @click="loadDashboard">刷新</el-button>
+                </div>
+              </template>
+              <div class="todo-grid">
+                <button v-for="item in todoCards" :key="item.label" class="todo-card" type="button" @click="item.action">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                  <em>{{ item.hint }}</em>
+                </button>
+              </div>
+            </el-card>
+          </div>
+
           <div class="dashboard-grid">
             <el-card shadow="never" class="panel-card">
               <template #header>
@@ -170,6 +198,45 @@
               <el-table-column prop="created_display" label="创建时间" width="170" />
             </el-table>
           </el-card>
+
+          <div class="dashboard-grid">
+            <el-card shadow="never" class="panel-card">
+              <template #header>
+                <div class="panel-head">
+                  <span>库存预警</span>
+                  <el-button text type="primary" @click="openInventoryRisk">查看低库存</el-button>
+                </div>
+              </template>
+              <div class="rank-list">
+                <div v-for="item in dashboard.lowStockProducts" :key="item.id" class="rank-item warning-rank">
+                  <el-image :src="item.image" fit="cover" class="rank-image">
+                    <template #error><div class="image-fallback">IMG</div></template>
+                  </el-image>
+                  <div>
+                    <strong>{{ item.name }}</strong>
+                    <span>{{ item.category_name || item.subcategory_name || '未分类' }} · 库存 {{ item.stock_total }}</span>
+                  </div>
+                  <el-button link type="primary" @click="openProductFromDashboard(item)">补货</el-button>
+                </div>
+                <el-empty v-if="!dashboard.lowStockProducts.length" description="暂无低库存商品" :image-size="72" />
+              </div>
+            </el-card>
+
+            <el-card shadow="never" class="panel-card">
+              <template #header>
+                <div class="panel-head">
+                  <span>内容健康度</span>
+                  <el-button text type="primary" @click="openContentHealth">管理首页</el-button>
+                </div>
+              </template>
+              <div class="health-grid">
+                <button v-for="item in contentHealthCards" :key="item.label" class="health-card" type="button" @click="item.action">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </button>
+              </div>
+            </el-card>
+          </div>
         </section>
 
         <section v-show="activeView === 'products'" class="view-stack">
@@ -178,6 +245,9 @@
               <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
               <el-select v-model="productCategory" clearable class="category-filter" placeholder="按分类筛选" @change="loadProducts">
                 <el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+              <el-select v-model="productStock" clearable class="stock-filter" placeholder="库存筛选" @change="loadProducts">
+                <el-option v-for="item in productStockOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </div>
             <div class="toolbar-actions">
@@ -725,16 +795,27 @@ const lastSyncedAt = ref(null)
 const keyword = ref('')
 const productStatus = ref('')
 const productCategory = ref('')
+const productStock = ref('')
 const orderStatus = ref('')
 const couponStatus = ref('')
 const contentKind = ref('categories')
 const orderChartRef = ref(null)
+const salesChartRef = ref(null)
 const mediaInput = ref(null)
 const searchInput = ref(null)
 let orderChart = null
+let salesChart = null
 
 const loginForm = reactive({ username: 'admin', password: 'iole' })
-const dashboard = reactive({ metrics: {}, orderStatus: {}, recentOrders: [], topProducts: [] })
+const dashboard = reactive({
+  metrics: {},
+  orderStatus: {},
+  salesTrend: [],
+  contentHealth: {},
+  recentOrders: [],
+  topProducts: [],
+  lowStockProducts: [],
+})
 const products = ref([])
 const orders = ref([])
 const users = ref([])
@@ -828,11 +909,26 @@ const metrics = computed(() => [
   { label: '上架商品', value: dashboard.metrics.active_products || 0, tag: `${dashboard.metrics.products || 0} 总商品` },
   { label: '会员用户', value: dashboard.metrics.users || 0, tag: `${dashboard.metrics.coupons || 0} 张券` },
 ])
+const todoCards = computed(() => [
+  { label: '待付款订单', value: dashboard.metrics.pending_orders || 0, hint: '催付或取消', action: () => openOrderQueue('pending') },
+  { label: '待发货订单', value: dashboard.metrics.paid_orders || 0, hint: '尽快履约', action: () => openOrderQueue('paid') },
+  { label: '售后处理', value: dashboard.metrics.after_sale_orders || 0, hint: '退款/拒绝', action: () => openOrderQueue('after_sale') },
+  { label: '低库存商品', value: dashboard.metrics.low_stock_products || 0, hint: '补库存', action: openInventoryRisk },
+])
+const contentHealthCards = computed(() => [
+  { label: '启用 Banner', value: dashboard.contentHealth.enabled_banners || 0, action: () => openContentHealth('banners') },
+  { label: '启用分类', value: dashboard.contentHealth.enabled_categories || 0, action: () => openContentHealth('categories') },
+  { label: '首页栏目', value: dashboard.contentHealth.enabled_home_sections || 0, action: () => openContentHealth('flashSales') },
+  { label: '素材文件', value: dashboard.contentHealth.media_files || 0, action: () => openContentHealth('media') },
+])
 
 const productStatusOptions = [
   { label: '全部', value: '' },
   { label: '上架', value: 'active' },
   { label: '下架', value: 'inactive' },
+]
+const productStockOptions = [
+  { label: '低库存', value: 'low' },
 ]
 const orderStatusOptions = [
   { label: '全部', value: '' },
@@ -892,7 +988,10 @@ watch(contentKind, () => {
 
 watch(isSidebarCollapsed, (value) => {
   localStorage.setItem(SIDEBAR_COLLAPSED_KEY, value ? 'true' : 'false')
-  window.setTimeout(() => orderChart?.resize(), 180)
+  window.setTimeout(() => {
+    orderChart?.resize()
+    salesChart?.resize()
+  }, 180)
 })
 
 onMounted(async () => {
@@ -1020,13 +1119,19 @@ async function loadDashboard() {
   const data = await adminApi.overview()
   dashboard.metrics = data.metrics || {}
   dashboard.orderStatus = data.order_status || {}
+  dashboard.salesTrend = data.sales_trend || []
+  dashboard.contentHealth = data.content_health || {}
   dashboard.recentOrders = data.recent_orders || []
   dashboard.topProducts = data.top_products || []
+  dashboard.lowStockProducts = data.low_stock_products || []
   await nextTick()
   renderOrderChart()
+  renderSalesChart()
   window.setTimeout(() => {
     renderOrderChart()
+    renderSalesChart()
     orderChart?.resize()
+    salesChart?.resize()
   }, 160)
 }
 
@@ -1054,8 +1159,53 @@ function renderOrderChart() {
   orderChart.resize()
 }
 
+function renderSalesChart() {
+  if (!salesChartRef.value) return
+  salesChart ||= echarts.init(salesChartRef.value)
+  const rows = dashboard.salesTrend || []
+  salesChart.setOption({
+    color: ['#2563EB', '#FF6B4A'],
+    tooltip: { trigger: 'axis' },
+    grid: { left: 44, right: 18, top: 28, bottom: 34 },
+    legend: { top: 0, right: 4 },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: rows.map(item => item.label),
+      axisLine: { lineStyle: { color: '#E5E7EB' } },
+      axisTick: { show: false },
+    },
+    yAxis: [
+      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#EEF2F7' } } },
+      { type: 'value', name: '订单', splitLine: { show: false } },
+    ],
+    series: [
+      {
+        name: 'GMV',
+        type: 'line',
+        smooth: true,
+        areaStyle: { opacity: 0.08 },
+        data: rows.map(item => Number(item.revenue || 0)),
+      },
+      {
+        name: '订单',
+        type: 'bar',
+        yAxisIndex: 1,
+        barWidth: 16,
+        data: rows.map(item => Number(item.orders || 0)),
+      },
+    ],
+  })
+  salesChart.resize()
+}
+
 async function loadProducts() {
-  const data = await adminApi.products({ q: keyword.value, status: productStatus.value, category: productCategory.value })
+  const data = await adminApi.products({
+    q: keyword.value,
+    status: productStatus.value,
+    category: productCategory.value,
+    stock: productStock.value,
+  })
   products.value = data.items || []
   selectedProducts.value = []
 }
@@ -1089,6 +1239,28 @@ async function loadCoupons() {
 
 async function loadShop() {
   Object.assign(shopForm, await adminApi.shop())
+}
+
+async function openOrderQueue(status) {
+  orderStatus.value = status
+  await switchView('orders')
+}
+
+async function openInventoryRisk() {
+  productStatus.value = 'active'
+  productStock.value = 'low'
+  await switchView('products')
+}
+
+async function openContentHealth(kind = 'banners') {
+  contentKind.value = kind
+  await switchView('content')
+}
+
+async function openProductFromDashboard(row) {
+  await switchView('products')
+  const fresh = products.value.find(item => item.id === row.id) || row
+  openProduct(fresh)
 }
 
 function openProduct(row = null) {

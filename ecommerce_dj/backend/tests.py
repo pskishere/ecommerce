@@ -15,6 +15,7 @@ from .models import (
     OrderProduct,
     PaymentTransaction,
     Product,
+    SKU,
     Subcategory,
     UserCoupon,
     UserProfile,
@@ -294,6 +295,12 @@ class AdminAPITests(APITestCase):
             is_in_stock=True,
             tag='测试',
         )
+        SKU.objects.create(
+            product=self.product,
+            price=self.product.price,
+            original_price=self.product.original_price,
+            stock=88,
+        )
         self.banner = HomeBanner.objects.create(
             tag='TEST',
             title='后台测试 Banner',
@@ -354,7 +361,18 @@ class AdminAPITests(APITestCase):
         overview = self.assert_success(self.client.get('/api/admin/overview/'))
         self.assertEqual(overview['metrics']['orders'], 1)
         self.assertEqual(overview['metrics']['products'], 1)
+        self.assertEqual(overview['metrics']['low_stock_products'], 1)
+        self.assertEqual(len(overview['sales_trend']), 7)
+        self.assertEqual(overview['content_health']['enabled_banners'], 1)
+        self.assertEqual(overview['content_health']['enabled_categories'], 1)
+        self.assertEqual(overview['content_health']['enabled_home_sections'], 0)
+        self.assertEqual(overview['low_stock_products'][0]['id'], self.product.id)
+        self.assertEqual(overview['low_stock_products'][0]['stock_total'], 88)
         self.assertEqual(overview['recent_orders'][0]['id'], self.order.id)
+
+        low_stock_products = self.assert_success(self.client.get('/api/admin/products/?stock=low'))
+        self.assertEqual(low_stock_products['total'], 1)
+        self.assertEqual(low_stock_products['items'][0]['id'], self.product.id)
 
     def test_admin_catalog_content_management(self):
         self.login_admin()

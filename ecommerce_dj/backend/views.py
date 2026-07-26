@@ -16,7 +16,7 @@ import binascii
 import uuid
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from .serializers import get_image_url, sku_spec_text
 
@@ -969,6 +969,35 @@ def admin_overview(request):
     status_counts = {row['status']: row['count'] for row in orders.values('status').annotate(count=Count('id'))}
     recent_orders = orders.select_related('user').prefetch_related('products__image').order_by('-created_at')[:6]
     top_products = Product.objects.select_related('image', 'subcategory__category').order_by('-sales_count')[:6]
+    low_stock_products = (
+        Product.objects.select_related('image', 'subcategory__category')
+        .annotate(stock_total=Sum('skus__stock'))
+        .filter(stock_total__lte=200, is_in_stock=True)
+        .order_by('stock_total', '-sales_count')[:6]
+    )
+    today = timezone.localdate()
+    sales_trend = []
+    for offset in range(6, -1, -1):
+        day = today - timedelta(days=offset)
+        day_orders = paid_orders.filter(created_at__date=day)
+        sales_trend.append({
+            'date': day.isoformat(),
+            'label': day.strftime('%m-%d'),
+            'revenue': str(day_orders.aggregate(total=Sum('payment')).get('total') or Decimal('0')),
+            'orders': day_orders.count(),
+        })
+    content_health = {
+        'enabled_banners': HomeBanner.objects.filter(is_enabled=True).count(),
+        'enabled_categories': Category.objects.filter(is_enabled=True).count(),
+        'enabled_home_sections': (
+            HomeFlashSale.objects.filter(is_enabled=True).count()
+            + HomeHotRank.objects.filter(is_enabled=True).count()
+            + HomeRecommend.objects.filter(is_enabled=True).count()
+            + HomeNewArrival.objects.filter(is_enabled=True).count()
+            + HomePromotion.objects.filter(is_enabled=True).count()
+        ),
+        'media_files': MediaFile.objects.count(),
+    }
     return api_response({
         'metrics': {
             'revenue': str(revenue),
@@ -976,14 +1005,19 @@ def admin_overview(request):
             'pending_orders': status_counts.get('pending', 0),
             'paid_orders': status_counts.get('paid', 0),
             'after_sale_orders': orders.exclude(after_sale_status='none').count(),
+            'low_stock_products': Product.objects.annotate(stock_total=Sum('skus__stock')).filter(stock_total__lte=200, is_in_stock=True).count(),
+            'inactive_products': Product.objects.filter(is_in_stock=False).count(),
             'products': Product.objects.count(),
             'active_products': Product.objects.filter(is_in_stock=True).count(),
             'users': User.objects.count(),
             'coupons': UserCoupon.objects.count(),
         },
         'order_status': status_counts,
+        'sales_trend': sales_trend,
+        'content_health': content_health,
         'recent_orders': [_admin_order_payload(order, request) for order in recent_orders],
         'top_products': [_admin_product_payload(product, request) for product in top_products],
+        'low_stock_products': [_admin_product_payload(product, request) for product in low_stock_products],
     })
 
 
@@ -1013,6 +1047,7 @@ class AdminProductViewSet(viewsets.ViewSet):
         )
         q = (self.request.GET.get('q') or '').strip()
         status = self.request.GET.get('status')
+        stock = self.request.GET.get('stock')
         category_id = self.request.GET.get('category')
         if q:
             qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(tag__icontains=q))
@@ -1020,6 +1055,8 @@ class AdminProductViewSet(viewsets.ViewSet):
             qs = qs.filter(is_in_stock=True)
         elif status == 'inactive':
             qs = qs.filter(is_in_stock=False)
+        if stock == 'low':
+            qs = qs.annotate(stock_total=Sum('skus__stock')).filter(stock_total__lte=200, is_in_stock=True)
         if category_id:
             qs = qs.filter(subcategory__category_id=category_id)
         return qs.order_by('-sales_count', 'name')
