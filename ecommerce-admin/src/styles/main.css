@@ -286,6 +286,36 @@ select {
   min-width: 0;
 }
 
+.command-trigger {
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border-color: #dbe3ef;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.command-trigger span {
+  font-weight: 800;
+}
+
+.command-trigger kbd,
+.command-header kbd {
+  display: inline-grid;
+  min-width: 42px;
+  height: 22px;
+  place-items: center;
+  padding: 0 7px;
+  border: 1px solid #dbe3ef;
+  border-bottom-color: #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
 .global-search {
   width: 320px;
 }
@@ -304,6 +334,7 @@ select {
 .view-stack {
   display: grid;
   gap: 18px;
+  animation: view-enter 0.18s ease both;
 }
 
 .metric-grid {
@@ -315,6 +346,13 @@ select {
 .metric-card {
   border: 1px solid var(--admin-line);
   border-radius: 12px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.metric-card:hover,
+.panel-card:hover {
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06);
 }
 
 .metric-card .el-card__body {
@@ -357,6 +395,7 @@ select {
 .panel-card {
   border: 1px solid var(--admin-line);
   border-radius: 12px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .panel-head,
@@ -430,7 +469,7 @@ select {
   color: var(--admin-text);
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .todo-card {
@@ -442,7 +481,22 @@ select {
 .health-card:hover {
   border-color: rgba(37, 99, 235, 0.38);
   background: #fff;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.08);
   transform: translateY(-1px);
+}
+
+.todo-card:active,
+.health-card:active,
+.rank-item:active {
+  transform: translateY(0);
+}
+
+.todo-card:focus-visible,
+.health-card:focus-visible,
+.front-link:focus-visible,
+.command-item:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
 }
 
 .todo-card span,
@@ -514,6 +568,13 @@ select {
   padding: 8px;
   border-radius: var(--admin-radius);
   background: var(--admin-panel);
+  transition: background 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.rank-item:hover {
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
 }
 
 .warning-rank {
@@ -745,6 +806,117 @@ select {
   justify-content: flex-end;
 }
 
+.command-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.22);
+}
+
+.command-dialog .el-dialog__header {
+  padding: 22px 22px 12px;
+  margin: 0;
+}
+
+.command-dialog .el-dialog__body {
+  padding: 0 22px 22px;
+}
+
+.command-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.command-header h3 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.command-search {
+  margin-bottom: 14px;
+}
+
+.command-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 2px 2px 0;
+}
+
+.command-item {
+  appearance: none;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--admin-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+}
+
+.command-item .el-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: var(--admin-brand);
+}
+
+.command-item.active,
+.command-item:hover {
+  border-color: rgba(37, 99, 235, 0.32);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.1);
+  transform: translateY(-1px);
+}
+
+.command-copy {
+  min-width: 0;
+}
+
+.command-copy strong,
+.command-copy em {
+  display: block;
+}
+
+.command-copy strong {
+  overflow: hidden;
+  color: var(--admin-text);
+  font-size: 14px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-copy em {
+  margin-top: 4px;
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.command-group {
+  min-width: 42px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
 .el-drawer__body {
   padding-top: 10px;
 }
@@ -756,11 +928,35 @@ select {
 
 .el-button {
   font-weight: 700;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.el-button:not(.is-disabled):active {
+  transform: translateY(1px);
 }
 
 .el-segmented {
   --el-segmented-item-selected-color: var(--admin-brand);
   --el-segmented-item-selected-bg-color: #ffffff;
+}
+
+.el-table .el-table__row {
+  transition: background 0.14s ease;
+}
+
+.el-table .el-table__row:hover > td.el-table__cell {
+  background: #f8fbff;
+}
+
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 1280px) {
