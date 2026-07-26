@@ -1,0 +1,966 @@
+<template>
+  <section v-if="!isAuthed" class="login-page">
+    <div class="login-card">
+      <div class="brand-block">
+        <div class="brand-mark">潮</div>
+        <div>
+          <p class="eyebrow">Trend commerce control</p>
+          <h1>潮流好物后台</h1>
+          <p>用成熟后台组件重构，商品、订单、用户、首页内容统一运营。</p>
+        </div>
+      </div>
+
+      <el-form :model="loginForm" label-position="top" @submit.prevent="login">
+        <el-form-item label="管理员账号">
+          <el-input v-model="loginForm.username" size="large" autocomplete="username" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="loginForm.password" size="large" type="password" autocomplete="current-password" show-password />
+        </el-form-item>
+        <el-button class="login-button" type="primary" size="large" :loading="loading" @click="login">进入后台</el-button>
+      </el-form>
+    </div>
+  </section>
+
+  <el-container v-else class="admin-layout">
+    <el-aside width="248px" class="admin-aside">
+      <div class="aside-brand">
+        <div class="brand-mark">潮</div>
+        <div>
+          <strong>潮流好物</strong>
+          <span>Admin console</span>
+        </div>
+      </div>
+
+      <el-menu :default-active="activeView" class="admin-menu" @select="switchView">
+        <el-menu-item index="dashboard"><el-icon><DataBoard /></el-icon><span>经营概览</span></el-menu-item>
+        <el-menu-item index="products"><el-icon><Goods /></el-icon><span>商品管理</span></el-menu-item>
+        <el-menu-item index="orders"><el-icon><Tickets /></el-icon><span>订单履约</span></el-menu-item>
+        <el-menu-item index="users"><el-icon><User /></el-icon><span>用户会员</span></el-menu-item>
+        <el-menu-item index="content"><el-icon><Grid /></el-icon><span>首页内容</span></el-menu-item>
+        <el-menu-item index="coupons"><el-icon><Ticket /></el-icon><span>优惠券</span></el-menu-item>
+        <el-menu-item index="shop"><el-icon><Shop /></el-icon><span>店铺设置</span></el-menu-item>
+      </el-menu>
+
+      <a class="front-link" href="http://localhost:3000/index.html" target="_blank" rel="noreferrer">打开商城前台</a>
+    </el-aside>
+
+    <el-container>
+      <el-header height="82px" class="admin-header">
+        <div>
+          <p class="eyebrow">{{ currentMeta.kicker }}</p>
+          <h2>{{ currentMeta.title }}</h2>
+        </div>
+        <div class="header-actions">
+          <el-input
+            v-if="searchable"
+            v-model="keyword"
+            clearable
+            class="global-search"
+            placeholder="搜索当前模块"
+            @keyup.enter="loadCurrentView"
+            @clear="loadCurrentView"
+          >
+            <template #prefix><el-icon><Search /></el-icon></template>
+          </el-input>
+          <el-button :icon="Refresh" circle @click="loadCurrentView" />
+          <el-button @click="logout">退出</el-button>
+        </div>
+      </el-header>
+
+      <el-main class="admin-main" v-loading="loading">
+        <section v-show="activeView === 'dashboard'" class="view-stack">
+          <div class="metric-grid">
+            <el-card v-for="metric in metrics" :key="metric.label" shadow="never" class="metric-card">
+              <span>{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+              <em>{{ metric.tag }}</em>
+            </el-card>
+          </div>
+
+          <div class="dashboard-grid">
+            <el-card shadow="never" class="panel-card">
+              <template #header>
+                <div class="panel-head">
+                  <span>订单状态</span>
+                  <el-tag type="info" effect="plain">实时</el-tag>
+                </div>
+              </template>
+              <div ref="orderChartRef" class="chart-box"></div>
+            </el-card>
+
+            <el-card shadow="never" class="panel-card">
+              <template #header>
+                <div class="panel-head">
+                  <span>热卖商品</span>
+                  <el-button text type="primary" @click="switchView('products')">管理商品</el-button>
+                </div>
+              </template>
+              <div class="rank-list">
+                <div v-for="item in dashboard.topProducts" :key="item.id" class="rank-item">
+                  <el-image :src="item.image" fit="cover" class="rank-image">
+                    <template #error><div class="image-fallback">IMG</div></template>
+                  </el-image>
+                  <div>
+                    <strong>{{ item.name }}</strong>
+                    <span>{{ item.category_name || item.subcategory_name || '未分类' }} · {{ item.sales_count }} 销量</span>
+                  </div>
+                </div>
+              </div>
+            </el-card>
+          </div>
+
+          <el-card shadow="never" class="panel-card">
+            <template #header>
+              <div class="panel-head">
+                <span>最近订单</span>
+                <el-button text type="primary" @click="switchView('orders')">查看全部</el-button>
+              </div>
+            </template>
+            <el-table :data="dashboard.recentOrders" stripe>
+              <el-table-column prop="id" label="订单号" min-width="180" />
+              <el-table-column label="用户" min-width="120">
+                <template #default="{ row }">{{ row.user?.username || '-' }}</template>
+              </el-table-column>
+              <el-table-column label="金额" width="120">
+                <template #default="{ row }">{{ money(row.payment || row.total_amount) }}</template>
+              </el-table-column>
+              <el-table-column label="状态" width="110">
+                <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag></template>
+              </el-table-column>
+              <el-table-column prop="created_display" label="创建时间" width="170" />
+            </el-table>
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'products'" class="view-stack">
+          <div class="toolbar">
+            <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
+            <el-button type="primary" :icon="Plus" @click="openProduct()">新增商品</el-button>
+          </div>
+          <el-card shadow="never" class="panel-card">
+            <el-table :data="products" stripe height="calc(100vh - 252px)">
+              <el-table-column label="商品" min-width="300" fixed>
+                <template #default="{ row }">
+                  <div class="goods-cell">
+                    <el-image :src="row.image" fit="cover" class="goods-image">
+                      <template #error><div class="image-fallback">IMG</div></template>
+                    </el-image>
+                    <div>
+                      <strong>{{ row.name }}</strong>
+                      <span>{{ row.tag || '无标签' }} · 库存 {{ row.stock_total }}</span>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="分类" min-width="150">
+                <template #default="{ row }">{{ row.category_name || '-' }} / {{ row.subcategory_name || '-' }}</template>
+              </el-table-column>
+              <el-table-column label="价格" width="140">
+                <template #default="{ row }">{{ money(row.price) }}</template>
+              </el-table-column>
+              <el-table-column prop="sales_count" label="销量" width="100" sortable />
+              <el-table-column label="状态" width="100">
+                <template #default="{ row }"><el-tag :type="row.is_in_stock ? 'success' : 'danger'">{{ row.is_in_stock ? '上架' : '下架' }}</el-tag></template>
+              </el-table-column>
+              <el-table-column label="操作" width="180" fixed="right">
+                <template #default="{ row }">
+                  <el-button link type="primary" @click="openProduct(row)">编辑</el-button>
+                  <el-button link :type="row.is_in_stock ? 'danger' : 'success'" @click="toggleProduct(row)">{{ row.is_in_stock ? '下架' : '上架' }}</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'orders'" class="view-stack">
+          <div class="toolbar">
+            <el-segmented v-model="orderStatus" :options="orderStatusOptions" @change="loadOrders" />
+          </div>
+          <el-card shadow="never" class="panel-card">
+            <el-table :data="orders" stripe height="calc(100vh - 252px)">
+              <el-table-column prop="id" label="订单号" min-width="190" fixed />
+              <el-table-column label="用户" width="130">
+                <template #default="{ row }">{{ row.user?.username || '-' }}</template>
+              </el-table-column>
+              <el-table-column label="商品" min-width="220">
+                <template #default="{ row }">
+                  <strong>{{ row.products?.[0]?.name || '无商品' }}</strong>
+                  <span class="subtext">共 {{ row.item_count || 0 }} 件</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="金额" width="120">
+                <template #default="{ row }">{{ money(row.payment || row.total_amount) }}</template>
+              </el-table-column>
+              <el-table-column label="状态" width="112">
+                <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag></template>
+              </el-table-column>
+              <el-table-column label="履约" min-width="180">
+                <template #default="{ row }">
+                  {{ row.carrier || '-' }}
+                  <span class="subtext">{{ row.tracking_number || row.after_sale_status_text || '' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="260" fixed="right">
+                <template #default="{ row }">
+                  <el-button v-if="row.status === 'pending'" link type="success" @click="markPaid(row)">标记支付</el-button>
+                  <el-button v-if="row.status === 'paid'" link type="primary" @click="openShip(row)">发货</el-button>
+                  <el-button link type="primary" @click="openOrderStatus(row)">改状态</el-button>
+                  <el-button link type="warning" @click="openAfterSale(row)">售后</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'users'" class="view-stack">
+          <el-card shadow="never" class="panel-card">
+            <el-table :data="users" stripe height="calc(100vh - 190px)">
+              <el-table-column prop="username" label="用户" min-width="150" fixed />
+              <el-table-column prop="phone" label="手机号" width="150" />
+              <el-table-column prop="email" label="邮箱" min-width="210" />
+              <el-table-column label="会员" width="130">
+                <template #default="{ row }">{{ row.vip_level_name }}</template>
+              </el-table-column>
+              <el-table-column label="订单" width="150">
+                <template #default="{ row }">{{ row.order_count }} 单 / {{ money(row.total_spent) }}</template>
+              </el-table-column>
+              <el-table-column label="状态" width="100">
+                <template #default="{ row }"><el-tag :type="row.is_active ? 'success' : 'danger'">{{ row.is_active ? '启用' : '停用' }}</el-tag></template>
+              </el-table-column>
+              <el-table-column label="操作" width="100">
+                <template #default="{ row }"><el-button link type="primary" @click="openUser(row)">编辑</el-button></template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'content'" class="view-stack">
+          <div class="toolbar">
+            <el-segmented v-model="contentKind" :options="contentKindOptions" />
+            <el-button type="primary" :icon="Plus" @click="openContent()">新增内容</el-button>
+          </div>
+          <el-card shadow="never" class="panel-card">
+            <el-table v-if="contentKind === 'categories'" :data="categories" stripe height="calc(100vh - 252px)">
+              <el-table-column label="分类" min-width="240">
+                <template #default="{ row }">
+                  <div class="goods-cell">
+                    <el-image :src="row.icon" fit="cover" class="goods-image small"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <strong>{{ row.name }}</strong>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="sort_order" label="排序" width="100" />
+              <el-table-column label="内容" width="150">
+                <template #default="{ row }">{{ row.subcategory_count }} 子类 / {{ row.product_count }} 商品</template>
+              </el-table-column>
+              <el-table-column label="状态" width="100">
+                <template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template>
+              </el-table-column>
+              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openCategory(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+
+            <el-table v-else-if="contentKind === 'subcategories'" :data="subcategories" stripe height="calc(100vh - 252px)">
+              <el-table-column prop="name" label="子分类" min-width="180" />
+              <el-table-column prop="category_name" label="所属分类" width="160" />
+              <el-table-column prop="sort_order" label="排序" width="100" />
+              <el-table-column prop="product_count" label="商品" width="100" />
+              <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
+              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openSubcategory(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+
+            <el-table v-else :data="banners" stripe height="calc(100vh - 252px)">
+              <el-table-column label="Banner" min-width="280">
+                <template #default="{ row }">
+                  <div class="goods-cell">
+                    <el-image :src="row.image" fit="cover" class="banner-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <div><strong>{{ row.title || row.tag || 'Banner' }}</strong><span>{{ row.tag || '-' }}</span></div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="link" label="跳转" min-width="180" />
+              <el-table-column prop="product_count" label="关联商品" width="110" />
+              <el-table-column prop="sort_order" label="排序" width="100" />
+              <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
+              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openBanner(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'coupons'" class="view-stack">
+          <div class="toolbar">
+            <el-segmented v-model="couponStatus" :options="couponStatusOptions" @change="loadCoupons" />
+            <el-button type="primary" :icon="Plus" @click="openCoupon()">发放优惠券</el-button>
+          </div>
+          <el-card shadow="never" class="panel-card">
+            <el-table :data="coupons" stripe height="calc(100vh - 252px)">
+              <el-table-column prop="name" label="优惠券" min-width="180" />
+              <el-table-column prop="username" label="用户" width="130" />
+              <el-table-column label="优惠" width="110"><template #default="{ row }">减 {{ row.value }}</template></el-table-column>
+              <el-table-column prop="threshold" label="门槛" min-width="150" />
+              <el-table-column prop="time" label="有效期" width="140" />
+              <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="couponType(row.status)">{{ statusText(row.status) }}</el-tag></template></el-table-column>
+              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openCoupon(row)">编辑</el-button></template></el-table-column>
+            </el-table>
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'shop'" class="view-stack">
+          <el-card shadow="never" class="panel-card shop-card">
+            <template #header>
+              <div class="panel-head">
+                <span>店铺资料</span>
+                <el-button type="primary" @click="saveShop">保存店铺</el-button>
+              </div>
+            </template>
+            <el-form :model="shopForm" label-position="top" class="shop-form">
+              <el-form-item label="店铺名称"><el-input v-model="shopForm.name" /></el-form-item>
+              <el-form-item label="评分"><el-input-number v-model="shopForm.score" :min="0" :max="5" :step="0.1" /></el-form-item>
+              <el-form-item label="商品数"><el-input-number v-model="shopForm.product_count" :min="0" /></el-form-item>
+              <el-form-item label="销售额展示"><el-input v-model="shopForm.sales" /></el-form-item>
+              <el-form-item label="粉丝数展示"><el-input v-model="shopForm.fans_count" /></el-form-item>
+              <el-form-item label="店铺简介" class="full"><el-input v-model="shopForm.description" type="textarea" :rows="4" /></el-form-item>
+            </el-form>
+          </el-card>
+        </section>
+      </el-main>
+    </el-container>
+  </el-container>
+
+  <el-drawer v-model="productDrawer" :title="productForm.id ? '编辑商品' : '新增商品'" size="560px">
+    <el-form :model="productForm" label-position="top">
+      <el-form-item label="商品名称"><el-input v-model="productForm.name" /></el-form-item>
+      <el-form-item label="标签"><el-input v-model="productForm.tag" /></el-form-item>
+      <el-form-item label="售价"><el-input-number v-model="productForm.price" :min="0" :precision="2" /></el-form-item>
+      <el-form-item label="划线价"><el-input-number v-model="productForm.original_price" :min="0" :precision="2" /></el-form-item>
+      <el-form-item label="销量"><el-input-number v-model="productForm.sales_count" :min="0" /></el-form-item>
+      <el-form-item label="评分"><el-input-number v-model="productForm.rating" :min="0" :max="5" :step="0.1" /></el-form-item>
+      <el-form-item label="所属子分类">
+        <el-select v-model="productForm.subcategory_id" filterable clearable>
+          <el-option v-for="item in subcategories" :key="item.id" :label="`${item.category_name} / ${item.name}`" :value="item.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="商品图片">
+        <el-select v-model="productForm.image_id" filterable clearable>
+          <el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="上架状态"><el-switch v-model="productForm.is_in_stock" active-text="上架" inactive-text="下架" /></el-form-item>
+      <el-form-item label="商品描述"><el-input v-model="productForm.description" type="textarea" :rows="4" /></el-form-item>
+      <div class="drawer-actions"><el-button @click="productDrawer = false">取消</el-button><el-button type="primary" @click="saveProduct">保存商品</el-button></div>
+    </el-form>
+  </el-drawer>
+
+  <el-drawer v-model="contentDrawer" :title="contentDrawerTitle" size="560px">
+    <el-form v-if="contentKind === 'categories'" :model="categoryForm" label-position="top">
+      <el-form-item label="分类名称"><el-input v-model="categoryForm.name" /></el-form-item>
+      <el-form-item label="排序"><el-input-number v-model="categoryForm.sort_order" :min="0" /></el-form-item>
+      <el-form-item label="图标"><el-select v-model="categoryForm.icon_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="Banner"><el-select v-model="categoryForm.banner_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="启用"><el-switch v-model="categoryForm.is_enabled" /></el-form-item>
+    </el-form>
+    <el-form v-else-if="contentKind === 'subcategories'" :model="subcategoryForm" label-position="top">
+      <el-form-item label="子分类名称"><el-input v-model="subcategoryForm.name" /></el-form-item>
+      <el-form-item label="所属分类"><el-select v-model="subcategoryForm.category_id"><el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="排序"><el-input-number v-model="subcategoryForm.sort_order" :min="0" /></el-form-item>
+      <el-form-item label="图标"><el-select v-model="subcategoryForm.icon_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="启用"><el-switch v-model="subcategoryForm.is_enabled" /></el-form-item>
+    </el-form>
+    <el-form v-else :model="bannerForm" label-position="top">
+      <el-form-item label="角标"><el-input v-model="bannerForm.tag" /></el-form-item>
+      <el-form-item label="主标题"><el-input v-model="bannerForm.title" /></el-form-item>
+      <el-form-item label="按钮文案"><el-input v-model="bannerForm.action_title" /></el-form-item>
+      <el-form-item label="跳转链接"><el-input v-model="bannerForm.link" /></el-form-item>
+      <el-form-item label="会场标识"><el-input v-model="bannerForm.landing_badge" /></el-form-item>
+      <el-form-item label="会场副标题"><el-input v-model="bannerForm.landing_subtitle" /></el-form-item>
+      <el-form-item label="色彩序号"><el-input-number v-model="bannerForm.gradient_type" :min="0" /></el-form-item>
+      <el-form-item label="排序"><el-input-number v-model="bannerForm.sort_order" :min="0" /></el-form-item>
+      <el-form-item label="图片"><el-select v-model="bannerForm.image_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="关联商品"><el-select v-model="bannerForm.product_ids" multiple filterable><el-option v-for="item in products" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="会场描述"><el-input v-model="bannerForm.landing_description" type="textarea" :rows="4" /></el-form-item>
+      <el-form-item label="启用"><el-switch v-model="bannerForm.is_enabled" /></el-form-item>
+    </el-form>
+    <div class="drawer-actions"><el-button @click="contentDrawer = false">取消</el-button><el-button type="primary" @click="saveContent">保存内容</el-button></div>
+  </el-drawer>
+
+  <el-drawer v-model="orderDrawer" :title="orderDrawerTitle" size="460px">
+    <el-form :model="orderForm" label-position="top">
+      <template v-if="orderAction === 'ship'">
+        <el-form-item label="物流公司"><el-input v-model="orderForm.carrier" /></el-form-item>
+        <el-form-item label="运单号"><el-input v-model="orderForm.tracking_number" /></el-form-item>
+      </template>
+      <template v-else-if="orderAction === 'status'">
+        <el-form-item label="订单状态">
+          <el-select v-model="orderForm.status">
+            <el-option v-for="item in orderRawStatuses" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+      </template>
+      <template v-else>
+        <el-form-item label="售后状态">
+          <el-select v-model="orderForm.after_sale_status">
+            <el-option v-for="item in afterSaleStatuses" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="处理备注"><el-input v-model="orderForm.after_sale_reason" type="textarea" :rows="4" /></el-form-item>
+      </template>
+      <div class="drawer-actions"><el-button @click="orderDrawer = false">取消</el-button><el-button type="primary" @click="saveOrderAction">保存</el-button></div>
+    </el-form>
+  </el-drawer>
+
+  <el-drawer v-model="userDrawer" title="编辑用户" size="460px">
+    <el-form :model="userForm" label-position="top">
+      <el-form-item label="邮箱"><el-input v-model="userForm.email" /></el-form-item>
+      <el-form-item label="手机号"><el-input v-model="userForm.phone" /></el-form-item>
+      <el-form-item label="会员等级"><el-select v-model="userForm.vip_level"><el-option v-for="item in vipLevels" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
+      <el-form-item label="积分"><el-input-number v-model="userForm.points" :min="0" /></el-form-item>
+      <el-form-item label="账号启用"><el-switch v-model="userForm.is_active" /></el-form-item>
+      <div class="drawer-actions"><el-button @click="userDrawer = false">取消</el-button><el-button type="primary" @click="saveUser">保存用户</el-button></div>
+    </el-form>
+  </el-drawer>
+
+  <el-drawer v-model="couponDrawer" :title="couponForm.id ? '编辑优惠券' : '发放优惠券'" size="460px">
+    <el-form :model="couponForm" label-position="top">
+      <el-form-item v-if="!couponForm.id" label="用户名"><el-input v-model="couponForm.username" /></el-form-item>
+      <el-form-item label="优惠券名称"><el-input v-model="couponForm.name" /></el-form-item>
+      <el-form-item label="优惠金额"><el-input-number v-model="couponForm.value" :min="0" /></el-form-item>
+      <el-form-item label="使用门槛"><el-input v-model="couponForm.threshold" /></el-form-item>
+      <el-form-item label="有效期"><el-input v-model="couponForm.time" /></el-form-item>
+      <el-form-item label="状态"><el-select v-model="couponForm.status"><el-option v-for="item in couponRawStatuses" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
+      <el-form-item label="说明"><el-input v-model="couponForm.description" type="textarea" :rows="4" /></el-form-item>
+      <div class="drawer-actions"><el-button @click="couponDrawer = false">取消</el-button><el-button type="primary" @click="saveCoupon">保存优惠券</el-button></div>
+    </el-form>
+  </el-drawer>
+</template>
+
+<script setup>
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
+import {
+  DataBoard,
+  Goods,
+  Grid,
+  Plus,
+  Refresh,
+  Search,
+  Shop,
+  Ticket,
+  Tickets,
+  User,
+} from '@element-plus/icons-vue'
+import { adminApi, clearToken, getToken, setToken } from './api/admin'
+
+const loading = ref(false)
+const isAuthed = ref(Boolean(getToken()))
+const activeView = ref('dashboard')
+const keyword = ref('')
+const productStatus = ref('')
+const orderStatus = ref('')
+const couponStatus = ref('')
+const contentKind = ref('categories')
+const orderChartRef = ref(null)
+let orderChart = null
+
+const loginForm = reactive({ username: 'admin', password: 'iole' })
+const dashboard = reactive({ metrics: {}, orderStatus: {}, recentOrders: [], topProducts: [] })
+const products = ref([])
+const orders = ref([])
+const users = ref([])
+const coupons = ref([])
+const categories = ref([])
+const subcategories = ref([])
+const banners = ref([])
+const media = ref([])
+const shopForm = reactive({})
+
+const productDrawer = ref(false)
+const contentDrawer = ref(false)
+const orderDrawer = ref(false)
+const userDrawer = ref(false)
+const couponDrawer = ref(false)
+
+const productForm = reactive({})
+const categoryForm = reactive({})
+const subcategoryForm = reactive({})
+const bannerForm = reactive({})
+const orderForm = reactive({})
+const userForm = reactive({})
+const couponForm = reactive({})
+const orderAction = ref('')
+const editingOrderId = ref('')
+
+const viewMeta = {
+  dashboard: { kicker: 'Dashboard', title: '经营概览' },
+  products: { kicker: 'Merchandise', title: '商品管理' },
+  orders: { kicker: 'Fulfillment', title: '订单履约' },
+  users: { kicker: 'Members', title: '用户会员' },
+  content: { kicker: 'Storefront', title: '首页内容' },
+  coupons: { kicker: 'Benefits', title: '优惠券' },
+  shop: { kicker: 'Shop profile', title: '店铺设置' },
+}
+
+const currentMeta = computed(() => viewMeta[activeView.value])
+const searchable = computed(() => ['products', 'orders', 'users', 'coupons'].includes(activeView.value))
+const contentDrawerTitle = computed(() => ({
+  categories: categoryForm.id ? '编辑一级分类' : '新增一级分类',
+  subcategories: subcategoryForm.id ? '编辑二级分类' : '新增二级分类',
+  banners: bannerForm.id ? '编辑 Banner' : '新增 Banner',
+}[contentKind.value]))
+const orderDrawerTitle = computed(() => ({
+  ship: '订单发货',
+  status: '修改订单状态',
+  afterSale: '售后处理',
+}[orderAction.value] || '订单处理'))
+const metrics = computed(() => [
+  { label: '营业额', value: money(dashboard.metrics.revenue), tag: 'GMV' },
+  { label: '订单数', value: dashboard.metrics.orders || 0, tag: `${dashboard.metrics.paid_orders || 0} 待发货` },
+  { label: '上架商品', value: dashboard.metrics.active_products || 0, tag: `${dashboard.metrics.products || 0} 总商品` },
+  { label: '会员用户', value: dashboard.metrics.users || 0, tag: `${dashboard.metrics.coupons || 0} 张券` },
+])
+
+const productStatusOptions = [
+  { label: '全部', value: '' },
+  { label: '上架', value: 'active' },
+  { label: '下架', value: 'inactive' },
+]
+const orderStatusOptions = [
+  { label: '全部', value: '' },
+  { label: '待付款', value: 'pending' },
+  { label: '待发货', value: 'paid' },
+  { label: '待收货', value: 'shipped' },
+  { label: '已完成', value: 'completed' },
+  { label: '售后', value: 'after_sale' },
+]
+const contentKindOptions = [
+  { label: '一级分类', value: 'categories' },
+  { label: '二级分类', value: 'subcategories' },
+  { label: '首页 Banner', value: 'banners' },
+]
+const couponStatusOptions = [
+  { label: '全部', value: '' },
+  { label: '可用', value: 'available' },
+  { label: '已使用', value: 'used' },
+  { label: '已失效', value: 'expired' },
+]
+const orderRawStatuses = [
+  { label: '待付款', value: 'pending' },
+  { label: '待发货', value: 'paid' },
+  { label: '待收货', value: 'shipped' },
+  { label: '已完成', value: 'completed' },
+  { label: '已取消', value: 'cancelled' },
+]
+const afterSaleStatuses = [
+  { label: '未申请', value: 'none' },
+  { label: '已申请', value: 'requested' },
+  { label: '处理中', value: 'processing' },
+  { label: '已退款', value: 'refunded' },
+  { label: '已拒绝', value: 'rejected' },
+]
+const couponRawStatuses = [
+  { label: '可用', value: 'available' },
+  { label: '已使用', value: 'used' },
+  { label: '已失效', value: 'expired' },
+]
+const vipLevels = [
+  { label: '普通会员', value: 'none' },
+  { label: '铜牌会员', value: 'bronze' },
+  { label: '银牌会员', value: 'silver' },
+  { label: '黄金会员', value: 'gold' },
+  { label: '钻石会员', value: 'diamond' },
+]
+
+watch(contentKind, () => {
+  if (activeView.value === 'content') loadContent()
+})
+
+onMounted(async () => {
+  if (isAuthed.value) await bootstrap()
+})
+
+async function run(task) {
+  loading.value = true
+  try {
+    return await task()
+  } catch (error) {
+    ElMessage.error(error.message || '操作失败')
+    if (error.message?.includes('登录')) {
+      isAuthed.value = false
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function login() {
+  if (!loginForm.username || !loginForm.password) {
+    ElMessage.warning('请输入管理员账号和密码')
+    return
+  }
+  await run(async () => {
+    const data = await adminApi.login(loginForm.username, loginForm.password)
+    setToken(data.token)
+    isAuthed.value = true
+    await bootstrap()
+    ElMessage.success('已进入后台')
+  })
+}
+
+function logout() {
+  clearToken()
+  isAuthed.value = false
+}
+
+async function bootstrap() {
+  await loadMeta()
+  await loadCurrentView()
+}
+
+async function loadMeta() {
+  const [categoryData, subcategoryData, mediaData, productData] = await Promise.all([
+    adminApi.categories(),
+    adminApi.subcategories(),
+    adminApi.media(),
+    adminApi.products(),
+  ])
+  categories.value = categoryData || []
+  subcategories.value = subcategoryData || []
+  media.value = mediaData || []
+  products.value = productData.items || []
+}
+
+async function switchView(view) {
+  activeView.value = view
+  keyword.value = ''
+  await loadCurrentView()
+}
+
+function loadCurrentView() {
+  const loaders = {
+    dashboard: loadDashboard,
+    products: loadProducts,
+    orders: loadOrders,
+    users: loadUsers,
+    content: loadContent,
+    coupons: loadCoupons,
+    shop: loadShop,
+  }
+  return run(loaders[activeView.value])
+}
+
+async function loadDashboard() {
+  const data = await adminApi.overview()
+  dashboard.metrics = data.metrics || {}
+  dashboard.orderStatus = data.order_status || {}
+  dashboard.recentOrders = data.recent_orders || []
+  dashboard.topProducts = data.top_products || []
+  await nextTick()
+  renderOrderChart()
+  window.setTimeout(() => {
+    renderOrderChart()
+    orderChart?.resize()
+  }, 160)
+}
+
+function renderOrderChart() {
+  if (!orderChartRef.value) return
+  orderChart ||= echarts.init(orderChartRef.value)
+  const data = orderRawStatuses.map(item => ({
+    name: item.label,
+    value: dashboard.orderStatus[item.value] || 0,
+  }))
+  orderChart.setOption({
+    color: ['#2563EB', '#16A34A', '#F59E0B', '#111827', '#DC2626'],
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0, icon: 'circle' },
+    series: [{
+      type: 'pie',
+      radius: ['48%', '72%'],
+      center: ['50%', '44%'],
+      avoidLabelOverlap: true,
+      minAngle: 6,
+      label: { formatter: '{b} {c}' },
+      data,
+    }],
+  })
+  orderChart.resize()
+}
+
+async function loadProducts() {
+  const data = await adminApi.products({ q: keyword.value, status: productStatus.value })
+  products.value = data.items || []
+}
+
+async function loadOrders() {
+  const data = await adminApi.orders({ q: keyword.value, status: orderStatus.value })
+  orders.value = data.items || []
+}
+
+async function loadUsers() {
+  const data = await adminApi.users({ q: keyword.value })
+  users.value = data.items || []
+}
+
+async function loadContent() {
+  const [categoryData, subcategoryData, bannerData] = await Promise.all([
+    adminApi.categories(),
+    adminApi.subcategories(),
+    adminApi.banners(),
+  ])
+  categories.value = categoryData || []
+  subcategories.value = subcategoryData || []
+  banners.value = bannerData || []
+}
+
+async function loadCoupons() {
+  const data = await adminApi.coupons({ q: keyword.value, status: couponStatus.value })
+  coupons.value = data.items || []
+}
+
+async function loadShop() {
+  Object.assign(shopForm, await adminApi.shop())
+}
+
+function openProduct(row = null) {
+  Object.assign(productForm, {
+    id: row?.id || '',
+    name: row?.name || '',
+    description: row?.description || '',
+    tag: row?.tag || '',
+    price: Number(row?.price || 0),
+    original_price: Number(row?.original_price || 0),
+    sales_count: Number(row?.sales_count || 0),
+    rating: Number(row?.rating || 5),
+    subcategory_id: row?.subcategory_id || '',
+    image_id: row?.image_id || '',
+    is_in_stock: row ? Boolean(row.is_in_stock) : true,
+  })
+  productDrawer.value = true
+}
+
+async function saveProduct() {
+  await run(async () => {
+    if (!productForm.name) throw new Error('商品名称不能为空')
+    const payload = { ...productForm }
+    if (!payload.original_price) payload.original_price = ''
+    if (productForm.id) {
+      await adminApi.updateProduct(productForm.id, payload)
+    } else {
+      await adminApi.createProduct(payload)
+    }
+    productDrawer.value = false
+    await loadProducts()
+    ElMessage.success('商品已保存')
+  })
+}
+
+async function toggleProduct(row) {
+  await run(async () => {
+    await adminApi.toggleProduct(row.id)
+    await loadProducts()
+    ElMessage.success(row.is_in_stock ? '商品已下架' : '商品已上架')
+  })
+}
+
+function openContent() {
+  if (contentKind.value === 'categories') openCategory()
+  else if (contentKind.value === 'subcategories') openSubcategory()
+  else openBanner()
+}
+
+function openCategory(row = null) {
+  Object.assign(categoryForm, {
+    id: row?.id || '',
+    name: row?.name || '',
+    sort_order: Number(row?.sort_order || 0),
+    icon_id: row?.icon_id || '',
+    banner_id: row?.banner_id || '',
+    is_enabled: row ? Boolean(row.is_enabled) : true,
+  })
+  contentDrawer.value = true
+}
+
+function openSubcategory(row = null) {
+  Object.assign(subcategoryForm, {
+    id: row?.id || '',
+    name: row?.name || '',
+    category_id: row?.category_id || categories.value[0]?.id || '',
+    sort_order: Number(row?.sort_order || 0),
+    icon_id: row?.icon_id || '',
+    is_enabled: row ? Boolean(row.is_enabled) : true,
+  })
+  contentDrawer.value = true
+}
+
+function openBanner(row = null) {
+  Object.assign(bannerForm, {
+    id: row?.id || '',
+    tag: row?.tag || '',
+    title: row?.title || '',
+    action_title: row?.action_title || '',
+    link: row?.link || 'category.html',
+    landing_badge: row?.landing_badge || '',
+    landing_subtitle: row?.landing_subtitle || '',
+    landing_description: row?.landing_description || '',
+    gradient_type: Number(row?.gradient_type || 0),
+    sort_order: Number(row?.sort_order || 0),
+    image_id: row?.image_id || '',
+    product_ids: row?.product_ids || [],
+    is_enabled: row ? Boolean(row.is_enabled) : true,
+  })
+  contentDrawer.value = true
+}
+
+async function saveContent() {
+  await run(async () => {
+    if (contentKind.value === 'categories') {
+      if (!categoryForm.name) throw new Error('分类名称不能为空')
+      categoryForm.id ? await adminApi.updateCategory(categoryForm.id, categoryForm) : await adminApi.createCategory(categoryForm)
+    } else if (contentKind.value === 'subcategories') {
+      if (!subcategoryForm.name || !subcategoryForm.category_id) throw new Error('子分类名称和所属分类不能为空')
+      subcategoryForm.id ? await adminApi.updateSubcategory(subcategoryForm.id, subcategoryForm) : await adminApi.createSubcategory(subcategoryForm)
+    } else {
+      bannerForm.id ? await adminApi.updateBanner(bannerForm.id, bannerForm) : await adminApi.createBanner(bannerForm)
+    }
+    contentDrawer.value = false
+    await loadContent()
+    ElMessage.success('内容已保存')
+  })
+}
+
+async function markPaid(row) {
+  await run(async () => {
+    await adminApi.markPaid(row.id)
+    await loadOrders()
+    ElMessage.success('订单已标记支付')
+  })
+}
+
+function openShip(row) {
+  editingOrderId.value = row.id
+  orderAction.value = 'ship'
+  Object.assign(orderForm, { carrier: row.carrier || '顺丰速运', tracking_number: row.tracking_number || '' })
+  orderDrawer.value = true
+}
+
+function openOrderStatus(row) {
+  editingOrderId.value = row.id
+  orderAction.value = 'status'
+  Object.assign(orderForm, { status: row.status })
+  orderDrawer.value = true
+}
+
+function openAfterSale(row) {
+  editingOrderId.value = row.id
+  orderAction.value = 'afterSale'
+  Object.assign(orderForm, {
+    after_sale_status: row.after_sale_status || 'none',
+    after_sale_reason: row.after_sale_reason || '',
+  })
+  orderDrawer.value = true
+}
+
+async function saveOrderAction() {
+  await run(async () => {
+    if (orderAction.value === 'ship') await adminApi.shipOrder(editingOrderId.value, orderForm)
+    else if (orderAction.value === 'status') await adminApi.setOrderStatus(editingOrderId.value, orderForm)
+    else await adminApi.updateAfterSale(editingOrderId.value, orderForm)
+    orderDrawer.value = false
+    await loadOrders()
+    ElMessage.success('订单已更新')
+  })
+}
+
+function openUser(row) {
+  Object.assign(userForm, {
+    id: row.id,
+    email: row.email || '',
+    phone: row.phone || '',
+    vip_level: row.vip_level || 'none',
+    points: Number(row.points || 0),
+    is_active: Boolean(row.is_active),
+  })
+  userDrawer.value = true
+}
+
+async function saveUser() {
+  await run(async () => {
+    await adminApi.updateUser(userForm.id, userForm)
+    userDrawer.value = false
+    await loadUsers()
+    ElMessage.success('用户已保存')
+  })
+}
+
+function openCoupon(row = null) {
+  Object.assign(couponForm, {
+    id: row?.id || '',
+    username: row?.username || '',
+    name: row?.name || '专属优惠券',
+    value: Number(row?.value || 20),
+    threshold: row?.threshold || '满100可用',
+    time: row?.time || '2026-12-31',
+    status: row?.status || 'available',
+    description: row?.description || '',
+  })
+  couponDrawer.value = true
+}
+
+async function saveCoupon() {
+  await run(async () => {
+    if (!couponForm.id && !couponForm.username) throw new Error('请输入发券用户名')
+    couponForm.id ? await adminApi.updateCoupon(couponForm.id, couponForm) : await adminApi.createCoupon(couponForm)
+    couponDrawer.value = false
+    await loadCoupons()
+    ElMessage.success(couponForm.id ? '优惠券已保存' : '优惠券已发放')
+  })
+}
+
+async function saveShop() {
+  await run(async () => {
+    await adminApi.saveShop(shopForm)
+    ElMessage.success('店铺资料已保存')
+  })
+}
+
+function money(value) {
+  const number = Number(value || 0)
+  return `¥${Number.isFinite(number) ? number.toFixed(2) : '0.00'}`
+}
+
+function statusText(status) {
+  return {
+    pending: '待付款',
+    paid: '待发货',
+    shipped: '待收货',
+    completed: '已完成',
+    cancelled: '已取消',
+    none: '未申请',
+    requested: '已申请',
+    processing: '处理中',
+    refunded: '已退款',
+    rejected: '已拒绝',
+    available: '可用',
+    used: '已使用',
+    expired: '已失效',
+  }[status] || status || '-'
+}
+
+function statusType(status) {
+  return {
+    pending: 'warning',
+    paid: 'success',
+    shipped: 'primary',
+    completed: 'info',
+    cancelled: 'danger',
+  }[status] || 'info'
+}
+
+function couponType(status) {
+  return {
+    available: 'success',
+    used: 'info',
+    expired: 'danger',
+  }[status] || 'info'
+}
+</script>
