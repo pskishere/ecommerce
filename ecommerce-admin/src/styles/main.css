@@ -434,6 +434,103 @@ select {
   white-space: nowrap;
 }
 
+.dashboard-brief {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(480px, 1.28fr);
+  align-items: stretch;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, #171a22 0%, #202433 58%, #263d74 100%);
+  color: #fff;
+  overflow: hidden;
+}
+
+.dashboard-copy {
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  padding-left: 16px;
+  border-left: 4px solid var(--admin-accent);
+}
+
+.dashboard-copy .eyebrow {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.dashboard-copy h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.dashboard-copy span {
+  display: block;
+  max-width: 360px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.brief-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.brief-action {
+  appearance: none;
+  min-width: 0;
+  min-height: 96px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.brief-action:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.brief-action:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.22);
+  outline-offset: 2px;
+}
+
+.brief-action span,
+.brief-action em {
+  display: block;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brief-action strong {
+  display: block;
+  overflow: hidden;
+  margin: 8px 0 6px;
+  color: #fff;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -453,9 +550,24 @@ select {
 }
 
 .metric-card .el-card__body {
-  min-height: 126px;
+  min-height: 138px;
   display: grid;
   align-content: space-between;
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.metric-top .el-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
 
 .metric-card span {
@@ -481,6 +593,36 @@ select {
   font-size: 12px;
   font-style: normal;
   font-weight: 800;
+}
+
+.metric-card.tone-revenue .metric-top .el-icon,
+.todo-card.tone-primary {
+  background: var(--admin-brand-soft);
+  color: var(--admin-brand-dark);
+}
+
+.metric-card.tone-orders .metric-top .el-icon,
+.todo-card.tone-warning {
+  background: #fff7e6;
+  color: #8a570a;
+}
+
+.metric-card.tone-goods .metric-top .el-icon {
+  background: #e7f8ef;
+  color: #0f7a49;
+}
+
+.metric-card.tone-users .metric-top .el-icon {
+  background: var(--admin-accent-soft);
+  color: #bf3e24;
+}
+
+.todo-card.tone-danger {
+  background: #fff0ef;
+}
+
+.todo-card.tone-danger strong {
+  color: var(--admin-danger);
 }
 
 .dashboard-grid {
@@ -985,10 +1127,6 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -1133,7 +1271,15 @@ select {
     padding: 18px;
   }
 
+  .dashboard-brief {
+    grid-template-columns: 1fr;
+  }
+
   .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brief-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1237,6 +1383,14 @@ select {
     padding: 12px;
   }
 
+  .dashboard-brief {
+    padding: 14px;
+  }
+
+  .dashboard-copy h3 {
+    font-size: 22px;
+  }
+
   .module-copy h3 {
     font-size: 18px;
   }
@@ -1258,6 +1412,14 @@ select {
 @media (max-width: 520px) {
   .admin-main {
     padding: 14px;
+  }
+
+  .brief-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .brief-action {
+    min-height: 82px;
   }
 
   .admin-header {

@@ -121,9 +121,27 @@
 
       <el-main class="admin-main" v-loading="loading">
         <section v-show="activeView === 'dashboard'" class="view-stack">
+          <div class="dashboard-brief">
+            <div class="dashboard-copy">
+              <p class="eyebrow">经营中台</p>
+              <h3>今日重点</h3>
+              <span>先处理待发货、售后和低库存，再维护首页内容。</span>
+            </div>
+            <div class="brief-actions">
+              <button v-for="item in dashboardQuickActions" :key="item.label" class="brief-action" type="button" @click="item.action">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
+
           <div class="metric-grid">
-            <el-card v-for="metric in metrics" :key="metric.label" shadow="never" class="metric-card">
-              <span>{{ metric.label }}</span>
+            <el-card v-for="metric in metrics" :key="metric.label" shadow="never" class="metric-card" :class="`tone-${metric.tone}`">
+              <div class="metric-top">
+                <span>{{ metric.label }}</span>
+                <el-icon><component :is="metric.icon" /></el-icon>
+              </div>
               <strong>{{ metric.value }}</strong>
               <em>{{ metric.tag }}</em>
             </el-card>
@@ -148,7 +166,7 @@
                 </div>
               </template>
               <div class="todo-grid">
-                <button v-for="item in todoCards" :key="item.label" class="todo-card" type="button" @click="item.action">
+                <button v-for="item in todoCards" :key="item.label" class="todo-card" :class="`tone-${item.tone}`" type="button" @click="item.action">
                   <span>{{ item.label }}</span>
                   <strong>{{ item.value }}</strong>
                   <em>{{ item.hint }}</em>
@@ -1024,16 +1042,22 @@ const orderDrawerTitle = computed(() => ({
   afterSale: '售后处理',
 }[orderAction.value] || '订单处理'))
 const metrics = computed(() => [
-  { label: '营业额', value: money(dashboard.metrics.revenue), tag: 'GMV' },
-  { label: '订单数', value: dashboard.metrics.orders || 0, tag: `${dashboard.metrics.paid_orders || 0} 待发货` },
-  { label: '上架商品', value: dashboard.metrics.active_products || 0, tag: `${dashboard.metrics.products || 0} 总商品` },
-  { label: '会员用户', value: dashboard.metrics.users || 0, tag: `${dashboard.metrics.coupons || 0} 张券` },
+  { label: '营业额', value: money(dashboard.metrics.revenue), tag: 'GMV', icon: DataBoard, tone: 'revenue' },
+  { label: '订单数', value: formatNumber(dashboard.metrics.orders || 0), tag: `${dashboard.metrics.paid_orders || 0} 待发货`, icon: Tickets, tone: 'orders' },
+  { label: '上架商品', value: formatNumber(dashboard.metrics.active_products || 0), tag: `${dashboard.metrics.products || 0} 总商品`, icon: Goods, tone: 'goods' },
+  { label: '会员用户', value: formatNumber(dashboard.metrics.users || 0), tag: `${dashboard.metrics.coupons || 0} 张券`, icon: User, tone: 'users' },
+])
+const dashboardQuickActions = computed(() => [
+  { label: '待发货', value: formatNumber(dashboard.metrics.paid_orders || 0), hint: '进入履约队列', action: () => openOrderQueue('paid') },
+  { label: '售后', value: formatNumber(dashboard.metrics.after_sale_orders || 0), hint: '处理退款/拒绝', action: () => openOrderQueue('after_sale') },
+  { label: '低库存', value: formatNumber(dashboard.metrics.low_stock_products || 0), hint: '补库存', action: openInventoryRisk },
+  { label: '内容项', value: formatNumber((dashboard.contentHealth.enabled_banners || 0) + (dashboard.contentHealth.enabled_home_sections || 0)), hint: '维护首页展示', action: () => openContentHealth('banners') },
 ])
 const todoCards = computed(() => [
-  { label: '待付款订单', value: dashboard.metrics.pending_orders || 0, hint: '催付或取消', action: () => openOrderQueue('pending') },
-  { label: '待发货订单', value: dashboard.metrics.paid_orders || 0, hint: '尽快履约', action: () => openOrderQueue('paid') },
-  { label: '售后处理', value: dashboard.metrics.after_sale_orders || 0, hint: '退款/拒绝', action: () => openOrderQueue('after_sale') },
-  { label: '低库存商品', value: dashboard.metrics.low_stock_products || 0, hint: '补库存', action: openInventoryRisk },
+  { label: '待付款订单', value: formatNumber(dashboard.metrics.pending_orders || 0), hint: '催付或取消', tone: 'neutral', action: () => openOrderQueue('pending') },
+  { label: '待发货订单', value: formatNumber(dashboard.metrics.paid_orders || 0), hint: '尽快履约', tone: 'primary', action: () => openOrderQueue('paid') },
+  { label: '售后处理', value: formatNumber(dashboard.metrics.after_sale_orders || 0), hint: '退款/拒绝', tone: 'warning', action: () => openOrderQueue('after_sale') },
+  { label: '低库存商品', value: formatNumber(dashboard.metrics.low_stock_products || 0), hint: '补库存', tone: 'danger', action: openInventoryRisk },
 ])
 const contentHealthCards = computed(() => [
   { label: '启用 Banner', value: dashboard.contentHealth.enabled_banners || 0, action: () => openContentHealth('banners') },
@@ -1327,7 +1351,7 @@ function renderOrderChart() {
     value: dashboard.orderStatus[item.value] || 0,
   }))
   orderChart.setOption({
-    color: ['#0F7B68', '#2F8F46', '#C99A2E', '#37463F', '#C2413A'],
+    color: ['#2563EB', '#16975B', '#C98212', '#69717F', '#D43D35'],
     tooltip: { trigger: 'item' },
     legend: { bottom: 0, icon: 'circle', itemWidth: compact ? 8 : 10, itemHeight: compact ? 8 : 10 },
     series: [{
@@ -1349,7 +1373,7 @@ function renderSalesChart() {
   const compact = salesChartRef.value.clientWidth < 520
   const rows = dashboard.salesTrend || []
   salesChart.setOption({
-    color: ['#0F7B68', '#D96C4B'],
+    color: ['#2563EB', '#FF6B4A'],
     tooltip: { trigger: 'axis' },
     grid: { left: compact ? 34 : 44, right: compact ? 8 : 18, top: compact ? 34 : 28, bottom: 34 },
     legend: { top: 0, right: compact ? 0 : 4, itemWidth: compact ? 12 : 18 },
@@ -1357,12 +1381,12 @@ function renderSalesChart() {
       type: 'category',
       boundaryGap: false,
       data: rows.map(item => item.label),
-      axisLine: { lineStyle: { color: '#DFE7DD' } },
+      axisLine: { lineStyle: { color: '#E1E6EF' } },
       axisTick: { show: false },
       axisLabel: { interval: compact ? 1 : 0 },
     },
     yAxis: [
-      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#E8EFE6' } } },
+      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#EDF0F5' } } },
       { type: 'value', name: '订单', splitLine: { show: false } },
     ],
     series: [
@@ -1370,7 +1394,7 @@ function renderSalesChart() {
         name: 'GMV',
         type: 'line',
         smooth: true,
-        areaStyle: { opacity: 0.08 },
+        areaStyle: { color: 'rgba(37, 99, 235, 0.08)' },
         data: rows.map(item => Number(item.revenue || 0)),
       },
       {
