@@ -65,16 +65,16 @@
 }
 
 .order-store svg {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .order-status {
   font-size: 13px;
   font-weight: 500;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
-.order-status.pending { color: #FF6B4A; }
+.order-status.pending { color: #0F766E; }
 .order-status.shipped { color: #007AFF; }
 .order-status.completed { color: #34C759; }
 .order-status.cancelled { color: #999999; }
@@ -199,7 +199,7 @@
 }
 
 .order-btn-primary {
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
 }
 
@@ -228,7 +228,7 @@
 
 .order-empty-btn {
   padding: 10px 32px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   border: none;
   border-radius: 20px;

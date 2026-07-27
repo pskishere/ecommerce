@@ -19,13 +19,13 @@ const state = {
 }
 
 const viewMeta = {
-  dashboard: ['Dashboard', '概览'],
-  products: ['Merchandise', '商品管理'],
-  orders: ['Fulfillment', '订单履约'],
-  users: ['Members', '用户管理'],
-  content: ['Storefront', '内容管理'],
-  coupons: ['Benefits', '优惠券'],
-  shop: ['Shop profile', '店铺设置'],
+  dashboard: ['后台 / 概览', '概览'],
+  products: ['后台 / 商品', '商品管理'],
+  orders: ['后台 / 订单', '订单履约'],
+  users: ['后台 / 会员', '用户管理'],
+  content: ['后台 / 内容', '内容管理'],
+  coupons: ['后台 / 权益', '优惠券'],
+  shop: ['后台 / 店铺', '店铺设置'],
 }
 
 const $ = (selector, ctx = document) => ctx.querySelector(selector)

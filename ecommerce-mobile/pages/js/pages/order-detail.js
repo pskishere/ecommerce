@@ -109,13 +109,13 @@ function renderOrderDetail(order) {
         <div class="info-row"><span class="info-label">商品总价</span><span class="info-value">¥${order.total}</span></div>
         <div class="info-row"><span class="info-label">运费</span><span class="info-value">${order.freight === 0 ? '免运费' : '¥' + order.freight}</span></div>
         ${order.discount ? `<div class="info-row"><span class="info-label">优惠</span><span class="info-value">-¥${order.discount}</span></div>` : ''}
-        <div class="info-row"><span class="info-label">订单编号</span><span class="info-value">${order.id} <span style="color:#FF6B4A;margin-left:8px" onclick="copyOrderId()">复制</span></span></div>
+        <div class="info-row"><span class="info-label">订单编号</span><span class="info-value">${order.id} <span style="color:#0F766E;margin-left:8px" onclick="copyOrderId()">复制</span></span></div>
         ${order.createTime ? `<div class="info-row"><span class="info-label">下单时间</span><span class="info-value">${order.createTime}</span></div>` : ''}
         ${order.payTime ? `<div class="info-row"><span class="info-label">支付时间</span><span class="info-value">${order.payTime}</span></div>` : ''}
         ${order.shippedTime ? `<div class="info-row"><span class="info-label">发货时间</span><span class="info-value">${order.shippedTime}</span></div>` : ''}
         ${order.carrier ? `<div class="info-row"><span class="info-label">物流公司</span><span class="info-value">${order.carrier}</span></div>` : ''}
         ${order.trackingNumber ? `<div class="info-row"><span class="info-label">物流单号</span><span class="info-value">${order.trackingNumber}</span></div>` : ''}
-        <div class="info-row" style="border-bottom:none"><span class="info-label">实付金额</span><span class="info-value" style="color:#FF6B4A;font-weight:700;font-size:16px">¥${order.payment}</span></div>
+        <div class="info-row" style="border-bottom:none"><span class="info-label">实付金额</span><span class="info-value" style="color:#0F766E;font-weight:700;font-size:16px">¥${order.payment}</span></div>
       </div>
     </div>
 

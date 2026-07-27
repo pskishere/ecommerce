@@ -23,10 +23,10 @@ enum DesignSystem {
 
     // MARK: Colors
     enum Colors {
-        static let accent = Color(hex: "FF6B4A")
-        static let accentDark = Color(hex: "E85A3A")
-        static let accentLight = Color(hex: "FF8A6A")
-        static let accentSoft = Color(hex: "FFF0ED")
+        static let accent = Color(hex: "0F766E")
+        static let accentDark = Color(hex: "0B5F59")
+        static let accentLight = Color(hex: "45A69B")
+        static let accentSoft = Color(hex: "E8F3F0")
         static let dark = Color(hex: "1A1A1A")
         static let dark2 = Color(hex: "2D2D2D")
         static let gray1 = Color(hex: "666666")
@@ -34,11 +34,11 @@ enum DesignSystem {
         static let gray3 = Color(hex: "CCCCCC")
         static let gray4 = Color(hex: "E5E5E5")
         static let light = Color(hex: "F8F8F8")
-        static let pageBackground = Color(hex: "F5F5F5")
+        static let pageBackground = Color(hex: "F5F6F2")
         static let surface = Color.white
         static let background = Color.white
-        static let secondaryBackground = Color(hex: "F8F8F8")
-        static let tertiaryBackground = Color(hex: "F2F2F2")
+        static let secondaryBackground = Color(hex: "F8F9F5")
+        static let tertiaryBackground = Color(hex: "EFF2EE")
         static let text = Color(hex: "1A1A1A")
         static let secondaryText = Color(hex: "666666")
         static let tertiaryText = Color(hex: "999999")

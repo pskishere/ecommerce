@@ -144,7 +144,7 @@ body {
   align-items: center;
   height: 28px;
   padding: 0 10px;
-  background: #FFF0ED;
+  background: #E8F3F0;
   color: #F15C40;
   border-radius: 14px;
   font-size: 12px;
@@ -233,7 +233,7 @@ body {
 }
 
 .campaign-product-price {
-  color: #FF6B4A;
+  color: #0F766E;
   font-size: 16px;
   font-weight: 900;
 }
@@ -263,8 +263,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFF0ED;
-  color: #FF6B4A;
+  background: #E8F3F0;
+  color: #0F766E;
   margin-bottom: 14px;
 }
 
@@ -287,7 +287,7 @@ body {
   padding: 0 22px;
   border: 0;
   border-radius: 21px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: #FFFFFF;
   font-size: 14px;
   font-weight: 800;

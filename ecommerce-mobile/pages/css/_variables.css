@@ -3,9 +3,9 @@
    ============================================================ */
 
 :root {
-  --accent: #FF6B4A;
-  --accent-dark: #E85A3A;
-  --accent-light: #FF8A6A;
+  --accent: #0F766E;
+  --accent-dark: #0B5F59;
+  --accent-light: #45A69B;
   --dark: #1A1A1A;
   --dark-2: #2D2D2D;
   --gray-1: #666666;
@@ -25,5 +25,5 @@
   --nav-height: 56px;
   --tab-height: 64px;
   --easing-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-  --easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-bounce: cubic-bezier(0.16, 1, 0.3, 1);
 }

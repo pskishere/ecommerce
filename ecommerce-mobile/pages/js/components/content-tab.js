@@ -6,9 +6,9 @@
  * @param {Array<{value: string, label: string}>} tabs - Tab options
  * @param {string} defaultTab - Initially selected tab value
  * @param {Function} onChange - Called with (tabValue) when tab changes
- * @param {string} [accentColor='#FF6B4A']
+ * @param {string} [accentColor='#0F766E']
  */
-export function createContentTab({ id, tabs, defaultTab, onChange, accentColor = '#FF6B4A' }) {
+export function createContentTab({ id, tabs, defaultTab, onChange, accentColor = '#0F766E' }) {
   const container = document.getElementById(id)
   if (!container) return
 

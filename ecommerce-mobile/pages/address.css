@@ -55,7 +55,7 @@
   position: absolute;
   top: 0;
   right: 12px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 10px;
   font-weight: 600;
@@ -109,7 +109,7 @@
 }
 
 .address-default-btn.active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .address-default-btn svg {
@@ -139,7 +139,7 @@
 
 .address-edit-btn:active,
 .address-del-btn:active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .address-edit-btn svg,
@@ -176,7 +176,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -206,7 +206,7 @@
 
 .address-bar-btn {
   width: 100%;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   border: none;
   border-radius: 24px;

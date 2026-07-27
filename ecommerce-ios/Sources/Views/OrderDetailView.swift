@@ -113,7 +113,7 @@ struct OrderDetailView: View {
 
     private var statusIconBackground: Color {
         switch order.status {
-        case .pending: return Color(hex: "FFF0ED")
+        case .pending: return Color(hex: "E8F3F0")
         case .paid: return Color(hex: "E8F0FE")
         case .shipped: return Color(hex: "E8F5E9")
         case .completed: return Color(hex: "E8F5E9")

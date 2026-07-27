@@ -85,7 +85,7 @@ struct CouponCard: View {
     @Environment(\.dismiss) private var dismiss
     let coupon: Coupon
 
-    private let gradientColors = [Color(hex: "FF6B4A"), Color(hex: "FF8E6B")]
+    private let gradientColors = [Color(hex: "0F766E"), Color(hex: "45A69B")]
 
     var body: some View {
         HStack(spacing: 0) {

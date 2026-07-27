@@ -7,7 +7,7 @@
 /* User Header */
 .user-header {
   position: relative;
-  background: linear-gradient(160deg, #FF6B4A 0%, #FF8A6A 60%, #FFAA88 100%);
+  background: linear-gradient(160deg, #0F766E 0%, #45A69B 60%, #A6D6CF 100%);
   padding: 48px 20px 24px;
   overflow: hidden;
 }
@@ -155,7 +155,7 @@
 .login-btn-small {
   padding: 8px 20px;
   background: white;
-  color: #FF6B4A;
+  color: #0F766E;
   font-size: 13px;
   font-weight: 700;
   border-radius: 20px;
@@ -306,7 +306,7 @@
   right: -4px;
   min-width: 16px;
   height: 16px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 10px;
   font-weight: 800;

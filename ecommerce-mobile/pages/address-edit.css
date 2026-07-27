@@ -163,7 +163,7 @@
 }
 
 .toggle-switch.active {
-  background: #FF6B4A;
+  background: #0F766E;
 }
 
 .toggle-switch::after {
@@ -197,7 +197,7 @@
 .edit-bar-btn {
   width: 100%;
   background: #FFE8E2;
-  color: #FF6B4A;
+  color: #0F766E;
   border: none;
   border-radius: 20px;
   padding: 10px;

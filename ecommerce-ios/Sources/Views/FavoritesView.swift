@@ -187,7 +187,7 @@ struct FavoriteCard: View {
             HStack {
                 Text(product.price.rmbText)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Color(hex: "FF6B4A"))
+                    .foregroundStyle(Color(hex: "0F766E"))
 
                 Spacer()
 

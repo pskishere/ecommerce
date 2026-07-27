@@ -7,7 +7,7 @@
 
 /* Shop Header */
 .shop-header {
-  background: linear-gradient(135deg, #FF6B4A 0%, #FF9A7A 100%);
+  background: linear-gradient(135deg, #0F766E 0%, #69BDB4 100%);
   padding: 24px 16px 20px;
   color: white;
 }
@@ -131,7 +131,7 @@
 
 .shop-action-btn.primary {
   background: white;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .shop-action-btn.secondary {
@@ -210,7 +210,7 @@
 .shop-product-price {
   font-size: 16px;
   font-weight: 800;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .shop-product-sales {
@@ -237,7 +237,7 @@
 }
 
 .shop-notice-title svg {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .shop-notice-item {

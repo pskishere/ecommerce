@@ -72,8 +72,8 @@
 .search-btn {
   font-size: 14px;
   font-weight: 600;
-  color: #FF6B4A;
-  background: #FFF0ED;
+  color: #0F766E;
+  background: #E8F3F0;
   border: none;
   border-radius: 8px;
   padding: 0 14px;
@@ -115,7 +115,7 @@
 }
 
 .hot-tag:active {
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   transform: scale(0.95);
 }
@@ -137,7 +137,7 @@
 }
 
 .history-item:active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .history-item svg {
@@ -151,7 +151,7 @@
 }
 
 .history-del:active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .clear-history {
@@ -163,7 +163,7 @@
 }
 
 .clear-history:active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .search-results {
@@ -214,7 +214,7 @@
 .result-price {
   font-size: 15px;
   font-weight: 800;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .no-results {

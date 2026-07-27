@@ -37,7 +37,7 @@
   justify-content: center;
   min-width: 16px;
   height: 16px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 10px;
   font-weight: 600;
@@ -81,7 +81,7 @@
   flex-shrink: 0;
 }
 
-.notif-icon.order { background: #FFF0ED; color: #FF6B4A; }
+.notif-icon.order { background: #E8F3F0; color: #0F766E; }
 .notif-icon.promo { background: #E8F5E9; color: #4CAF50; }
 .notif-icon.sys { background: #E3F2FD; color: #2196F3; }
 .notif-icon.logistics { background: #FFF8E1; color: #FF9800; }
@@ -119,7 +119,7 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #FF6B4A;
+  color: #0F766E;
   cursor: pointer;
 }
 

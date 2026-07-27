@@ -371,8 +371,8 @@ function updateFavBtn() {
   if (!btn) return
   const svg = btn.querySelector('svg')
   if (isFav) {
-    svg?.setAttribute('fill', '#FF6B4A')
-    svg?.setAttribute('stroke', '#FF6B4A')
+    svg?.setAttribute('fill', '#0F766E')
+    svg?.setAttribute('stroke', '#0F766E')
     btn.classList.add('active')
   } else {
     svg?.setAttribute('fill', 'none')

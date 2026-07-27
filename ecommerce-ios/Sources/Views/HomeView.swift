@@ -101,7 +101,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack {
                 HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
+                    Image(systemName: "clock")
                         .foregroundStyle(DesignSystem.Colors.accent)
                     Text("限时秒杀")
                         .font(.headline)
@@ -143,8 +143,8 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack {
                 HStack(spacing: 6) {
-                    Image(systemName: "flame.fill")
-                        .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.29))
+                    Image(systemName: "chart.bar.fill")
+                        .foregroundStyle(DesignSystem.Colors.accentDark)
                     Text("热销榜单")
                         .font(.headline)
                         .fontWeight(.bold)
@@ -159,7 +159,7 @@ struct HomeView: View {
                         Image(systemName: "chevron.right")
                             .font(.caption)
                     }
-                    .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.29))
+                    .foregroundStyle(DesignSystem.Colors.accentDark)
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.md)
@@ -190,8 +190,8 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack {
                 HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(Color(red: 0.18, green: 0.52, blue: 0.43))
+                    Image(systemName: "tag")
+                        .foregroundStyle(DesignSystem.Colors.accent)
                     Text("新品首发")
                         .font(.headline)
                         .fontWeight(.bold)
@@ -206,7 +206,7 @@ struct HomeView: View {
                         Image(systemName: "chevron.right")
                             .font(.caption)
                     }
-                    .foregroundStyle(Color(red: 0.18, green: 0.52, blue: 0.43))
+                    .foregroundStyle(DesignSystem.Colors.accent)
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.md)

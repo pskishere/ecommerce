@@ -762,7 +762,7 @@ struct CouponSelectionSheet: View {
 
                 ZStack {
                     LinearGradient(
-                        colors: [Color(hex: "FF6B4A"), Color(hex: "FF8E6B")],
+                        colors: [Color(hex: "0F766E"), Color(hex: "45A69B")],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )

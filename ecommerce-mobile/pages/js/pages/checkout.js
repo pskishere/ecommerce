@@ -161,7 +161,7 @@ function renderBody(items, subtotal, freight, finalTotal, store) {
       <div class="address-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
       ` : `
       <div class="address-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-      <div class="address-info"><div class="address-user"><span class="address-name" style="color:#FF6B4A">请添加收货地址</span></div></div>
+      <div class="address-info"><div class="address-user"><span class="address-name" style="color:#0F766E">请添加收货地址</span></div></div>
       <div class="address-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
       `}
     </div>

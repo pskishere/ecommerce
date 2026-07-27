@@ -93,7 +93,7 @@
 }
 
 .settings-toggle.active {
-  background: #FF6B4A;
+  background: #0F766E;
 }
 
 .settings-toggle::after {
@@ -125,7 +125,7 @@
   padding: 14px;
   text-align: center;
   font-size: 15px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-weight: 500;
   cursor: pointer;
 }

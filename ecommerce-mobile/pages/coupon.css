@@ -51,7 +51,7 @@
 .coupon-left {
   width: 110px;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #FF6B4A 0%, #FF8E6B 100%);
+  background: linear-gradient(135deg, #0F766E 0%, #45A69B 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -127,7 +127,7 @@
 .coupon-use-btn {
   align-self: flex-end;
   padding: 5px 16px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   border: none;
   border-radius: 14px;

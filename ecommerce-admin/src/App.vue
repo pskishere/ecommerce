@@ -4,9 +4,9 @@
       <div class="brand-block">
         <div class="brand-mark">潮</div>
         <div>
-          <p class="eyebrow">Trend commerce control</p>
+          <p class="eyebrow">管理后台</p>
           <h1>潮流好物后台</h1>
-          <p>用成熟后台组件重构，商品、订单、用户、首页内容统一运营。</p>
+          <p>商品、订单、内容和会员在这里处理。</p>
         </div>
       </div>
 
@@ -34,7 +34,7 @@
         <div class="brand-mark">潮</div>
         <div class="brand-copy">
           <strong>潮流好物</strong>
-          <span>Admin console</span>
+          <span>管理台</span>
         </div>
         <el-button
           class="aside-collapse-button"
@@ -260,9 +260,8 @@
         <section v-show="activeView === 'products'" class="view-stack">
           <div class="module-hero">
             <div class="module-copy">
-              <p class="eyebrow">Catalog Control</p>
-              <h3>商品运营台</h3>
-              <span>集中处理商品上下架、库存风险、分类归属和 SKU 维护。</span>
+              <h3>商品库</h3>
+              <span>上下架、库存和规格维护</span>
             </div>
             <div class="module-stats">
               <button v-for="item in productSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
@@ -342,9 +341,8 @@
         <section v-show="activeView === 'orders'" class="view-stack">
           <div class="module-hero">
             <div class="module-copy">
-              <p class="eyebrow">Fulfillment Queue</p>
-              <h3>订单处理台</h3>
-              <span>把待付款、待发货、售后和订单状态处理放在同一条队列里。</span>
+              <h3>履约队列</h3>
+              <span>付款、发货和售后按状态处理</span>
             </div>
             <div class="module-stats">
               <button v-for="item in orderSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
@@ -404,9 +402,8 @@
         <section v-show="activeView === 'users'" class="view-stack">
           <div class="module-hero">
             <div class="module-copy">
-              <p class="eyebrow">Member Operations</p>
-              <h3>会员运营台</h3>
-              <span>查看用户活跃状态、会员等级、积分和消费贡献。</span>
+              <h3>会员列表</h3>
+              <span>账号状态、会员等级、积分和消费</span>
             </div>
             <div class="module-stats">
               <button v-for="item in userSummaryCards" :key="item.label" class="module-stat" type="button" disabled>
@@ -447,9 +444,8 @@
         <section v-show="activeView === 'content'" class="view-stack">
           <div class="module-hero">
             <div class="module-copy">
-              <p class="eyebrow">Storefront Publishing</p>
-              <h3>首页内容台</h3>
-              <span>维护分类、Banner、首页栏目、促销位和素材库，保持前台内容一致。</span>
+              <h3>前台内容</h3>
+              <span>分类、Banner、栏目和素材统一维护</span>
             </div>
             <div class="module-stats">
               <button v-for="item in contentSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
@@ -585,9 +581,8 @@
         <section v-show="activeView === 'coupons'" class="view-stack">
           <div class="module-hero">
             <div class="module-copy">
-              <p class="eyebrow">Benefits</p>
-              <h3>优惠券运营台</h3>
-              <span>管理发券、核销状态、用户权益和有效期。</span>
+              <h3>优惠券</h3>
+              <span>发放、核销和有效期</span>
             </div>
             <div class="module-stats">
               <button v-for="item in couponSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
@@ -624,9 +619,8 @@
         <section v-show="activeView === 'shop'" class="view-stack">
           <div class="module-hero">
             <div class="module-copy">
-              <p class="eyebrow">Shop Profile</p>
-              <h3>店铺资料台</h3>
-              <span>控制前台店铺展示信息，避免评分、粉丝和销售展示脱节。</span>
+              <h3>店铺资料</h3>
+              <span>前台展示信息</span>
             </div>
             <div class="module-stats">
               <button v-for="item in shopSummaryCards" :key="item.label" class="module-stat" type="button" disabled>
@@ -667,7 +661,7 @@
     <template #header>
       <div class="command-header">
         <div>
-          <p class="eyebrow">Command</p>
+          <p class="eyebrow">快捷操作</p>
           <h3>快速跳转和常用操作</h3>
         </div>
         <kbd>{{ commandShortcutLabel }}</kbd>
@@ -1040,13 +1034,13 @@ const selectedProducts = ref([])
 const orderDetail = ref(null)
 
 const viewMeta = {
-  dashboard: { kicker: 'Dashboard', title: '经营概览' },
-  products: { kicker: 'Merchandise', title: '商品管理' },
-  orders: { kicker: 'Fulfillment', title: '订单履约' },
-  users: { kicker: 'Members', title: '用户会员' },
-  content: { kicker: 'Storefront', title: '首页内容' },
-  coupons: { kicker: 'Benefits', title: '优惠券' },
-  shop: { kicker: 'Shop profile', title: '店铺设置' },
+  dashboard: { kicker: '后台 / 概览', title: '经营概览' },
+  products: { kicker: '后台 / 商品', title: '商品管理' },
+  orders: { kicker: '后台 / 订单', title: '订单履约' },
+  users: { kicker: '后台 / 会员', title: '用户会员' },
+  content: { kicker: '后台 / 内容', title: '首页内容' },
+  coupons: { kicker: '后台 / 权益', title: '优惠券' },
+  shop: { kicker: '后台 / 店铺', title: '店铺设置' },
 }
 
 const navItems = [

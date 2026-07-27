@@ -34,14 +34,14 @@
 .cart-edit-btn {
   font-size: 14px;
   font-weight: 600;
-  color: #FF6B4A;
+  color: #0F766E;
   padding: 6px 12px;
   border-radius: 8px;
   transition: background 0.15s;
 }
 
 .cart-edit-btn:active {
-  background: #FFF0ED;
+  background: #E8F3F0;
 }
 
 /* ── Cart Content ── */
@@ -78,8 +78,8 @@
 }
 
 .store-check.checked {
-  background: #FF6B4A;
-  border-color: #FF6B4A;
+  background: #0F766E;
+  border-color: #0F766E;
 }
 
 .store-check.checked::after {
@@ -99,7 +99,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .store-name {
@@ -111,7 +111,7 @@
 
 .store-tag {
   font-size: 11px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-weight: 600;
 }
 
@@ -177,8 +177,8 @@
 }
 
 .product-check.checked {
-  background: #FF6B4A;
-  border-color: #FF6B4A;
+  background: #0F766E;
+  border-color: #0F766E;
 }
 
 .product-check.checked::after {
@@ -246,7 +246,7 @@
 .product-price {
   font-size: 17px;
   font-weight: 900;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .product-qty {
@@ -315,7 +315,7 @@
 
 .empty-btn {
   padding: 12px 36px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 15px;
   font-weight: 700;
@@ -366,8 +366,8 @@
 }
 
 .bar-check.checked {
-  background: #FF6B4A;
-  border-color: #FF6B4A;
+  background: #0F766E;
+  border-color: #0F766E;
 }
 
 .bar-check.checked::after {
@@ -397,7 +397,7 @@
 .total-price {
   font-size: 18px;
   font-weight: 900;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .total-disount {
@@ -408,7 +408,7 @@
 .checkout-btn {
   height: 44px;
   padding: 0 24px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 15px;
   font-weight: 800;
@@ -420,7 +420,7 @@
 
 .checkout-btn:active {
   transform: scale(0.96);
-  background: #E85A3A;
+  background: #0B5F59;
 }
 
 .checkout-btn:disabled {
@@ -437,18 +437,18 @@
   height: 44px;
   padding: 0 24px;
   background: white;
-  color: #FF6B4A;
+  color: #0F766E;
   font-size: 15px;
   font-weight: 700;
   border-radius: 22px;
-  border: 1.5px solid #FF6B4A;
+  border: 1.5px solid #0F766E;
   transition: transform 0.15s, background 0.15s;
   flex-shrink: 0;
 }
 
 .delete-btn:active {
   transform: scale(0.96);
-  background: #FFF0ED;
+  background: #E8F3F0;
 }
 
 /* ── Toast (cart-specific bottom position) ── */
@@ -589,5 +589,5 @@
 .recommend-price {
   font-size: 15px;
   font-weight: 900;
-  color: #FF6B4A;
+  color: #0F766E;
 }

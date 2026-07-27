@@ -282,7 +282,7 @@ struct SearchView: View {
     private var hotTagsSection: some View {
         SearchSectionCard {
             SearchSectionHeader(
-                icon: "flame.fill",
+                icon: "line.3.horizontal.decrease.circle",
                 title: "热门搜索",
                 subtitle: isLoadingHotTags ? "正在读取商城热度" : "来自分类和热销商品"
             )
@@ -372,7 +372,7 @@ struct SearchView: View {
                     selectTerm("新品")
                 }) {
                     SearchInspirationCard(
-                        icon: "sparkles",
+                        icon: "tag",
                         title: "看新品",
                         subtitle: "上新好物"
                     )

@@ -74,7 +74,7 @@
   flex-shrink: 0;
 }
 
-.status-icon.pending { background: #FFF0ED; color: #FF6B4A; }
+.status-icon.pending { background: #E8F3F0; color: #0F766E; }
 .status-icon.paid { background: #E8F0FE; color: #007AFF; }
 .status-icon.shipped { background: #E8F5E9; color: #34C759; }
 .status-icon.completed { background: #E8F5E9; color: #34C759; }
@@ -108,7 +108,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   display: flex;
   align-items: center;
@@ -150,7 +150,7 @@
 .store-icon {
   width: 20px;
   height: 20px;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .store-name {
@@ -291,7 +291,7 @@
 }
 
 .detail-btn-primary {
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
 }
 
@@ -368,7 +368,7 @@
 }
 
 .logistics-dot.active {
-  background: #FF6B4A;
+  background: #0F766E;
 }
 
 .logistics-content {

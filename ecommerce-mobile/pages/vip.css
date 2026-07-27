@@ -40,7 +40,7 @@
 .vip-banner {
   background: linear-gradient(135deg, #FFF8F0 0%, #FFF0E8 100%);
   padding: 20px 16px;
-  border-bottom: 1px solid rgba(255,107,74,0.1);
+  border-bottom: 1px solid rgba(15, 118, 110,0.1);
 }
 
 .vip-user {
@@ -117,7 +117,7 @@
 .vip-points-num {
   font-size: 18px;
   font-weight: 700;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .vip-points-text {
@@ -161,12 +161,12 @@
   width: 36px;
   height: 36px;
   margin: 0 auto 6px;
-  background: #FFF0ED;
+  background: #E8F3F0;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .benefit-name {
@@ -196,12 +196,12 @@
 .privilege-icon {
   width: 32px;
   height: 32px;
-  background: #FFF0ED;
+  background: #E8F3F0;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF6B4A;
+  color: #0F766E;
   flex-shrink: 0;
 }
 
@@ -223,7 +223,7 @@
 
 .privilege-value {
   font-size: 12px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-weight: 500;
 }
 
@@ -257,12 +257,12 @@
 .history-icon {
   width: 32px;
   height: 32px;
-  background: #FFF0ED;
+  background: #E8F3F0;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF6B4A;
+  color: #0F766E;
   flex-shrink: 0;
 }
 
@@ -284,7 +284,7 @@
 
 .history-points {
   font-size: 14px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-weight: 600;
 }
 

@@ -10,7 +10,7 @@
   <style>
     .login-page {
       min-height: 100dvh;
-      background: linear-gradient(180deg, #EEF5F0 0%, #F8FAF6 48%, #FFF4EF 100%);
+      background: #F5F6F2;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -29,19 +29,19 @@
       width: 58px;
       height: 58px;
       background: white;
-      border-radius: 18px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 14px 34px rgba(49, 60, 54, 0.12);
+      box-shadow: 0 10px 26px rgba(49, 60, 54, 0.10);
       border: 1px solid rgba(31, 36, 34, 0.06);
     }
 
     .login-logo svg {
       width: 30px;
       height: 30px;
-      color: #FF6B4A;
+      color: #0F766E;
     }
 
     .login-title {
@@ -61,11 +61,9 @@
     .login-form {
       background: rgba(255, 255, 255, 0.94);
       border: 1px solid rgba(31, 36, 34, 0.06);
-      border-radius: 28px;
+      border-radius: 20px;
       padding: 26px 24px 24px;
-      box-shadow: 0 24px 60px rgba(49, 60, 54, 0.12);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 18px 44px rgba(49, 60, 54, 0.10);
     }
 
     .login-form-head {
@@ -104,8 +102,8 @@
     }
 
     .login-field:focus-within {
-      border-color: #FF6B4A;
-      box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.12);
+      border-color: #0F766E;
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
     }
 
     .login-field-icon {
@@ -178,7 +176,7 @@
     .login-btn {
       width: 100%;
       height: 54px;
-      background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6A 100%);
+      background: #0F766E;
       border: none;
       border-radius: 15px;
       color: white;
@@ -187,7 +185,7 @@
       cursor: pointer;
       transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
       margin-top: 4px;
-      box-shadow: 0 12px 26px rgba(255, 107, 74, 0.22);
+      box-shadow: 0 10px 22px rgba(15, 118, 110, 0.18);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -196,7 +194,7 @@
 
     .login-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 16px 30px rgba(255, 107, 74, 0.28);
+      box-shadow: 0 12px 24px rgba(15, 118, 110, 0.22);
     }
 
     .login-btn:active {
@@ -223,7 +221,7 @@
     }
 
     .login-tip a {
-      color: #FF6B4A;
+      color: #0F766E;
       text-decoration: none;
     }
 
@@ -237,7 +235,7 @@
     }
 
     .back-to-home:hover {
-      color: #FF6B4A;
+      color: #0F766E;
     }
 
     .toast {
@@ -283,7 +281,7 @@
       </div>
       <div>
         <h1 class="login-title">潮流好物</h1>
-        <p class="login-subtitle">年轻人的购物主场</p>
+        <p class="login-subtitle">登录后查看购物车和订单</p>
       </div>
     </div>
 

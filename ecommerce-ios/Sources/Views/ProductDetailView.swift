@@ -1083,7 +1083,7 @@ struct SpecOption: View {
     private var normalBg: Color { Color(red: 0.97, green: 0.97, blue: 0.97) }  // #F8F8F8
     private var normalBorder: Color { Color(red: 0.90, green: 0.90, blue: 0.90) }  // #E5E5E5
     private var normalText: Color { Color(red: 0.40, green: 0.40, blue: 0.40) }  // #666666
-    private var selectedBg: Color { Color(red: 1.0, green: 0.94, blue: 0.93) }  // #FFF0ED
+    private var selectedBg: Color { Color(red: 1.0, green: 0.94, blue: 0.93) }  // #E8F3F0
 
     var body: some View {
         Button(action: {

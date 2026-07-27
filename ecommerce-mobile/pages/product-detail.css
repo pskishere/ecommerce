@@ -188,7 +188,7 @@
 .price-current {
   font-size: 32px;
   font-weight: 900;
-  color: #FF6B4A;
+  color: #0F766E;
   letter-spacing: -0.02em;
 }
 
@@ -202,8 +202,8 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
-  background: #FFF0ED;
-  color: #FF6B4A;
+  background: #E8F3F0;
+  color: #0F766E;
   font-size: 11px;
   font-weight: 700;
   border-radius: 6px;
@@ -239,7 +239,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-weight: 600;
 }
 
@@ -354,8 +354,8 @@
 
 .shop-btn {
   padding: 8px 18px;
-  border: 1.5px solid #FF6B4A;
-  color: #FF6B4A;
+  border: 1.5px solid #0F766E;
+  color: #0F766E;
   font-size: 13px;
   font-weight: 700;
   border-radius: 20px;
@@ -365,7 +365,7 @@
 }
 
 .shop-btn:active {
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
 }
 
@@ -395,7 +395,7 @@
 
 .reviews-title span {
   font-size: 12px;
-  color: #FF6B4A;
+  color: #0F766E;
   font-weight: 600;
 }
 
@@ -409,7 +409,7 @@
 }
 
 .reviews-more:active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .review-item {
@@ -433,7 +433,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #FF6B4A, #FF9A7A);
+  background: linear-gradient(135deg, #0F766E, #69BDB4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -453,7 +453,7 @@
 .review-stars {
   display: flex;
   gap: 2px;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .review-stars svg {
@@ -621,7 +621,7 @@
 .related-price {
   font-size: 15px;
   font-weight: 900;
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 /* ── Bottom Action Bar ── */
@@ -672,7 +672,7 @@
 }
 
 .bar-icon-item.active .bar-icon-label {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .bar-cart-badge {
@@ -681,7 +681,7 @@
   right: 4px;
   min-width: 16px;
   height: 16px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 10px;
   font-weight: 800;
@@ -723,7 +723,7 @@
 .btn-buy {
   flex: 1;
   height: 46px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 15px;
   font-weight: 800;
@@ -738,7 +738,7 @@
 
 .btn-buy:active {
   transform: scale(0.97);
-  background: #E85A3A;
+  background: #0B5F59;
 }
 
 /* ── Spec Sheet ── */
@@ -836,7 +836,7 @@
 .spec-sheet-price {
   font-size: 24px;
   font-weight: 900;
-  color: #FF6B4A;
+  color: #0F766E;
   margin-bottom: 4px;
 }
 
@@ -899,9 +899,9 @@
 }
 
 .spec-option.selected {
-  border-color: #FF6B4A;
-  background: #FFF0ED;
-  color: #FF6B4A;
+  border-color: #0F766E;
+  background: #E8F3F0;
+  color: #0F766E;
   font-weight: 700;
 }
 
@@ -990,7 +990,7 @@
 .spec-sheet-buy {
   flex: 1;
   height: 50px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   font-size: 15px;
   font-weight: 800;

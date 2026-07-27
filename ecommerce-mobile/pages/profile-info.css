@@ -156,7 +156,7 @@
 }
 
 .gender-option.active {
-  color: #FF6B4A;
+  color: #0F766E;
 }
 
 .gender-option input {
@@ -175,7 +175,7 @@
 }
 
 .gender-option.active .gender-radio {
-  border-color: #FF6B4A;
+  border-color: #0F766E;
 }
 
 .gender-option.active .gender-radio::after {
@@ -183,7 +183,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #FF6B4A;
+  background: #0F766E;
 }
 
 /* Section Title */
@@ -202,7 +202,7 @@
   width: calc(100% - 32px);
   margin: 24px 16px;
   height: 48px;
-  background: #FF6B4A;
+  background: #0F766E;
   color: white;
   border: none;
   border-radius: 24px;

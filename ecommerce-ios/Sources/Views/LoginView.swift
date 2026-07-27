@@ -291,10 +291,10 @@ private struct LegalDocumentView: View {
 }
 
 private enum LoginPalette {
-    static let canvas = Color(red: 0.965, green: 0.976, blue: 0.966)
-    static let shelf = Color(red: 0.925, green: 0.950, blue: 0.930)
-    static let warmSurface = Color(red: 1.000, green: 0.965, blue: 0.945)
-    static let field = Color(red: 0.985, green: 0.985, blue: 0.975)
+    static let canvas = Color(hex: "F5F6F2")
+    static let shelf = Color(hex: "E8F3F0")
+    static let warmSurface = Color(hex: "FFFFFF")
+    static let field = Color(hex: "FAFBF8")
     static let line = Color.black.opacity(0.08)
     static let ink = Color(red: 0.105, green: 0.125, blue: 0.115)
     static let muted = Color(red: 0.450, green: 0.490, blue: 0.465)
@@ -313,10 +313,10 @@ private struct LoginBackground: View {
                     .frame(height: 285)
                 Spacer()
                 LoginPalette.warmSurface
-                    .frame(height: 210)
+                    .frame(height: 190)
                     .clipShape(
                         UnevenRoundedRectangle(
-                            topLeadingRadius: 44,
+                            topLeadingRadius: 22,
                             bottomLeadingRadius: 0,
                             bottomTrailingRadius: 0,
                             topTrailingRadius: 0,
@@ -349,16 +349,16 @@ private struct LoginBrandHeader: View {
                         .font(.system(size: 28, weight: .black))
                         .foregroundStyle(LoginPalette.ink)
 
-                    Text("年轻人的购物主场")
+                    Text("登录后查看购物车和订单")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(LoginPalette.muted)
                 }
             }
 
             HStack(spacing: 8) {
-                Image(systemName: "sparkles")
+                Image(systemName: "checkmark.seal")
                     .font(.system(size: 13, weight: .semibold))
-                Text("登录后同步购物车、订单和会员权益")
+                Text("登录后同步购物车、订单和会员")
                     .font(.system(size: 13, weight: .semibold))
             }
             .foregroundStyle(LoginPalette.muted)

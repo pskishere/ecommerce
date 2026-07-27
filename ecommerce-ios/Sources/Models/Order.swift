@@ -23,7 +23,7 @@ enum OrderStatus: String, CaseIterable, Codable, Hashable {
 
     var color: String {
         switch self {
-        case .pending: return "#FF6B4A"
+        case .pending: return "#0F766E"
         case .shipped: return "#007AFF"
         case .completed: return "#34C759"
         case .paid: return "#007AFF"
