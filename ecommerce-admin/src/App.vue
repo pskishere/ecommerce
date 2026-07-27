@@ -22,7 +22,7 @@
     </div>
   </section>
 
-  <el-container v-else class="admin-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+  <el-container v-else class="admin-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed, 'compact-viewport': isCompactViewport }">
     <el-aside :width="isSidebarCollapsed ? '84px' : '248px'" class="admin-aside" :class="{ collapsed: isSidebarCollapsed }">
       <div class="aside-brand">
         <div class="brand-mark">潮</div>
@@ -58,6 +58,13 @@
         <span>打开商城前台</span>
       </a>
     </el-aside>
+    <button
+      v-if="isCompactViewport && !isSidebarCollapsed"
+      class="aside-scrim"
+      type="button"
+      aria-label="关闭侧边栏"
+      @click="isSidebarCollapsed = true"
+    ></button>
 
     <el-container>
       <el-header height="82px" class="admin-header">
@@ -846,6 +853,7 @@ const loading = ref(false)
 const isAuthed = ref(Boolean(getToken()))
 const activeView = ref(localStorage.getItem(ACTIVE_VIEW_KEY) || 'dashboard')
 const isSidebarCollapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true')
+const isCompactViewport = ref(false)
 const lastSyncedAt = ref(null)
 const keyword = ref('')
 const productStatus = ref('')
@@ -1211,11 +1219,14 @@ watch(isSidebarCollapsed, (value) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('resize', syncViewport)
+  syncViewport()
   if (isAuthed.value) await bootstrap()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('resize', syncViewport)
 })
 
 async function run(task) {
@@ -1274,6 +1285,7 @@ async function switchView(view) {
   localStorage.setItem(ACTIVE_VIEW_KEY, view)
   keyword.value = ''
   await loadCurrentView()
+  if (isCompactViewport.value) isSidebarCollapsed.value = true
 }
 
 async function loadCurrentView() {
@@ -1294,6 +1306,18 @@ async function loadCurrentView() {
 
 function toggleSidebar() {
   isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
+
+function syncViewport() {
+  if (typeof window === 'undefined') return
+  const nextCompact = window.innerWidth <= 900
+  const enteredCompact = nextCompact && !isCompactViewport.value
+  isCompactViewport.value = nextCompact
+  if (enteredCompact) isSidebarCollapsed.value = true
+  window.setTimeout(() => {
+    orderChart?.resize()
+    salesChart?.resize()
+  }, 180)
 }
 
 async function handleQuickCreate(command) {
@@ -1381,6 +1405,7 @@ async function loadDashboard() {
 function renderOrderChart() {
   if (!canRenderChart(orderChartRef.value)) return
   orderChart ||= echarts.init(orderChartRef.value)
+  const compact = orderChartRef.value.clientWidth < 520
   const data = orderRawStatuses.map(item => ({
     name: item.label,
     value: dashboard.orderStatus[item.value] || 0,
@@ -1388,14 +1413,14 @@ function renderOrderChart() {
   orderChart.setOption({
     color: ['#0F7B68', '#2F8F46', '#C99A2E', '#37463F', '#C2413A'],
     tooltip: { trigger: 'item' },
-    legend: { bottom: 0, icon: 'circle' },
+    legend: { bottom: 0, icon: 'circle', itemWidth: compact ? 8 : 10, itemHeight: compact ? 8 : 10 },
     series: [{
       type: 'pie',
-      radius: ['48%', '72%'],
-      center: ['50%', '44%'],
+      radius: compact ? ['48%', '70%'] : ['48%', '72%'],
+      center: compact ? ['50%', '42%'] : ['50%', '44%'],
       avoidLabelOverlap: true,
       minAngle: 6,
-      label: { formatter: '{b} {c}' },
+      label: compact ? { show: false } : { formatter: '{b} {c}' },
       data,
     }],
   })
@@ -1405,18 +1430,20 @@ function renderOrderChart() {
 function renderSalesChart() {
   if (!canRenderChart(salesChartRef.value)) return
   salesChart ||= echarts.init(salesChartRef.value)
+  const compact = salesChartRef.value.clientWidth < 520
   const rows = dashboard.salesTrend || []
   salesChart.setOption({
     color: ['#0F7B68', '#D96C4B'],
     tooltip: { trigger: 'axis' },
-    grid: { left: 44, right: 18, top: 28, bottom: 34 },
-    legend: { top: 0, right: 4 },
+    grid: { left: compact ? 34 : 44, right: compact ? 8 : 18, top: compact ? 34 : 28, bottom: 34 },
+    legend: { top: 0, right: compact ? 0 : 4, itemWidth: compact ? 12 : 18 },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: rows.map(item => item.label),
       axisLine: { lineStyle: { color: '#DFE7DD' } },
       axisTick: { show: false },
+      axisLabel: { interval: compact ? 1 : 0 },
     },
     yAxis: [
       { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#E8EFE6' } } },
@@ -1434,7 +1461,7 @@ function renderSalesChart() {
         name: '订单',
         type: 'bar',
         yAxisIndex: 1,
-        barWidth: 16,
+        barWidth: compact ? 10 : 16,
         data: rows.map(item => Number(item.orders || 0)),
       },
     ],
