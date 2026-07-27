@@ -23,7 +23,13 @@
   </section>
 
   <el-container v-else class="admin-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed, 'compact-viewport': isCompactViewport }">
-    <el-aside :width="isSidebarCollapsed ? '84px' : '248px'" class="admin-aside" :class="{ collapsed: isSidebarCollapsed }">
+    <el-aside
+      :width="isSidebarCollapsed ? '84px' : '248px'"
+      class="admin-aside"
+      :class="{ collapsed: isSidebarCollapsed }"
+      :inert="isCompactViewport && isSidebarCollapsed"
+      :aria-hidden="isCompactViewport && isSidebarCollapsed"
+    >
       <div class="aside-brand">
         <div class="brand-mark">潮</div>
         <div class="brand-copy">
@@ -252,6 +258,20 @@
         </section>
 
         <section v-show="activeView === 'products'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <p class="eyebrow">Catalog Control</p>
+              <h3>商品运营台</h3>
+              <span>集中处理商品上下架、库存风险、分类归属和 SKU 维护。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in productSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
           <div class="toolbar">
             <div class="toolbar-left">
               <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
@@ -271,7 +291,13 @@
             </div>
           </div>
           <el-card shadow="never" class="panel-card">
-            <el-table :data="products" stripe height="calc(100vh - 252px)" @selection-change="selectedProducts = $event">
+            <template #header>
+              <div class="panel-head">
+                <span>商品列表</span>
+                <el-tag type="info" effect="plain">{{ productFilterLabel }}</el-tag>
+              </div>
+            </template>
+            <el-table :data="products" stripe max-height="calc(100vh - 420px)" @selection-change="selectedProducts = $event">
               <template #empty><el-empty description="暂无商品，先新增一个商品" /></template>
               <el-table-column type="selection" width="46" fixed />
               <el-table-column label="商品" min-width="300" fixed>
@@ -314,11 +340,31 @@
         </section>
 
         <section v-show="activeView === 'orders'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <p class="eyebrow">Fulfillment Queue</p>
+              <h3>订单处理台</h3>
+              <span>把待付款、待发货、售后和订单状态处理放在同一条队列里。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in orderSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
           <div class="toolbar">
             <el-segmented v-model="orderStatus" :options="orderStatusOptions" @change="loadOrders" />
           </div>
           <el-card shadow="never" class="panel-card">
-            <el-table :data="orders" stripe height="calc(100vh - 252px)">
+            <template #header>
+              <div class="panel-head">
+                <span>订单列表</span>
+                <el-tag type="info" effect="plain">{{ orderFilterLabel }}</el-tag>
+              </div>
+            </template>
+            <el-table :data="orders" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无订单" /></template>
               <el-table-column prop="id" label="订单号" min-width="190" fixed />
               <el-table-column label="用户" width="130">
@@ -356,8 +402,28 @@
         </section>
 
         <section v-show="activeView === 'users'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <p class="eyebrow">Member Operations</p>
+              <h3>会员运营台</h3>
+              <span>查看用户活跃状态、会员等级、积分和消费贡献。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in userSummaryCards" :key="item.label" class="module-stat" type="button" disabled>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
           <el-card shadow="never" class="panel-card">
-            <el-table :data="users" stripe height="calc(100vh - 190px)">
+            <template #header>
+              <div class="panel-head">
+                <span>用户列表</span>
+                <el-tag type="info" effect="plain">{{ users.length }} 位用户</el-tag>
+              </div>
+            </template>
+            <el-table :data="users" stripe max-height="calc(100vh - 360px)">
               <template #empty><el-empty description="暂无用户" /></template>
               <el-table-column prop="username" label="用户" min-width="150" fixed />
               <el-table-column prop="phone" label="手机号" width="150" />
@@ -379,6 +445,20 @@
         </section>
 
         <section v-show="activeView === 'content'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <p class="eyebrow">Storefront Publishing</p>
+              <h3>首页内容台</h3>
+              <span>维护分类、Banner、首页栏目、促销位和素材库，保持前台内容一致。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in contentSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
           <div class="toolbar">
             <el-segmented v-model="contentKind" :options="contentKindOptions" />
             <div class="toolbar-actions">
@@ -387,7 +467,13 @@
             </div>
           </div>
           <el-card shadow="never" class="panel-card">
-            <el-table v-if="contentKind === 'categories'" :data="categories" stripe height="calc(100vh - 252px)">
+            <template #header>
+              <div class="panel-head">
+                <span>{{ currentContentLabel }}</span>
+                <el-tag type="info" effect="plain">{{ currentContentRows.length }} 条内容</el-tag>
+              </div>
+            </template>
+            <el-table v-if="contentKind === 'categories'" :data="categories" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无一级分类" /></template>
               <el-table-column label="分类" min-width="240">
                 <template #default="{ row }">
@@ -407,7 +493,7 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openCategory(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else-if="contentKind === 'subcategories'" :data="subcategories" stripe height="calc(100vh - 252px)">
+            <el-table v-else-if="contentKind === 'subcategories'" :data="subcategories" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无二级分类" /></template>
               <el-table-column prop="name" label="子分类" min-width="180" />
               <el-table-column prop="category_name" label="所属分类" width="160" />
@@ -417,7 +503,7 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openSubcategory(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else-if="contentKind === 'banners'" :data="banners" stripe height="calc(100vh - 252px)">
+            <el-table v-else-if="contentKind === 'banners'" :data="banners" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无首页 Banner" /></template>
               <el-table-column label="Banner" min-width="280">
                 <template #default="{ row }">
@@ -434,7 +520,7 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openBanner(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else-if="isHomeProductSection" :data="currentHomeSections" stripe height="calc(100vh - 252px)">
+            <el-table v-else-if="isHomeProductSection" :data="currentHomeSections" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty :description="`暂无${currentContentLabel}`" /></template>
               <el-table-column prop="title" label="栏目" min-width="180" fixed />
               <el-table-column v-if="contentKind === 'flashSales'" prop="subtitle" label="副标题" min-width="160" />
@@ -463,7 +549,7 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openHomeSection(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else-if="contentKind === 'promotions'" :data="promotions" stripe height="calc(100vh - 252px)">
+            <el-table v-else-if="contentKind === 'promotions'" :data="promotions" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无促销位" /></template>
               <el-table-column label="促销位" min-width="280">
                 <template #default="{ row }">
@@ -479,7 +565,7 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openPromotion(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else :data="media" stripe height="calc(100vh - 252px)">
+            <el-table v-else :data="media" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无素材，上传一张图片" /></template>
               <el-table-column label="素材" min-width="320">
                 <template #default="{ row }">
@@ -497,12 +583,32 @@
         </section>
 
         <section v-show="activeView === 'coupons'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <p class="eyebrow">Benefits</p>
+              <h3>优惠券运营台</h3>
+              <span>管理发券、核销状态、用户权益和有效期。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in couponSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
           <div class="toolbar">
             <el-segmented v-model="couponStatus" :options="couponStatusOptions" @change="loadCoupons" />
             <el-button type="primary" :icon="Plus" @click="openCoupon()">发放优惠券</el-button>
           </div>
           <el-card shadow="never" class="panel-card">
-            <el-table :data="coupons" stripe height="calc(100vh - 252px)">
+            <template #header>
+              <div class="panel-head">
+                <span>优惠券列表</span>
+                <el-tag type="info" effect="plain">{{ couponFilterLabel }}</el-tag>
+              </div>
+            </template>
+            <el-table :data="coupons" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无优惠券" /></template>
               <el-table-column prop="name" label="优惠券" min-width="180" />
               <el-table-column prop="username" label="用户" width="130" />
@@ -516,6 +622,20 @@
         </section>
 
         <section v-show="activeView === 'shop'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <p class="eyebrow">Shop Profile</p>
+              <h3>店铺资料台</h3>
+              <span>控制前台店铺展示信息，避免评分、粉丝和销售展示脱节。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in shopSummaryCards" :key="item.label" class="module-stat" type="button" disabled>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
           <el-card shadow="never" class="panel-card shop-card">
             <template #header>
               <div class="panel-head">
@@ -1130,6 +1250,70 @@ const contentHealthCards = computed(() => [
   { label: '首页栏目', value: dashboard.contentHealth.enabled_home_sections || 0, action: () => openContentHealth('flashSales') },
   { label: '素材文件', value: dashboard.contentHealth.media_files || 0, action: () => openContentHealth('media') },
 ])
+const currentContentRows = computed(() => {
+  if (contentKind.value === 'categories') return categories.value
+  if (contentKind.value === 'subcategories') return subcategories.value
+  if (contentKind.value === 'banners') return banners.value
+  if (contentKind.value === 'flashSales') return homeFlashSales.value
+  if (contentKind.value === 'hotRanks') return homeHotRanks.value
+  if (contentKind.value === 'recommends') return homeRecommends.value
+  if (contentKind.value === 'newArrivals') return homeNewArrivals.value
+  if (contentKind.value === 'promotions') return promotions.value
+  return media.value
+})
+const currentContentEnabledCount = computed(() => {
+  if (contentKind.value === 'media') return media.value.length
+  return currentContentRows.value.filter(item => item.is_enabled !== false).length
+})
+const currentContentProductCount = computed(() => sumBy(currentContentRows.value, item => item.product_count))
+const productFilterLabel = computed(() => {
+  const parts = []
+  const status = optionLabel(productStatusOptions, productStatus.value)
+  if (status && status !== '全部') parts.push(status)
+  const category = categories.value.find(item => item.id === productCategory.value)?.name
+  if (category) parts.push(category)
+  const stock = optionLabel(productStockOptions, productStock.value)
+  if (stock) parts.push(stock)
+  return parts.length ? parts.join(' / ') : '全部商品'
+})
+const orderFilterLabel = computed(() => optionLabel(orderStatusOptions, orderStatus.value) || '全部订单')
+const couponFilterLabel = computed(() => optionLabel(couponStatusOptions, couponStatus.value) || '全部优惠券')
+const productSummaryCards = computed(() => [
+  { label: '当前结果', value: formatNumber(products.value.length), hint: productFilterLabel.value },
+  { label: '上架商品', value: formatNumber(products.value.filter(item => item.is_in_stock).length), hint: '可售状态', action: () => openProductFilter({ status: 'active' }) },
+  { label: '低库存', value: formatNumber(products.value.filter(isLowStockProduct).length), hint: '需要补货', action: openInventoryRisk },
+  { label: '库存合计', value: formatNumber(sumBy(products.value, item => item.stock_total)), hint: '当前结果' },
+])
+const orderSummaryCards = computed(() => [
+  { label: '当前订单', value: formatNumber(orders.value.length), hint: orderFilterLabel.value },
+  { label: '待付款', value: formatNumber(dashboard.metrics.pending_orders || 0), hint: '需要催付', action: () => openOrderQueue('pending') },
+  { label: '待发货', value: formatNumber(dashboard.metrics.paid_orders || 0), hint: '尽快履约', action: () => openOrderQueue('paid') },
+  { label: '售后', value: formatNumber(dashboard.metrics.after_sale_orders || 0), hint: '需要处理', action: () => openOrderQueue('after_sale') },
+])
+const userSummaryCards = computed(() => [
+  { label: '当前用户', value: formatNumber(users.value.length), hint: '列表结果' },
+  { label: '启用账号', value: formatNumber(users.value.filter(item => item.is_active).length), hint: '可登录' },
+  { label: '会员用户', value: formatNumber(users.value.filter(item => item.vip_level && item.vip_level !== 'none').length), hint: '非普通等级' },
+  { label: '消费合计', value: money(sumBy(users.value, item => item.total_spent)), hint: '累计贡献' },
+])
+const contentSummaryCards = computed(() => [
+  { label: '当前模块', value: currentContentLabel.value, hint: '正在维护' },
+  { label: '当前内容', value: formatNumber(currentContentRows.value.length), hint: '列表结果' },
+  { label: '已启用', value: formatNumber(currentContentEnabledCount.value), hint: contentKind.value === 'media' ? '素材总量' : '前台可见' },
+  { label: contentKind.value === 'media' ? '素材文件' : '关联商品', value: formatNumber(contentKind.value === 'media' ? media.value.length : currentContentProductCount.value), hint: contentKind.value === 'media' ? '图片资源' : '内容绑定' },
+])
+const couponSummaryCards = computed(() => [
+  { label: '当前优惠券', value: formatNumber(coupons.value.length), hint: couponFilterLabel.value },
+  { label: '可用', value: formatNumber(coupons.value.filter(item => item.status === 'available').length), hint: '可核销', action: () => openCouponQueue('available') },
+  { label: '已使用', value: formatNumber(coupons.value.filter(item => item.status === 'used').length), hint: '已核销', action: () => openCouponQueue('used') },
+  { label: '面额合计', value: `¥${formatNumber(sumBy(coupons.value, item => item.value))}`, hint: '当前结果' },
+])
+const shopSummaryCards = computed(() => [
+  { label: '店铺评分', value: shopForm.score || '-', hint: '前台展示' },
+  { label: '商品数', value: formatNumber(shopForm.product_count || 0), hint: '展示口径' },
+  { label: '销售额', value: shopForm.sales || '-', hint: '展示文本' },
+  { label: '粉丝数', value: shopForm.fans_count || '-', hint: '展示文本' },
+])
 
 const productStatusOptions = [
   { label: '全部', value: '' },
@@ -1512,7 +1696,12 @@ async function loadCoupons() {
 }
 
 async function loadShop() {
-  Object.assign(shopForm, await adminApi.shop())
+  const data = await adminApi.shop()
+  Object.assign(shopForm, {
+    ...data,
+    score: Number(data?.score || 0),
+    product_count: Number(data?.product_count || 0),
+  })
 }
 
 async function openOrderQueue(status) {
@@ -1520,10 +1709,20 @@ async function openOrderQueue(status) {
   await switchView('orders')
 }
 
-async function openInventoryRisk() {
-  productStatus.value = 'active'
-  productStock.value = 'low'
+async function openProductFilter({ status = '', stock = '', category = '' } = {}) {
+  productStatus.value = status
+  productStock.value = stock
+  productCategory.value = category
   await switchView('products')
+}
+
+async function openInventoryRisk() {
+  await openProductFilter({ status: 'active', stock: 'low' })
+}
+
+async function openCouponQueue(status) {
+  couponStatus.value = status
+  await switchView('coupons')
 }
 
 async function openContentHealth(kind = 'banners') {
@@ -1997,6 +2196,23 @@ async function saveShop() {
 function money(value) {
   const number = Number(value || 0)
   return `¥${Number.isFinite(number) ? number.toFixed(2) : '0.00'}`
+}
+
+function formatNumber(value) {
+  const number = Number(value || 0)
+  return Number.isFinite(number) ? number.toLocaleString('zh-CN') : '0'
+}
+
+function sumBy(rows, getter) {
+  return (rows || []).reduce((total, item) => total + Number(getter(item) || 0), 0)
+}
+
+function optionLabel(options, value) {
+  return options.find(item => item.value === value)?.label || ''
+}
+
+function isLowStockProduct(item) {
+  return Number(item.low_stock_count || 0) > 0 || Number(item.stock_total || 0) <= 200
 }
 
 function fileSize(value) {
