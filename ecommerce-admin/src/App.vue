@@ -1386,7 +1386,7 @@ function renderOrderChart() {
     value: dashboard.orderStatus[item.value] || 0,
   }))
   orderChart.setOption({
-    color: ['#2563EB', '#16A34A', '#F59E0B', '#111827', '#DC2626'],
+    color: ['#0F7B68', '#2F8F46', '#C99A2E', '#37463F', '#C2413A'],
     tooltip: { trigger: 'item' },
     legend: { bottom: 0, icon: 'circle' },
     series: [{
@@ -1407,7 +1407,7 @@ function renderSalesChart() {
   salesChart ||= echarts.init(salesChartRef.value)
   const rows = dashboard.salesTrend || []
   salesChart.setOption({
-    color: ['#2563EB', '#FF6B4A'],
+    color: ['#0F7B68', '#D96C4B'],
     tooltip: { trigger: 'axis' },
     grid: { left: 44, right: 18, top: 28, bottom: 34 },
     legend: { top: 0, right: 4 },
@@ -1415,11 +1415,11 @@ function renderSalesChart() {
       type: 'category',
       boundaryGap: false,
       data: rows.map(item => item.label),
-      axisLine: { lineStyle: { color: '#E5E7EB' } },
+      axisLine: { lineStyle: { color: '#DFE7DD' } },
       axisTick: { show: false },
     },
     yAxis: [
-      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#EEF2F7' } } },
+      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#E8EFE6' } } },
       { type: 'value', name: '订单', splitLine: { show: false } },
     ],
     series: [
