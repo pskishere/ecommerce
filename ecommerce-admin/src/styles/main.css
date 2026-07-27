@@ -311,36 +311,6 @@ select {
   min-width: 0;
 }
 
-.command-trigger {
-  height: 36px;
-  padding: 0 10px 0 12px;
-  border-color: #d7e2d8;
-  background: #f7f9f4;
-  color: #314039;
-}
-
-.command-trigger span {
-  font-weight: 800;
-}
-
-.command-trigger kbd,
-.command-header kbd {
-  display: inline-grid;
-  min-width: 42px;
-  height: 22px;
-  place-items: center;
-  padding: 0 7px;
-  border: 1px solid #d7e2d8;
-  border-bottom-color: #c6d3c8;
-  border-radius: 6px;
-  background: #fff;
-  color: var(--admin-muted);
-  font-size: 11px;
-  font-weight: 900;
-  line-height: 1;
-  box-shadow: 0 1px 0 rgba(23, 33, 27, 0.06);
-}
-
 .global-search {
   width: 320px;
 }
@@ -615,8 +585,7 @@ select {
 
 .todo-card:focus-visible,
 .health-card:focus-visible,
-.front-link:focus-visible,
-.command-item:focus-visible {
+.front-link:focus-visible {
   outline: 3px solid rgba(15, 123, 104, 0.2);
   outline-offset: 2px;
 }
@@ -928,117 +897,6 @@ select {
   justify-content: flex-end;
 }
 
-.command-dialog {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 30px 90px rgba(23, 33, 27, 0.2);
-}
-
-.command-dialog .el-dialog__header {
-  padding: 22px 22px 12px;
-  margin: 0;
-}
-
-.command-dialog .el-dialog__body {
-  padding: 0 22px 22px;
-}
-
-.command-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.command-header h3 {
-  margin: 0;
-  color: var(--admin-text);
-  font-size: 22px;
-  line-height: 1.15;
-}
-
-.command-search {
-  margin-bottom: 14px;
-}
-
-.command-list {
-  display: grid;
-  gap: 8px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding: 2px 2px 0;
-}
-
-.command-item {
-  appearance: none;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: var(--admin-panel);
-  color: var(--admin-text);
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
-}
-
-.command-item .el-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--admin-brand-soft);
-  color: var(--admin-brand);
-}
-
-.command-item.active,
-.command-item:hover {
-  border-color: rgba(15, 123, 104, 0.34);
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(15, 123, 104, 0.1);
-  transform: translateY(-1px);
-}
-
-.command-copy {
-  min-width: 0;
-}
-
-.command-copy strong,
-.command-copy em {
-  display: block;
-}
-
-.command-copy strong {
-  overflow: hidden;
-  color: var(--admin-text);
-  font-size: 14px;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.command-copy em {
-  margin-top: 4px;
-  color: var(--admin-muted);
-  font-size: 12px;
-  font-style: normal;
-  line-height: 1.35;
-}
-
-.command-group {
-  min-width: 42px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #edf3ec;
-  color: #526259;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-}
-
 .el-drawer__body {
   padding-top: 10px;
 }
@@ -1328,11 +1186,6 @@ select {
     justify-content: flex-start;
   }
 
-  .command-trigger {
-    width: 100%;
-    justify-content: space-between;
-  }
-
   .global-search,
   .category-filter,
   .stock-filter,
@@ -1398,19 +1251,6 @@ select {
 
   .chart-box.compact {
     height: 220px;
-  }
-
-  .command-dialog {
-    width: calc(100vw - 28px) !important;
-  }
-
-  .command-item {
-    grid-template-columns: 34px minmax(0, 1fr);
-  }
-
-  .command-group {
-    grid-column: 2;
-    justify-self: flex-start;
   }
 
   .el-drawer {

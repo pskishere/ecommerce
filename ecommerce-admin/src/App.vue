@@ -88,14 +88,8 @@
           </div>
         </div>
         <div class="header-actions">
-          <el-button class="command-trigger" @click="openCommandPalette">
-            <el-icon><Search /></el-icon>
-            <span>全局操作</span>
-            <kbd>{{ commandShortcutLabel }}</kbd>
-          </el-button>
           <el-input
             v-if="searchable"
-            ref="searchInput"
             v-model="keyword"
             clearable
             class="global-search"
@@ -651,56 +645,6 @@
     </el-container>
   </el-container>
 
-  <el-dialog
-    v-model="commandPaletteVisible"
-    align-center
-    class="command-dialog"
-    width="640px"
-    :show-close="false"
-  >
-    <template #header>
-      <div class="command-header">
-        <div>
-          <p class="eyebrow">快捷操作</p>
-          <h3>快速跳转和常用操作</h3>
-        </div>
-        <kbd>{{ commandShortcutLabel }}</kbd>
-      </div>
-    </template>
-    <el-input
-      ref="commandInput"
-      v-model="commandQuery"
-      class="command-search"
-      size="large"
-      placeholder="搜索页面、商品、订单或操作"
-      @keydown.down.prevent="moveCommand(1)"
-      @keydown.up.prevent="moveCommand(-1)"
-      @keyup.enter="runSelectedCommand"
-      @keyup.esc="commandPaletteVisible = false"
-    >
-      <template #prefix><el-icon><Search /></el-icon></template>
-    </el-input>
-    <div class="command-list">
-      <button
-        v-for="(item, index) in filteredCommandItems"
-        :key="item.key"
-        class="command-item"
-        :class="{ active: index === activeCommandIndex }"
-        type="button"
-        @click="runCommand(item)"
-        @mouseenter="activeCommandIndex = index"
-      >
-        <el-icon><component :is="item.icon" /></el-icon>
-        <span class="command-copy">
-          <strong>{{ item.label }}</strong>
-          <em>{{ item.description }}</em>
-        </span>
-        <span class="command-group">{{ item.group }}</span>
-      </button>
-      <el-empty v-if="!filteredCommandItems.length" description="没有匹配的操作" :image-size="72" />
-    </div>
-  </el-dialog>
-
   <el-drawer v-model="productDrawer" :title="productForm.id ? '编辑商品' : '新增商品'" size="720px">
     <el-form :model="productForm" label-position="top">
       <el-form-item label="商品名称"><el-input v-model="productForm.name" /></el-form-item>
@@ -979,11 +923,6 @@ const contentKind = ref('categories')
 const orderChartRef = ref(null)
 const salesChartRef = ref(null)
 const mediaInput = ref(null)
-const searchInput = ref(null)
-const commandInput = ref(null)
-const commandPaletteVisible = ref(false)
-const commandQuery = ref('')
-const activeCommandIndex = ref(0)
 let orderChart = null
 let salesChart = null
 
@@ -1055,151 +994,9 @@ const navItems = [
 
 const currentMeta = computed(() => viewMeta[activeView.value] || viewMeta.dashboard)
 const searchable = computed(() => ['products', 'orders', 'users', 'coupons'].includes(activeView.value))
-const commandShortcutLabel = computed(() => {
-  if (typeof navigator === 'undefined') return 'Ctrl K'
-  return /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'
-})
 const formattedLastSynced = computed(() => {
   if (!lastSyncedAt.value) return ''
   return lastSyncedAt.value.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-})
-const commandItems = computed(() => [
-  {
-    key: 'view-dashboard',
-    group: '页面',
-    label: '经营概览',
-    description: '查看销售趋势、运营待办和库存预警',
-    keywords: 'dashboard 工作台 概览 销售 趋势',
-    icon: DataBoard,
-    action: () => switchView('dashboard'),
-  },
-  {
-    key: 'view-products',
-    group: '页面',
-    label: '商品管理',
-    description: '维护商品、规格、库存和上下架',
-    keywords: 'product 商品 sku 库存 上架 下架',
-    icon: Goods,
-    action: () => switchView('products'),
-  },
-  {
-    key: 'view-orders',
-    group: '页面',
-    label: '订单履约',
-    description: '处理付款、发货、售后和订单状态',
-    keywords: 'order 订单 发货 售后 履约',
-    icon: Tickets,
-    action: () => switchView('orders'),
-  },
-  {
-    key: 'view-users',
-    group: '页面',
-    label: '用户会员',
-    description: '查看会员等级、积分和账号状态',
-    keywords: 'user member 用户 会员 积分',
-    icon: User,
-    action: () => switchView('users'),
-  },
-  {
-    key: 'view-content',
-    group: '页面',
-    label: '首页内容',
-    description: '维护分类、Banner、栏目和素材库',
-    keywords: 'content banner 首页 分类 素材',
-    icon: Grid,
-    action: () => switchView('content'),
-  },
-  {
-    key: 'view-coupons',
-    group: '页面',
-    label: '优惠券',
-    description: '发券、编辑优惠和查看使用状态',
-    keywords: 'coupon 优惠券 发券 权益',
-    icon: Ticket,
-    action: () => switchView('coupons'),
-  },
-  {
-    key: 'view-shop',
-    group: '页面',
-    label: '店铺设置',
-    description: '调整店铺资料、评分和展示数据',
-    keywords: 'shop 店铺 设置 资料',
-    icon: Shop,
-    action: () => switchView('shop'),
-  },
-  {
-    key: 'create-product',
-    group: '新建',
-    label: '新增商品',
-    description: '打开商品编辑抽屉并配置规格库存',
-    keywords: 'create add product 新增 商品',
-    icon: Plus,
-    action: () => handleQuickCreate('product'),
-  },
-  {
-    key: 'create-banner',
-    group: '新建',
-    label: '新增 Banner',
-    description: '进入首页内容并新建 Banner',
-    keywords: 'create banner 首页 轮播',
-    icon: Plus,
-    action: () => handleQuickCreate('banner'),
-  },
-  {
-    key: 'create-coupon',
-    group: '新建',
-    label: '发放优惠券',
-    description: '给指定用户发券',
-    keywords: 'coupon create 发券 优惠券',
-    icon: Ticket,
-    action: () => handleQuickCreate('coupon'),
-  },
-  {
-    key: 'upload-media',
-    group: '新建',
-    label: '上传素材',
-    description: '打开素材库并选择图片上传',
-    keywords: 'media upload image 素材 上传 图片',
-    icon: Plus,
-    action: () => handleQuickCreate('media'),
-  },
-  {
-    key: 'low-stock',
-    group: '运营',
-    label: '查看低库存商品',
-    description: '直接进入商品管理的低库存筛选',
-    keywords: 'stock low inventory 库存 低库存 补货',
-    icon: Goods,
-    action: openInventoryRisk,
-  },
-  {
-    key: 'paid-orders',
-    group: '运营',
-    label: '处理待发货订单',
-    description: '筛选已支付但未发货的订单',
-    keywords: 'paid ship order 待发货 发货 订单',
-    icon: Tickets,
-    action: () => openOrderQueue('paid'),
-  },
-  {
-    key: 'after-sale',
-    group: '运营',
-    label: '处理售后',
-    description: '筛选售后相关订单',
-    keywords: 'after sale refund 售后 退款',
-    icon: Tickets,
-    action: () => openOrderQueue('after_sale'),
-  },
-])
-const filteredCommandItems = computed(() => {
-  const query = commandQuery.value.trim().toLowerCase()
-  if (!query) return commandItems.value
-  return commandItems.value.filter(item => [
-    item.label,
-    item.description,
-    item.group,
-    item.keywords,
-  ].join(' ').toLowerCase().includes(query))
 })
 const homeProductSectionKinds = ['flashSales', 'hotRanks', 'recommends', 'newArrivals']
 const isHomeProductSection = computed(() => homeProductSectionKinds.includes(contentKind.value))
@@ -1373,20 +1170,6 @@ watch(contentKind, () => {
   if (activeView.value === 'content') loadContent()
 })
 
-watch(commandQuery, () => {
-  activeCommandIndex.value = 0
-})
-
-watch(commandPaletteVisible, async (value) => {
-  if (!value) {
-    commandQuery.value = ''
-    activeCommandIndex.value = 0
-    return
-  }
-  await nextTick()
-  commandInput.value?.focus?.()
-})
-
 watch(isSidebarCollapsed, (value) => {
   localStorage.setItem(SIDEBAR_COLLAPSED_KEY, value ? 'true' : 'false')
   window.setTimeout(() => {
@@ -1396,14 +1179,12 @@ watch(isSidebarCollapsed, (value) => {
 })
 
 onMounted(async () => {
-  window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('resize', syncViewport)
   syncViewport()
   if (isAuthed.value) await bootstrap()
 })
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('resize', syncViewport)
 })
 
@@ -1515,49 +1296,6 @@ async function handleQuickCreate(command) {
     await nextTick()
     mediaInput.value?.click()
   }
-}
-
-function handleGlobalKeydown(event) {
-  if (!isAuthed.value) return
-  const key = event.key.toLowerCase()
-  if ((event.metaKey || event.ctrlKey) && key === 'k') {
-    event.preventDefault()
-    openCommandPalette()
-    return
-  }
-
-  const target = event.target
-  const isEditing = target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)
-  if (isEditing) return
-  if ((event.metaKey || event.ctrlKey) && key === 'b') {
-    event.preventDefault()
-    toggleSidebar()
-  } else if (key === '/' && searchable.value) {
-    event.preventDefault()
-    searchInput.value?.focus?.()
-  }
-}
-
-function openCommandPalette() {
-  commandPaletteVisible.value = true
-}
-
-function moveCommand(step) {
-  const count = filteredCommandItems.value.length
-  if (!count) return
-  activeCommandIndex.value = (activeCommandIndex.value + step + count) % count
-}
-
-async function runSelectedCommand() {
-  const item = filteredCommandItems.value[activeCommandIndex.value]
-  await runCommand(item)
-}
-
-async function runCommand(item) {
-  if (!item) return
-  commandPaletteVisible.value = false
-  await nextTick()
-  await item.action()
 }
 
 async function loadDashboard() {
