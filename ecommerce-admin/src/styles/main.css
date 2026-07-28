@@ -765,6 +765,15 @@ select {
   font-weight: 800;
 }
 
+.panel-head-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
 .panel-card .el-card__header {
   padding: 14px 16px;
   background: #ffffff;
@@ -901,6 +910,35 @@ select {
 
 .bulk-dropdown .el-button {
   min-width: 122px;
+}
+
+.selection-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid #d8e2ed;
+  border-radius: 8px;
+  background: #f7fafc;
+  color: var(--admin-brand-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selection-summary strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .hidden-file-input {
@@ -1575,6 +1613,22 @@ select {
   min-width: 0;
 }
 
+.el-table__empty-text {
+  line-height: 1.5;
+}
+
+.el-table__empty-block .el-empty {
+  padding: 28px 0;
+}
+
+.el-table__empty-block .el-empty__image {
+  width: 92px;
+}
+
+.el-table__empty-block .el-empty__description {
+  margin-top: 10px;
+}
+
 .panel-card .el-table {
   min-width: 720px;
 }
@@ -1940,6 +1994,16 @@ select {
     flex: 0 0 auto;
   }
 
+  .panel-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel-head-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .toolbar-actions {
     justify-content: stretch;
   }
@@ -1992,6 +2056,11 @@ select {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
+  }
+
+  .selection-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .metric-grid,

@@ -306,8 +306,13 @@
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
+              <el-button v-if="hasProductFilters" :icon="Refresh" @click="resetProductFilters">重置筛选</el-button>
               <el-button type="primary" :icon="Plus" @click="openProduct()">新增商品</el-button>
             </div>
+          </div>
+          <div v-if="selectedProducts.length" class="selection-summary">
+            <span>已选 <strong>{{ selectedProducts.length }}</strong> 个商品</span>
+            <el-button link type="primary" @click="clearProductSelection">清除选择</el-button>
           </div>
           <el-card shadow="never" class="panel-card">
             <template #header>
@@ -316,8 +321,15 @@
                 <el-tag type="info" effect="plain">{{ productFilterLabel }}</el-tag>
               </div>
             </template>
-            <el-table :data="products" stripe max-height="calc(100vh - 420px)" @selection-change="selectedProducts = $event">
-              <template #empty><el-empty description="暂无商品，先新增一个商品" /></template>
+            <el-table ref="productTableRef" :data="products" stripe max-height="calc(100vh - 420px)" @selection-change="selectedProducts = $event">
+              <template #empty>
+                <el-empty :description="hasProductFilters ? '没有匹配的商品' : '暂无商品，先新增一个商品'">
+                  <div class="empty-actions">
+                    <el-button v-if="hasProductFilters" @click="resetProductFilters">清空筛选</el-button>
+                    <el-button type="primary" :icon="Plus" @click="openProduct()">新增商品</el-button>
+                  </div>
+                </el-empty>
+              </template>
               <el-table-column type="selection" width="46" />
               <el-table-column label="商品" min-width="300">
                 <template #default="{ row }">
@@ -386,6 +398,9 @@
           </div>
           <div class="toolbar">
             <el-segmented v-model="orderStatus" :options="orderStatusOptions" @change="loadOrders" />
+            <div class="toolbar-actions">
+              <el-button v-if="hasOrderFilters" :icon="Refresh" @click="resetOrderFilters">重置筛选</el-button>
+            </div>
           </div>
           <el-card shadow="never" class="panel-card">
             <template #header>
@@ -395,7 +410,13 @@
               </div>
             </template>
             <el-table :data="orders" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无订单" /></template>
+              <template #empty>
+                <el-empty :description="hasOrderFilters ? '没有匹配的订单' : '暂无订单'">
+                  <div v-if="hasOrderFilters" class="empty-actions">
+                    <el-button @click="resetOrderFilters">清空筛选</el-button>
+                  </div>
+                </el-empty>
+              </template>
               <el-table-column prop="id" label="订单号" min-width="190" />
               <el-table-column label="用户" width="130">
                 <template #default="{ row }">{{ row.user?.username || '-' }}</template>
@@ -459,11 +480,20 @@
             <template #header>
               <div class="panel-head">
                 <span>用户列表</span>
-                <el-tag type="info" effect="plain">{{ users.length }} 位用户</el-tag>
+                <div class="panel-head-actions">
+                  <el-button v-if="hasUserFilters" text type="primary" @click="resetUserFilters">清空搜索</el-button>
+                  <el-tag type="info" effect="plain">{{ users.length }} 位用户</el-tag>
+                </div>
               </div>
             </template>
             <el-table :data="users" stripe max-height="calc(100vh - 360px)">
-              <template #empty><el-empty description="暂无用户" /></template>
+              <template #empty>
+                <el-empty :description="hasUserFilters ? '没有匹配的用户' : '暂无用户'">
+                  <div v-if="hasUserFilters" class="empty-actions">
+                    <el-button @click="resetUserFilters">清空搜索</el-button>
+                  </div>
+                </el-empty>
+              </template>
               <el-table-column prop="username" label="用户" min-width="150" />
               <el-table-column prop="phone" label="手机号" width="150" />
               <el-table-column prop="email" label="邮箱" min-width="210" />
@@ -511,7 +541,11 @@
               </div>
             </template>
             <el-table v-if="contentKind === 'categories'" :data="categories" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无一级分类" /></template>
+              <template #empty>
+                <el-empty description="暂无一级分类">
+                  <div class="empty-actions"><el-button type="primary" :icon="Plus" @click="openCategory()">新增一级分类</el-button></div>
+                </el-empty>
+              </template>
               <el-table-column label="分类" min-width="240">
                 <template #default="{ row }">
                   <div class="goods-cell">
@@ -531,7 +565,11 @@
             </el-table>
 
             <el-table v-else-if="contentKind === 'subcategories'" :data="subcategories" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无二级分类" /></template>
+              <template #empty>
+                <el-empty description="暂无二级分类">
+                  <div class="empty-actions"><el-button type="primary" :icon="Plus" @click="openSubcategory()">新增二级分类</el-button></div>
+                </el-empty>
+              </template>
               <el-table-column prop="name" label="子分类" min-width="180" />
               <el-table-column prop="category_name" label="所属分类" width="160" />
               <el-table-column prop="sort_order" label="排序" width="100" />
@@ -541,7 +579,11 @@
             </el-table>
 
             <el-table v-else-if="contentKind === 'banners'" :data="banners" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无首页 Banner" /></template>
+              <template #empty>
+                <el-empty description="暂无首页 Banner">
+                  <div class="empty-actions"><el-button type="primary" :icon="Plus" @click="openBanner()">新增 Banner</el-button></div>
+                </el-empty>
+              </template>
               <el-table-column label="Banner" min-width="280">
                 <template #default="{ row }">
                   <div class="goods-cell">
@@ -558,7 +600,11 @@
             </el-table>
 
             <el-table v-else-if="isHomeProductSection" :data="currentHomeSections" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty :description="`暂无${currentContentLabel}`" /></template>
+              <template #empty>
+                <el-empty :description="`暂无${currentContentLabel}`">
+                  <div class="empty-actions"><el-button type="primary" :icon="Plus" @click="openHomeSection()">{{ contentPrimaryLabel }}</el-button></div>
+                </el-empty>
+              </template>
               <el-table-column prop="title" label="栏目" min-width="180" />
               <el-table-column v-if="contentKind === 'flashSales'" prop="subtitle" label="副标题" min-width="160" />
               <el-table-column label="商品" min-width="260">
@@ -587,7 +633,11 @@
             </el-table>
 
             <el-table v-else-if="contentKind === 'promotions'" :data="promotions" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无促销位" /></template>
+              <template #empty>
+                <el-empty description="暂无促销位">
+                  <div class="empty-actions"><el-button type="primary" :icon="Plus" @click="openPromotion()">新增促销位</el-button></div>
+                </el-empty>
+              </template>
               <el-table-column label="促销位" min-width="280">
                 <template #default="{ row }">
                   <div class="goods-cell">
@@ -626,6 +676,7 @@
               <el-segmented v-model="mediaKind" :options="mediaKindOptions" @change="loadCurrentView" />
             </div>
             <div class="toolbar-actions">
+              <el-button v-if="hasMediaFilters" :icon="Refresh" @click="resetMediaFilters">重置筛选</el-button>
               <el-button :icon="Refresh" @click="loadCurrentView">刷新</el-button>
               <el-button type="primary" :icon="Upload" @click="mediaInput?.click()">上传资源</el-button>
             </div>
@@ -673,7 +724,12 @@
                 </div>
               </article>
             </div>
-            <el-empty v-else description="暂无资源，上传图片、视频、音频或文档" />
+            <el-empty v-else :description="hasMediaFilters ? '没有匹配的资源' : '暂无资源，上传图片、视频、音频或文档'">
+              <div class="empty-actions">
+                <el-button v-if="hasMediaFilters" @click="resetMediaFilters">清空筛选</el-button>
+                <el-button type="primary" :icon="Upload" @click="mediaInput?.click()">上传资源</el-button>
+              </div>
+            </el-empty>
           </el-card>
         </section>
 
@@ -693,7 +749,10 @@
           </div>
           <div class="toolbar">
             <el-segmented v-model="couponStatus" :options="couponStatusOptions" @change="loadCoupons" />
-            <el-button type="primary" :icon="Plus" @click="openCoupon()">发放优惠券</el-button>
+            <div class="toolbar-actions">
+              <el-button v-if="hasCouponFilters" :icon="Refresh" @click="resetCouponFilters">重置筛选</el-button>
+              <el-button type="primary" :icon="Plus" @click="openCoupon()">发放优惠券</el-button>
+            </div>
           </div>
           <el-card shadow="never" class="panel-card">
             <template #header>
@@ -703,7 +762,14 @@
               </div>
             </template>
             <el-table :data="coupons" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无优惠券" /></template>
+              <template #empty>
+                <el-empty :description="hasCouponFilters ? '没有匹配的优惠券' : '暂无优惠券'">
+                  <div class="empty-actions">
+                    <el-button v-if="hasCouponFilters" @click="resetCouponFilters">清空筛选</el-button>
+                    <el-button type="primary" :icon="Plus" @click="openCoupon()">发放优惠券</el-button>
+                  </div>
+                </el-empty>
+              </template>
               <el-table-column prop="name" label="优惠券" min-width="180" />
               <el-table-column prop="username" label="用户" width="130" />
               <el-table-column label="优惠" width="110"><template #default="{ row }">减 {{ row.value }}</template></el-table-column>
@@ -1085,6 +1151,7 @@ const mediaKind = ref('')
 const orderChartRef = ref(null)
 const salesChartRef = ref(null)
 const mediaInput = ref(null)
+const productTableRef = ref(null)
 let orderChart = null
 let salesChart = null
 
@@ -1241,6 +1308,11 @@ const productFilterLabel = computed(() => {
 })
 const orderFilterLabel = computed(() => optionLabel(orderStatusOptions, orderStatus.value) || '全部订单')
 const couponFilterLabel = computed(() => optionLabel(couponStatusOptions, couponStatus.value) || '全部优惠券')
+const hasProductFilters = computed(() => Boolean(keyword.value.trim() || productStatus.value || productCategory.value || productStock.value))
+const hasOrderFilters = computed(() => Boolean(keyword.value.trim() || orderStatus.value))
+const hasUserFilters = computed(() => Boolean(keyword.value.trim()))
+const hasMediaFilters = computed(() => Boolean(keyword.value.trim() || mediaKind.value))
+const hasCouponFilters = computed(() => Boolean(keyword.value.trim() || couponStatus.value))
 const productSummaryCards = computed(() => [
   { label: '当前结果', value: formatNumber(products.value.length), hint: productFilterLabel.value },
   { label: '上架商品', value: formatNumber(products.value.filter(item => item.is_in_stock).length), hint: '可售状态', action: () => openProductFilter({ status: 'active' }) },
@@ -1713,6 +1785,43 @@ async function deleteMedia(row) {
 async function loadCoupons() {
   const data = await adminApi.coupons({ q: keyword.value, status: couponStatus.value })
   coupons.value = data.items || []
+}
+
+async function resetProductFilters() {
+  keyword.value = ''
+  productStatus.value = ''
+  productCategory.value = ''
+  productStock.value = ''
+  clearProductSelection()
+  await loadCurrentView()
+}
+
+async function resetOrderFilters() {
+  keyword.value = ''
+  orderStatus.value = ''
+  await loadCurrentView()
+}
+
+async function resetUserFilters() {
+  keyword.value = ''
+  await loadCurrentView()
+}
+
+async function resetMediaFilters() {
+  keyword.value = ''
+  mediaKind.value = ''
+  await loadCurrentView()
+}
+
+async function resetCouponFilters() {
+  keyword.value = ''
+  couponStatus.value = ''
+  await loadCurrentView()
+}
+
+function clearProductSelection() {
+  productTableRef.value?.clearSelection?.()
+  selectedProducts.value = []
 }
 
 async function loadShop() {
