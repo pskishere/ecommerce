@@ -305,8 +305,8 @@
             </template>
             <el-table :data="products" stripe max-height="calc(100vh - 420px)" @selection-change="selectedProducts = $event">
               <template #empty><el-empty description="暂无商品，先新增一个商品" /></template>
-              <el-table-column type="selection" width="46" fixed />
-              <el-table-column label="商品" min-width="300" fixed>
+              <el-table-column type="selection" width="46" />
+              <el-table-column label="商品" min-width="300">
                 <template #default="{ row }">
                   <div class="goods-cell">
                     <el-image :src="row.image" fit="cover" class="goods-image">
@@ -335,7 +335,7 @@
               <el-table-column label="状态" width="100">
                 <template #default="{ row }"><el-tag :type="row.is_in_stock ? 'success' : 'danger'">{{ row.is_in_stock ? '上架' : '下架' }}</el-tag></template>
               </el-table-column>
-              <el-table-column label="操作" width="180" fixed="right">
+              <el-table-column label="操作" width="180">
                 <template #default="{ row }">
                   <el-button link type="primary" @click="openProduct(row)">编辑</el-button>
                   <el-button link :type="row.is_in_stock ? 'danger' : 'success'" @click="toggleProduct(row)">{{ row.is_in_stock ? '下架' : '上架' }}</el-button>
@@ -371,7 +371,7 @@
             </template>
             <el-table :data="orders" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty description="暂无订单" /></template>
-              <el-table-column prop="id" label="订单号" min-width="190" fixed />
+              <el-table-column prop="id" label="订单号" min-width="190" />
               <el-table-column label="用户" width="130">
                 <template #default="{ row }">{{ row.user?.username || '-' }}</template>
               </el-table-column>
@@ -393,7 +393,7 @@
                   <span class="subtext">{{ row.tracking_number || row.after_sale_status_text || '' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="300" fixed="right">
+              <el-table-column label="操作" width="300">
                 <template #default="{ row }">
                   <el-button link type="primary" @click="openOrderDetail(row)">详情</el-button>
                   <el-button v-if="row.status === 'pending'" link type="success" @click="markPaid(row)">标记支付</el-button>
@@ -429,7 +429,7 @@
             </template>
             <el-table :data="users" stripe max-height="calc(100vh - 360px)">
               <template #empty><el-empty description="暂无用户" /></template>
-              <el-table-column prop="username" label="用户" min-width="150" fixed />
+              <el-table-column prop="username" label="用户" min-width="150" />
               <el-table-column prop="phone" label="手机号" width="150" />
               <el-table-column prop="email" label="邮箱" min-width="210" />
               <el-table-column label="会员" width="130">
@@ -524,7 +524,7 @@
 
             <el-table v-else-if="isHomeProductSection" :data="currentHomeSections" stripe max-height="calc(100vh - 420px)">
               <template #empty><el-empty :description="`暂无${currentContentLabel}`" /></template>
-              <el-table-column prop="title" label="栏目" min-width="180" fixed />
+              <el-table-column prop="title" label="栏目" min-width="180" />
               <el-table-column v-if="contentKind === 'flashSales'" prop="subtitle" label="副标题" min-width="160" />
               <el-table-column label="商品" min-width="260">
                 <template #default="{ row }">
