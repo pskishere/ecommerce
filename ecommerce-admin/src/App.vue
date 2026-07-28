@@ -34,10 +34,6 @@
       :aria-hidden="isCompactViewport && isSidebarCollapsed"
     >
       <div class="aside-brand">
-        <div class="brand-mark" aria-hidden="true">
-          <span class="brand-bag"></span>
-          <span class="brand-word">潮</span>
-        </div>
         <div class="brand-copy">
           <strong>潮流好物</strong>
           <span>管理台</span>

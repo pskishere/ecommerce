@@ -189,51 +189,12 @@ select {
 }
 
 .aside-brand {
-  height: 78px;
+  height: 62px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-bottom: 1px solid #eeeeef;
   transition: padding 0.2s ease;
-}
-
-.admin-aside .brand-mark {
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  border-radius: 13px;
-  background:
-    radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.2), transparent 24px),
-    linear-gradient(145deg, #343436 0%, #171717 62%, #050505 100%);
-  box-shadow: 0 12px 24px rgba(17, 17, 17, 0.16);
-}
-
-.admin-aside .brand-mark::after {
-  inset: 6px;
-  border-radius: 9px;
-}
-
-.admin-aside .brand-bag {
-  left: 11px;
-  top: 16px;
-  width: 22px;
-  height: 19px;
-  border-radius: 6px 6px 8px 8px;
-}
-
-.admin-aside .brand-bag::before {
-  left: 4px;
-  top: -7px;
-  width: 10px;
-  height: 8px;
-}
-
-.admin-aside .brand-bag::after {
-  left: 7px;
-  top: 7px;
-  width: 5px;
-  height: 5px;
 }
 
 .brand-copy {
@@ -243,7 +204,7 @@ select {
 .brand-copy strong {
   display: block;
   color: #111111;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.1;
 }
 
@@ -255,38 +216,7 @@ select {
 }
 
 .admin-aside.collapsed .aside-brand {
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px;
-}
-
-.admin-aside.collapsed .brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-}
-
-.admin-aside.collapsed .brand-bag {
-  left: 10px;
-  top: 15px;
-  width: 20px;
-  height: 17px;
-  border-radius: 6px 6px 8px 8px;
-}
-
-.admin-aside.collapsed .brand-bag::before {
-  left: 4px;
-  top: -7px;
-  width: 8px;
-  height: 8px;
-}
-
-.admin-aside.collapsed .brand-bag::after {
-  left: 6px;
-  top: 6px;
-  width: 5px;
-  height: 5px;
+  display: none;
 }
 
 .admin-aside.collapsed .brand-copy {
@@ -1317,24 +1247,6 @@ select {
     width: min(82vw, 270px) !important;
     pointer-events: none;
     transform: translateX(-290px);
-  }
-
-  .admin-aside.collapsed .aside-brand {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 0 22px;
-  }
-
-  .admin-aside.collapsed .brand-mark {
-    width: 54px;
-    height: 54px;
-    border-radius: 12px;
-    font-size: 22px;
-  }
-
-  .admin-aside.collapsed .brand-copy {
-    display: block;
   }
 
   .admin-aside.collapsed .admin-menu {
