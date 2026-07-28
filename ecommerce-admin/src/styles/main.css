@@ -782,16 +782,19 @@ select {
 }
 
 .toolbar .el-segmented {
-  width: auto;
-  max-width: min(100%, 720px);
-  flex: 1 1 420px;
-  border: 1px solid #e5e5e8;
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  border: 1px solid var(--admin-line);
   border-radius: 8px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
 }
 
 .toolbar-left > .el-segmented {
+  width: auto;
+  flex: 1 1 420px;
   max-width: min(100%, 620px);
 }
 
@@ -1648,9 +1651,15 @@ select {
     flex-wrap: nowrap;
   }
 
+  .toolbar .el-segmented {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
   .toolbar-left,
   .toolbar-actions {
     width: 100%;
+    flex: 0 0 auto;
     flex-wrap: wrap;
   }
 
@@ -1814,7 +1823,7 @@ select {
 
   .toolbar-left,
   .toolbar-actions {
-    flex: 1 1 100%;
+    flex: 0 0 auto;
   }
 
   .toolbar-actions {
