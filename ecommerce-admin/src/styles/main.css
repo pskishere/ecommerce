@@ -1116,8 +1116,10 @@ select {
   width: 54px;
   height: 54px;
   border-radius: var(--admin-radius);
-  background: #eeeeef;
+  border: 1px solid #e4e8ed;
+  background: #f7f8fa;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .goods-image.small {
@@ -1129,8 +1131,22 @@ select {
   width: 86px;
   height: 48px;
   border-radius: var(--admin-radius);
-  background: #eeeeef;
+  border: 1px solid #e4e8ed;
+  background: #f7f8fa;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.rank-image .el-image__inner,
+.goods-image .el-image__inner,
+.banner-image .el-image__inner {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  object-fit: contain !important;
+  object-position: center;
 }
 
 .image-fallback {
@@ -1191,7 +1207,20 @@ select {
   aspect-ratio: 16 / 9;
   display: grid;
   place-items: center;
-  background: #f1f1f2;
+  background: #f7f8fa;
+  overflow: hidden;
+}
+
+.media-thumb .el-image__inner {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  object-fit: contain !important;
+  object-position: center;
 }
 
 .media-thumb-fallback {

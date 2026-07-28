@@ -190,7 +190,7 @@
               </template>
               <div class="rank-list">
                 <div v-for="item in dashboard.topProducts" :key="item.id" class="rank-item">
-                  <el-image :src="item.image" fit="cover" class="rank-image">
+                  <el-image :src="item.image" fit="contain" class="rank-image">
                     <template #error><div class="image-fallback">IMG</div></template>
                   </el-image>
                   <div>
@@ -234,7 +234,7 @@
               </template>
               <div class="rank-list">
                 <div v-for="item in dashboard.lowStockProducts" :key="item.id" class="rank-item warning-rank">
-                  <el-image :src="item.image" fit="cover" class="rank-image">
+                  <el-image :src="item.image" fit="contain" class="rank-image">
                     <template #error><div class="image-fallback">IMG</div></template>
                   </el-image>
                   <div>
@@ -334,7 +334,7 @@
               <el-table-column label="商品" min-width="300">
                 <template #default="{ row }">
                   <div class="goods-cell">
-                    <el-image :src="row.image" fit="cover" class="goods-image">
+                    <el-image :src="row.image" fit="contain" class="goods-image">
                       <template #error><div class="image-fallback">IMG</div></template>
                     </el-image>
                     <div>
@@ -549,7 +549,7 @@
               <el-table-column label="分类" min-width="240">
                 <template #default="{ row }">
                   <div class="goods-cell">
-                    <el-image :src="row.icon" fit="cover" class="goods-image small"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <el-image :src="row.icon" fit="contain" class="goods-image small"><template #error><div class="image-fallback">IMG</div></template></el-image>
                     <strong>{{ row.name }}</strong>
                   </div>
                 </template>
@@ -587,7 +587,7 @@
               <el-table-column label="Banner" min-width="280">
                 <template #default="{ row }">
                   <div class="goods-cell">
-                    <el-image :src="row.image" fit="cover" class="banner-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <el-image :src="row.image" fit="contain" class="banner-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
                     <div><strong>{{ row.title || row.tag || 'Banner' }}</strong><span>{{ row.tag || '-' }}</span></div>
                   </div>
                 </template>
@@ -641,7 +641,7 @@
               <el-table-column label="促销位" min-width="280">
                 <template #default="{ row }">
                   <div class="goods-cell">
-                    <el-image :src="row.image" fit="cover" class="banner-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
+                    <el-image :src="row.image" fit="contain" class="banner-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
                     <div><strong>{{ row.title }}</strong><span>{{ row.subtitle || '-' }}</span></div>
                   </div>
                 </template>
@@ -693,7 +693,7 @@
             <div v-if="media.length" class="media-grid">
               <article v-for="item in media" :key="item.id" class="media-card">
                 <button class="media-preview-button" type="button" @click="openMediaPreview(item)">
-                  <el-image v-if="item.kind === 'image'" :src="item.url" fit="cover" class="media-thumb">
+                  <el-image v-if="item.kind === 'image'" :src="item.url" fit="contain" class="media-thumb">
                     <template #error><div class="image-fallback">IMG</div></template>
                   </el-image>
                   <div v-else class="media-thumb media-thumb-fallback">
@@ -1014,7 +1014,7 @@
       <section class="detail-section">
         <h3>商品明细</h3>
         <div v-for="item in orderDetail.products" :key="item.id" class="order-product">
-          <el-image :src="item.image" fit="cover" class="goods-image">
+          <el-image :src="item.image" fit="contain" class="goods-image">
             <template #error><div class="image-fallback">IMG</div></template>
           </el-image>
           <div>
