@@ -2,7 +2,10 @@
   <section v-if="!isAuthed" class="login-page">
     <div class="login-card">
       <div class="brand-block">
-        <div class="brand-mark">潮</div>
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-bag"></span>
+          <span class="brand-word">潮</span>
+        </div>
         <div>
           <p class="eyebrow">管理后台</p>
           <h1>潮流好物后台</h1>
@@ -31,7 +34,10 @@
       :aria-hidden="isCompactViewport && isSidebarCollapsed"
     >
       <div class="aside-brand">
-        <div class="brand-mark">潮</div>
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-bag"></span>
+          <span class="brand-word">潮</span>
+        </div>
         <div class="brand-copy">
           <strong>潮流好物</strong>
           <span>管理台</span>

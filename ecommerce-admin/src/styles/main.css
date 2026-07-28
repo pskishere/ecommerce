@@ -81,17 +81,65 @@ select {
 }
 
 .brand-mark {
+  position: relative;
   width: 54px;
   height: 54px;
-  border-radius: 10px;
-  background: var(--admin-brand);
-  box-shadow: inset -14px 0 0 var(--admin-accent), 0 12px 28px rgba(var(--admin-brand-rgb), 0.22);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-  font-weight: 900;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.22), transparent 28px),
+    linear-gradient(145deg, #5d86f2 0%, #2563eb 58%, #1e40af 100%);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.26), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.brand-mark::after {
+  position: absolute;
+  inset: 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  content: "";
+}
+
+.brand-bag {
+  position: absolute;
+  left: 14px;
+  top: 19px;
+  z-index: 1;
+  width: 26px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 7px 7px 9px 9px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 18px rgba(30, 64, 175, 0.24);
+}
+
+.brand-bag::before {
+  position: absolute;
+  left: 5px;
+  top: -8px;
+  width: 12px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  content: "";
+}
+
+.brand-bag::after {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--admin-accent);
+  content: "";
+}
+
+.brand-word {
+  display: none;
 }
 
 .eyebrow {
@@ -187,8 +235,29 @@ select {
 .admin-aside.collapsed .brand-mark {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 12px;
+}
+
+.admin-aside.collapsed .brand-bag {
+  left: 10px;
+  top: 15px;
+  width: 20px;
+  height: 17px;
+  border-radius: 6px 6px 8px 8px;
+}
+
+.admin-aside.collapsed .brand-bag::before {
+  left: 4px;
+  top: -7px;
+  width: 8px;
+  height: 8px;
+}
+
+.admin-aside.collapsed .brand-bag::after {
+  left: 6px;
+  top: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .admin-aside.collapsed .brand-copy {
@@ -220,7 +289,14 @@ select {
 }
 
 .admin-menu .el-menu-item .el-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #9299a8;
   flex-shrink: 0;
+  transition: background 0.16s ease, color 0.16s ease;
 }
 
 .menu-label {
@@ -241,6 +317,12 @@ select {
 .admin-menu .el-menu-item.is-active {
   background: var(--admin-aside-raised);
   color: white;
+}
+
+.admin-menu .el-menu-item:hover .el-icon,
+.admin-menu .el-menu-item.is-active .el-icon {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .front-link {
