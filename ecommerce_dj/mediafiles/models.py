@@ -14,7 +14,7 @@ def upload_to(instance, filename):
 
 class MediaFile(models.Model):
     id = models.CharField(max_length=50, primary_key=True, default=generate_uuid)
-    file = models.ImageField(upload_to=upload_to)
+    file = models.FileField(upload_to=upload_to)
     original_name = models.CharField(max_length=255, blank=True)
     size = models.IntegerField(default=0)
     mime_type = models.CharField(max_length=100, blank=True)

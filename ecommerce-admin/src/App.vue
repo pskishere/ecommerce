@@ -105,7 +105,7 @@
                 <el-dropdown-item command="product">新增商品</el-dropdown-item>
                 <el-dropdown-item command="banner">新增 Banner</el-dropdown-item>
                 <el-dropdown-item command="coupon">发放优惠券</el-dropdown-item>
-                <el-dropdown-item command="media">上传素材</el-dropdown-item>
+                <el-dropdown-item command="media">上传资源</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -452,7 +452,7 @@
           <div class="module-hero">
             <div class="module-copy">
               <h3>前台内容</h3>
-              <span>分类、Banner、栏目和素材统一维护</span>
+              <span>分类、Banner 和栏目统一维护</span>
             </div>
             <div class="module-stats">
               <button v-for="item in contentSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
@@ -465,7 +465,6 @@
           <div class="toolbar">
             <el-segmented v-model="contentKind" :options="contentKindOptions" />
             <div class="toolbar-actions">
-              <input ref="mediaInput" class="hidden-file-input" type="file" accept="image/*" @change="uploadMediaFromInput" />
               <el-button type="primary" :icon="Plus" @click="openContent()">{{ contentPrimaryLabel }}</el-button>
             </div>
           </div>
@@ -568,20 +567,78 @@
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openPromotion(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
-            <el-table v-else :data="media" stripe max-height="calc(100vh - 420px)">
-              <template #empty><el-empty description="暂无素材，上传一张图片" /></template>
-              <el-table-column label="素材" min-width="320">
-                <template #default="{ row }">
-                  <div class="goods-cell">
-                    <el-image :src="row.url" fit="cover" class="goods-image"><template #error><div class="image-fallback">IMG</div></template></el-image>
-                    <div><strong>{{ row.name }}</strong><span>{{ row.mime_type || '-' }}</span></div>
+            <el-empty v-else description="暂无内容" />
+          </el-card>
+        </section>
+
+        <section v-show="activeView === 'media'" class="view-stack">
+          <div class="module-hero">
+            <div class="module-copy">
+              <h3>多媒体资源管理</h3>
+              <span>统一管理图片、视频、音频和文档，前台内容与商品图片从这里复用。</span>
+            </div>
+            <div class="module-stats">
+              <button v-for="item in mediaSummaryCards" :key="item.label" class="module-stat" type="button" :disabled="!item.action" @click="item.action?.()">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <em>{{ item.hint }}</em>
+              </button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <el-segmented v-model="mediaKind" :options="mediaKindOptions" @change="loadCurrentView" />
+            </div>
+            <div class="toolbar-actions">
+              <el-button :icon="Refresh" @click="loadCurrentView">刷新</el-button>
+              <el-button type="primary" :icon="Upload" @click="mediaInput?.click()">上传资源</el-button>
+            </div>
+          </div>
+
+          <el-card shadow="never" class="panel-card media-panel">
+            <template #header>
+              <div class="panel-head">
+                <span>资源库</span>
+                <el-tag type="info" effect="plain">{{ mediaFilterLabel }}</el-tag>
+              </div>
+            </template>
+
+            <div v-if="media.length" class="media-grid">
+              <article v-for="item in media" :key="item.id" class="media-card">
+                <button class="media-preview-button" type="button" @click="openMediaPreview(item)">
+                  <el-image v-if="item.kind === 'image'" :src="item.url" fit="cover" class="media-thumb">
+                    <template #error><div class="image-fallback">IMG</div></template>
+                  </el-image>
+                  <div v-else class="media-thumb media-thumb-fallback">
+                    <el-icon><component :is="mediaIcon(item.kind)" /></el-icon>
+                    <span>{{ mediaKindLabel(item.kind) }}</span>
                   </div>
-                </template>
-              </el-table-column>
-              <el-table-column label="大小" width="120"><template #default="{ row }">{{ fileSize(row.size) }}</template></el-table-column>
-              <el-table-column prop="uploaded_at" label="上传时间" width="170" />
-              <el-table-column label="地址" min-width="260"><template #default="{ row }"><el-link :href="row.url" target="_blank" type="primary">打开素材</el-link></template></el-table-column>
-            </el-table>
+                </button>
+                <div class="media-card-body">
+                  <div class="media-card-title">
+                    <strong>{{ item.name }}</strong>
+                    <el-tag type="info" effect="plain">{{ item.extension || mediaKindLabel(item.kind) }}</el-tag>
+                  </div>
+                  <p>{{ item.mime_type || '-' }}</p>
+                  <div class="media-meta-row">
+                    <span>{{ fileSize(item.size) }}</span>
+                    <span>{{ item.uploaded_at || '-' }}</span>
+                  </div>
+                  <div class="media-usage">
+                    <el-tag :type="item.usage_count ? 'success' : 'info'" effect="plain">{{ item.usage_count ? `引用 ${item.usage_count}` : '未引用' }}</el-tag>
+                    <span v-if="item.used_in?.length">{{ item.used_in.map(usage => `${usage.label} ${usage.count}`).join(' / ') }}</span>
+                  </div>
+                </div>
+                <div class="media-actions">
+                  <el-button link type="primary" :icon="View" @click="openMediaPreview(item)">预览</el-button>
+                  <el-button link type="primary" :icon="CopyDocument" @click="copyMediaUrl(item)">复制</el-button>
+                  <el-button link type="primary" @click="renameMedia(item)">重命名</el-button>
+                  <el-button link type="danger" :icon="Delete" @click="deleteMedia(item)">删除</el-button>
+                </div>
+              </article>
+            </div>
+            <el-empty v-else description="暂无资源，上传图片、视频、音频或文档" />
           </el-card>
         </section>
 
@@ -658,6 +715,16 @@
     </el-container>
   </el-container>
 
+  <input
+    v-if="isAuthed"
+    ref="mediaInput"
+    class="hidden-file-input"
+    type="file"
+    multiple
+    accept="image/*,video/*,audio/*,application/pdf,text/plain,.csv,.json"
+    @change="uploadMediaFromInput"
+  />
+
   <el-drawer v-model="productDrawer" :title="productForm.id ? '编辑商品' : '新增商品'" size="720px">
     <el-form :model="productForm" label-position="top">
       <el-form-item label="商品名称"><el-input v-model="productForm.name" /></el-form-item>
@@ -673,7 +740,7 @@
       </el-form-item>
       <el-form-item label="商品图片">
         <el-select v-model="productForm.image_id" filterable clearable>
-          <el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" />
+          <el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
       </el-form-item>
       <el-form-item label="上架状态"><el-switch v-model="productForm.is_in_stock" active-text="上架" inactive-text="下架" /></el-form-item>
@@ -729,7 +796,7 @@
           <el-table-column label="图片" min-width="150">
             <template #default="{ row }">
               <el-select v-model="row.image_id" filterable clearable placeholder="默认商品图">
-                <el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" />
+                <el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" />
               </el-select>
             </template>
           </el-table-column>
@@ -744,15 +811,15 @@
     <el-form v-if="contentKind === 'categories'" :model="categoryForm" label-position="top">
       <el-form-item label="分类名称"><el-input v-model="categoryForm.name" /></el-form-item>
       <el-form-item label="排序"><el-input-number v-model="categoryForm.sort_order" :min="0" /></el-form-item>
-      <el-form-item label="图标"><el-select v-model="categoryForm.icon_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
-      <el-form-item label="Banner"><el-select v-model="categoryForm.banner_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="图标"><el-select v-model="categoryForm.icon_id" filterable clearable><el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="Banner"><el-select v-model="categoryForm.banner_id" filterable clearable><el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="启用"><el-switch v-model="categoryForm.is_enabled" /></el-form-item>
     </el-form>
     <el-form v-else-if="contentKind === 'subcategories'" :model="subcategoryForm" label-position="top">
       <el-form-item label="子分类名称"><el-input v-model="subcategoryForm.name" /></el-form-item>
       <el-form-item label="所属分类"><el-select v-model="subcategoryForm.category_id"><el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="排序"><el-input-number v-model="subcategoryForm.sort_order" :min="0" /></el-form-item>
-      <el-form-item label="图标"><el-select v-model="subcategoryForm.icon_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="图标"><el-select v-model="subcategoryForm.icon_id" filterable clearable><el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="启用"><el-switch v-model="subcategoryForm.is_enabled" /></el-form-item>
     </el-form>
     <el-form v-else-if="contentKind === 'banners'" :model="bannerForm" label-position="top">
@@ -764,7 +831,7 @@
       <el-form-item label="会场副标题"><el-input v-model="bannerForm.landing_subtitle" /></el-form-item>
       <el-form-item label="色彩序号"><el-input-number v-model="bannerForm.gradient_type" :min="0" /></el-form-item>
       <el-form-item label="排序"><el-input-number v-model="bannerForm.sort_order" :min="0" /></el-form-item>
-      <el-form-item label="图片"><el-select v-model="bannerForm.image_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="图片"><el-select v-model="bannerForm.image_id" filterable clearable><el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="关联商品"><el-select v-model="bannerForm.product_ids" multiple filterable><el-option v-for="item in products" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="会场描述"><el-input v-model="bannerForm.landing_description" type="textarea" :rows="4" /></el-form-item>
       <el-form-item label="启用"><el-switch v-model="bannerForm.is_enabled" /></el-form-item>
@@ -786,7 +853,7 @@
       <el-form-item label="标题"><el-input v-model="promotionForm.title" /></el-form-item>
       <el-form-item label="副标题"><el-input v-model="promotionForm.subtitle" /></el-form-item>
       <el-form-item label="跳转链接"><el-input v-model="promotionForm.link" /></el-form-item>
-      <el-form-item label="图片"><el-select v-model="promotionForm.image_id" filterable clearable><el-option v-for="item in media" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+      <el-form-item label="图片"><el-select v-model="promotionForm.image_id" filterable clearable><el-option v-for="item in mediaImageOptions" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
       <el-form-item label="排序"><el-input-number v-model="promotionForm.sort_order" :min="0" /></el-form-item>
       <el-form-item label="启用"><el-switch v-model="promotionForm.is_enabled" /></el-form-item>
     </el-form>
@@ -894,6 +961,43 @@
       <div class="drawer-actions"><el-button @click="couponDrawer = false">取消</el-button><el-button type="primary" @click="saveCoupon">保存优惠券</el-button></div>
     </el-form>
   </el-drawer>
+
+  <el-dialog v-model="mediaPreviewVisible" title="资源预览" width="760px" class="media-preview-dialog">
+    <div v-if="mediaPreview" class="media-preview">
+      <img v-if="mediaPreview.kind === 'image'" :src="mediaPreview.url" alt="" />
+      <video v-else-if="mediaPreview.kind === 'video'" :src="mediaPreview.url" controls></video>
+      <audio v-else-if="mediaPreview.kind === 'audio'" :src="mediaPreview.url" controls></audio>
+      <iframe v-else-if="mediaPreview.mime_type === 'application/pdf'" :src="mediaPreview.url" title="PDF 预览"></iframe>
+      <div v-else class="media-file-preview">
+        <el-icon><component :is="mediaIcon(mediaPreview.kind)" /></el-icon>
+        <strong>{{ mediaPreview.name }}</strong>
+        <el-link :href="mediaPreview.url" target="_blank" type="primary">打开资源</el-link>
+      </div>
+
+      <dl class="media-detail-list">
+        <div>
+          <dt>名称</dt>
+          <dd>{{ mediaPreview.name }}</dd>
+        </div>
+        <div>
+          <dt>类型</dt>
+          <dd>{{ mediaPreview.mime_type || mediaKindLabel(mediaPreview.kind) }}</dd>
+        </div>
+        <div>
+          <dt>大小</dt>
+          <dd>{{ fileSize(mediaPreview.size) }}</dd>
+        </div>
+        <div>
+          <dt>上传时间</dt>
+          <dd>{{ mediaPreview.uploaded_at || '-' }}</dd>
+        </div>
+        <div class="full">
+          <dt>引用</dt>
+          <dd>{{ mediaPreview.used_in?.length ? mediaPreview.used_in.map(usage => `${usage.label} ${usage.count}`).join(' / ') : '未引用' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -902,11 +1006,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import * as echarts from 'echarts'
 import {
   ArrowDown,
+  CopyDocument,
   DataBoard,
+  Delete,
+  Document,
   Expand,
+  Files,
   Fold,
   Goods,
   Grid,
+  Headset,
+  Picture,
   Plus,
   Refresh,
   Search,
@@ -914,6 +1024,9 @@ import {
   Ticket,
   Tickets,
   User,
+  Upload,
+  VideoPlay,
+  View,
 } from '@element-plus/icons-vue'
 import { adminApi, clearToken, getToken, setToken } from './api/admin'
 
@@ -933,6 +1046,7 @@ const productStock = ref('')
 const orderStatus = ref('')
 const couponStatus = ref('')
 const contentKind = ref('categories')
+const mediaKind = ref('')
 const orderChartRef = ref(null)
 const salesChartRef = ref(null)
 const mediaInput = ref(null)
@@ -962,6 +1076,7 @@ const homeRecommends = ref([])
 const homeNewArrivals = ref([])
 const promotions = ref([])
 const media = ref([])
+const mediaSummary = ref(createEmptyMediaSummary())
 const shopForm = reactive({})
 
 const productDrawer = ref(false)
@@ -984,6 +1099,8 @@ const orderAction = ref('')
 const editingOrderId = ref('')
 const selectedProducts = ref([])
 const orderDetail = ref(null)
+const mediaPreview = ref(null)
+const mediaPreviewVisible = ref(false)
 
 const viewMeta = {
   dashboard: { kicker: '后台 / 概览', title: '经营概览' },
@@ -991,6 +1108,7 @@ const viewMeta = {
   orders: { kicker: '后台 / 订单', title: '订单履约' },
   users: { kicker: '后台 / 会员', title: '用户会员' },
   content: { kicker: '后台 / 内容', title: '首页内容' },
+  media: { kicker: '后台 / 资源', title: '资源管理' },
   coupons: { kicker: '后台 / 权益', title: '优惠券' },
   shop: { kicker: '后台 / 店铺', title: '店铺设置' },
 }
@@ -1001,12 +1119,13 @@ const navItems = [
   { index: 'orders', label: '订单履约', icon: Tickets },
   { index: 'users', label: '用户会员', icon: User },
   { index: 'content', label: '首页内容', icon: Grid },
+  { index: 'media', label: '资源管理', icon: Files },
   { index: 'coupons', label: '优惠券', icon: Ticket },
   { index: 'shop', label: '店铺设置', icon: Shop },
 ]
 
 const currentMeta = computed(() => viewMeta[activeView.value] || viewMeta.dashboard)
-const searchable = computed(() => ['products', 'orders', 'users', 'coupons'].includes(activeView.value))
+const searchable = computed(() => ['products', 'orders', 'users', 'media', 'coupons'].includes(activeView.value))
 const formattedLastSynced = computed(() => {
   if (!lastSyncedAt.value) return ''
   return lastSyncedAt.value.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
@@ -1014,7 +1133,7 @@ const formattedLastSynced = computed(() => {
 const homeProductSectionKinds = ['flashSales', 'hotRanks', 'recommends', 'newArrivals']
 const isHomeProductSection = computed(() => homeProductSectionKinds.includes(contentKind.value))
 const currentContentLabel = computed(() => contentKindOptions.find(item => item.value === contentKind.value)?.label || '内容')
-const contentPrimaryLabel = computed(() => contentKind.value === 'media' ? '上传素材' : `新增${currentContentLabel.value}`)
+const contentPrimaryLabel = computed(() => `新增${currentContentLabel.value}`)
 const currentHomeSections = computed(() => ({
   flashSales: homeFlashSales.value,
   hotRanks: homeHotRanks.value,
@@ -1058,7 +1177,7 @@ const contentHealthCards = computed(() => [
   { label: '启用 Banner', value: dashboard.contentHealth.enabled_banners || 0, action: () => openContentHealth('banners') },
   { label: '启用分类', value: dashboard.contentHealth.enabled_categories || 0, action: () => openContentHealth('categories') },
   { label: '首页栏目', value: dashboard.contentHealth.enabled_home_sections || 0, action: () => openContentHealth('flashSales') },
-  { label: '素材文件', value: dashboard.contentHealth.media_files || 0, action: () => openContentHealth('media') },
+  { label: '素材文件', value: dashboard.contentHealth.media_files || 0, action: () => switchView('media') },
 ])
 const currentContentRows = computed(() => {
   if (contentKind.value === 'categories') return categories.value
@@ -1069,10 +1188,9 @@ const currentContentRows = computed(() => {
   if (contentKind.value === 'recommends') return homeRecommends.value
   if (contentKind.value === 'newArrivals') return homeNewArrivals.value
   if (contentKind.value === 'promotions') return promotions.value
-  return media.value
+  return []
 })
 const currentContentEnabledCount = computed(() => {
-  if (contentKind.value === 'media') return media.value.length
   return currentContentRows.value.filter(item => item.is_enabled !== false).length
 })
 const currentContentProductCount = computed(() => sumBy(currentContentRows.value, item => item.product_count))
@@ -1109,9 +1227,21 @@ const userSummaryCards = computed(() => [
 const contentSummaryCards = computed(() => [
   { label: '当前模块', value: currentContentLabel.value, hint: '正在维护' },
   { label: '当前内容', value: formatNumber(currentContentRows.value.length), hint: '列表结果' },
-  { label: '已启用', value: formatNumber(currentContentEnabledCount.value), hint: contentKind.value === 'media' ? '素材总量' : '前台可见' },
-  { label: contentKind.value === 'media' ? '素材文件' : '关联商品', value: formatNumber(contentKind.value === 'media' ? media.value.length : currentContentProductCount.value), hint: contentKind.value === 'media' ? '图片资源' : '内容绑定' },
+  { label: '已启用', value: formatNumber(currentContentEnabledCount.value), hint: '前台可见' },
+  { label: '关联商品', value: formatNumber(currentContentProductCount.value), hint: '内容绑定' },
 ])
+const mediaImageOptions = computed(() => media.value.filter(item => item.kind === 'image' || (item.mime_type || '').startsWith('image/')))
+const mediaSummaryCards = computed(() => [
+  { label: '资源总数', value: formatNumber(mediaSummary.value.total), hint: fileSize(mediaSummary.value.storage) },
+  { label: '图片', value: formatNumber(mediaSummary.value.images), hint: '可用于商品和内容', action: () => openMediaKind('image') },
+  { label: '视频 / 音频', value: `${formatNumber(mediaSummary.value.videos)} / ${formatNumber(mediaSummary.value.audios)}`, hint: '展示与介绍素材' },
+  { label: '未引用', value: formatNumber(mediaSummary.value.unused), hint: '可清理资源', action: () => openMediaKind('unused') },
+])
+const mediaFilterLabel = computed(() => {
+  const label = optionLabel(mediaKindOptions, mediaKind.value) || '全部'
+  const keywordText = keyword.value ? ` / ${keyword.value}` : ''
+  return `${label}${keywordText} · ${formatNumber(media.value.length)} 个资源`
+})
 const couponSummaryCards = computed(() => [
   { label: '当前优惠券', value: formatNumber(coupons.value.length), hint: couponFilterLabel.value },
   { label: '可用', value: formatNumber(coupons.value.filter(item => item.status === 'available').length), hint: '可核销', action: () => openCouponQueue('available') },
@@ -1150,7 +1280,14 @@ const contentKindOptions = [
   { label: '新品上市', value: 'newArrivals' },
   { label: '为你推荐', value: 'recommends' },
   { label: '促销位', value: 'promotions' },
-  { label: '素材库', value: 'media' },
+]
+const mediaKindOptions = [
+  { label: '全部', value: '' },
+  { label: '图片', value: 'image' },
+  { label: '视频', value: 'video' },
+  { label: '音频', value: 'audio' },
+  { label: '文档', value: 'document' },
+  { label: '未引用', value: 'unused' },
 ]
 const couponStatusOptions = [
   { label: '全部', value: '' },
@@ -1252,9 +1389,11 @@ async function loadMeta() {
     adminApi.media(),
     adminApi.products(),
   ])
+  const normalizedMedia = normalizeMediaResponse(mediaData)
   categories.value = categoryData || []
   subcategories.value = subcategoryData || []
-  media.value = mediaData || []
+  media.value = normalizedMedia.items
+  mediaSummary.value = normalizedMedia.summary
   products.value = productData.items || []
 }
 
@@ -1273,6 +1412,7 @@ async function loadCurrentView() {
     orders: loadOrders,
     users: loadUsers,
     content: loadContent,
+    media: loadMedia,
     coupons: loadCoupons,
     shop: loadShop,
   }
@@ -1310,8 +1450,7 @@ async function handleQuickCreate(command) {
     await switchView('coupons')
     openCoupon()
   } else if (command === 'media') {
-    contentKind.value = 'media'
-    await switchView('content')
+    await switchView('media')
     await nextTick()
     mediaInput.value?.click()
   }
@@ -1438,7 +1577,102 @@ async function loadContent() {
   else if (contentKind.value === 'recommends') homeRecommends.value = await adminApi.homeRecommends()
   else if (contentKind.value === 'newArrivals') homeNewArrivals.value = await adminApi.homeNewArrivals()
   else if (contentKind.value === 'promotions') promotions.value = await adminApi.homePromotions()
-  else if (contentKind.value === 'media') media.value = await adminApi.media()
+}
+
+async function loadMedia() {
+  await fetchMedia({ q: keyword.value, kind: mediaKind.value })
+}
+
+async function fetchMedia(params = {}) {
+  const data = await adminApi.media(params)
+  const normalized = normalizeMediaResponse(data)
+  media.value = normalized.items
+  mediaSummary.value = normalized.summary
+  return normalized
+}
+
+function normalizeMediaResponse(data) {
+  if (Array.isArray(data)) {
+    return { items: data, summary: createEmptyMediaSummary(data) }
+  }
+  const items = data?.items || []
+  return {
+    items,
+    summary: {
+      ...createEmptyMediaSummary(items),
+      ...(data?.summary || {}),
+    },
+  }
+}
+
+function createEmptyMediaSummary(items = []) {
+  return {
+    total: items.length,
+    images: items.filter(item => item.kind === 'image').length,
+    videos: items.filter(item => item.kind === 'video').length,
+    audios: items.filter(item => item.kind === 'audio').length,
+    documents: items.filter(item => item.kind === 'document').length,
+    unused: items.filter(item => !item.usage_count).length,
+    storage: sumBy(items, item => item.size),
+  }
+}
+
+async function openMediaKind(kind) {
+  mediaKind.value = kind
+  await switchView('media')
+}
+
+function openMediaPreview(row) {
+  mediaPreview.value = row
+  mediaPreviewVisible.value = true
+}
+
+async function copyMediaUrl(row) {
+  const value = row.url || ''
+  if (!value) return
+  try {
+    await navigator.clipboard?.writeText(value)
+    ElMessage.success('资源链接已复制')
+  } catch {
+    ElMessage.warning('浏览器不允许直接复制，请在预览里打开资源')
+  }
+}
+
+async function renameMedia(row) {
+  const { value } = await ElMessageBox.prompt('请输入新的资源名称', '重命名资源', {
+    inputValue: row.name,
+    inputPattern: /\S+/,
+    inputErrorMessage: '名称不能为空',
+    confirmButtonText: '保存',
+    cancelButtonText: '取消',
+  })
+  await run(async () => {
+    await adminApi.updateMedia(row.id, { name: value })
+    await loadMedia()
+    if (mediaPreview.value?.id === row.id) mediaPreview.value = media.value.find(item => item.id === row.id) || null
+    ElMessage.success('资源已重命名')
+  })
+}
+
+async function deleteMedia(row) {
+  const force = Number(row.usage_count || 0) > 0
+  const message = force
+    ? `该资源仍被引用 ${row.usage_count} 次，删除后相关位置可能失去图片或文件。确认删除？`
+    : `确认删除资源「${row.name}」？`
+  await ElMessageBox.confirm(message, '删除资源', {
+    type: force ? 'warning' : 'info',
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+  })
+  await run(async () => {
+    await adminApi.deleteMedia(row.id, force)
+    await loadMedia()
+    if (mediaPreview.value?.id === row.id) {
+      mediaPreviewVisible.value = false
+      mediaPreview.value = null
+    }
+    ElMessage.success('资源已删除')
+  })
 }
 
 async function loadCoupons() {
@@ -1477,6 +1711,10 @@ async function openCouponQueue(status) {
 }
 
 async function openContentHealth(kind = 'banners') {
+  if (kind === 'media') {
+    await switchView('media')
+    return
+  }
   contentKind.value = kind
   await switchView('content')
 }
@@ -1692,9 +1930,7 @@ function buildProductPayload() {
 }
 
 function openContent() {
-  if (contentKind.value === 'media') {
-    mediaInput.value?.click()
-  } else if (contentKind.value === 'categories') openCategory()
+  if (contentKind.value === 'categories') openCategory()
   else if (contentKind.value === 'subcategories') openSubcategory()
   else if (contentKind.value === 'banners') openBanner()
   else if (isHomeProductSection.value) openHomeSection()
@@ -1812,14 +2048,17 @@ async function saveHomeSection() {
 }
 
 async function uploadMediaFromInput(event) {
-  const file = event.target.files?.[0]
+  const files = Array.from(event.target.files || [])
   event.target.value = ''
-  if (!file) return
+  if (!files.length) return
   await run(async () => {
-    const dataUrl = await fileToDataUrl(file)
-    await adminApi.uploadMedia({ file: dataUrl, name: file.name })
-    media.value = await adminApi.media()
-    ElMessage.success('素材已上传')
+    for (const file of files) {
+      if (file.size > 20 * 1024 * 1024) throw new Error(`${file.name} 超过 20MB`)
+      const dataUrl = await fileToDataUrl(file)
+      await adminApi.uploadMedia({ file: dataUrl, name: file.name })
+    }
+    await fetchMedia({ q: activeView.value === 'media' ? keyword.value : '', kind: activeView.value === 'media' ? mediaKind.value : '' })
+    ElMessage.success(files.length > 1 ? `已上传 ${files.length} 个资源` : '资源已上传')
   })
 }
 
@@ -1971,6 +2210,26 @@ function fileSize(value) {
   if (!Number.isFinite(size) || size <= 0) return '-'
   if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`
   return `${Math.ceil(size / 1024)} KB`
+}
+
+function mediaKindLabel(kind) {
+  return {
+    image: '图片',
+    video: '视频',
+    audio: '音频',
+    document: '文档',
+    other: '文件',
+  }[kind] || '文件'
+}
+
+function mediaIcon(kind) {
+  return {
+    image: Picture,
+    video: VideoPlay,
+    audio: Headset,
+    document: Document,
+    other: Files,
+  }[kind] || Files
 }
 
 function addressText(order) {

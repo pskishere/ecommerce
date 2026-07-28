@@ -56,8 +56,10 @@ export const adminApi = {
     ...json({ username, password }),
   }),
   overview: () => request('/api/admin/overview/'),
-  media: () => request('/api/admin/media/'),
+  media: (params = {}) => request(`/api/admin/media/?${new URLSearchParams(params)}`),
   uploadMedia: (payload) => request('/api/admin/media/', { method: 'POST', ...json(payload) }),
+  updateMedia: (id, payload) => request(`/api/admin/media/${id}/`, { method: 'PATCH', ...json(payload) }),
+  deleteMedia: (id, force = false) => request(`/api/admin/media/${id}/${force ? '?force=1' : ''}`, { method: 'DELETE' }),
 
   products: (params = {}) => request(`/api/admin/products/?${new URLSearchParams(params)}`),
   product: (id) => request(`/api/admin/products/${id}/`),

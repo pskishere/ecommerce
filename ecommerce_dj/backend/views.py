@@ -13,6 +13,7 @@ from django.utils import timezone
 from mediafiles.models import MediaFile
 import base64
 import binascii
+import os
 import uuid
 import json
 import re
@@ -119,25 +120,67 @@ def update_profile(user, data):
     return None
 
 
-def media_from_data_url(data_url, original_prefix='review-image'):
-    if not isinstance(data_url, str) or not data_url.startswith('data:image/'):
+ALLOWED_MEDIA_MIME_PREFIXES = ('image/', 'video/', 'audio/', 'text/')
+ALLOWED_MEDIA_MIME_TYPES = {'application/pdf'}
+MAX_MEDIA_UPLOAD_SIZE = 20 * 1024 * 1024
+
+
+def _safe_media_name(name, fallback='media'):
+    raw = str(name or fallback).strip() or fallback
+    raw = os.path.basename(raw).replace('\\', '-')
+    safe = re.sub(r'[^A-Za-z0-9._\-\u4e00-\u9fff]+', '-', raw).strip('.-')
+    return safe or fallback
+
+
+def _media_extension(mime_type, original_name=''):
+    ext = os.path.splitext(original_name or '')[1].lstrip('.').lower()
+    if ext:
+        return ext
+    if mime_type == 'image/jpeg':
+        return 'jpg'
+    if mime_type == 'image/svg+xml':
+        return 'svg'
+    if mime_type == 'application/pdf':
+        return 'pdf'
+    return mime_type.split('/')[-1].split('+')[0] or 'bin'
+
+
+def _is_allowed_media_type(mime_type):
+    return (
+        any(mime_type.startswith(prefix) for prefix in ALLOWED_MEDIA_MIME_PREFIXES)
+        or mime_type in ALLOWED_MEDIA_MIME_TYPES
+    )
+
+
+def media_from_data_url(data_url, original_prefix='review-image', allow_all=False):
+    if not isinstance(data_url, str) or not data_url.startswith('data:'):
         return None
     try:
         header, encoded = data_url.split(',', 1)
-        match = re.match(r'data:(image/[a-zA-Z0-9+.-]+);base64', header)
+        match = re.match(r'data:([a-zA-Z0-9.+-]+/[a-zA-Z0-9+.-]+);base64', header)
         if not match:
             return None
         mime_type = match.group(1)
-        ext = mime_type.split('/')[-1].split('+')[0]
-        raw = base64.b64decode(encoded)
-        if len(raw) > 5 * 1024 * 1024:
+        if allow_all:
+            is_allowed = _is_allowed_media_type(mime_type)
+        else:
+            is_allowed = mime_type.startswith('image/')
+        if not is_allowed:
             return None
+        raw = base64.b64decode(encoded)
+        if len(raw) > MAX_MEDIA_UPLOAD_SIZE:
+            return None
+        original_name = _safe_media_name(original_prefix)
+        ext = _media_extension(mime_type, original_name)
+        if not os.path.splitext(original_name)[1]:
+            original_name = f'{original_name}.{ext}'
+        storage_prefix = os.path.splitext(original_name)[0]
         media = MediaFile(
-            original_name=f'{original_prefix}.{ext}',
+            original_name=original_name,
             size=len(raw),
             mime_type=mime_type,
         )
-        media.file.save(f'{original_prefix}-{uuid.uuid4().hex}.{ext}', ContentFile(raw), save=True)
+        media.file.save(f'{storage_prefix}-{uuid.uuid4().hex}.{ext}', ContentFile(raw), save=True)
         return media
     except (ValueError, TypeError, binascii.Error):
         return None
@@ -731,14 +774,75 @@ def _date_time(value):
     return value.strftime('%Y-%m-%d %H:%M') if value else ''
 
 
+def _media_kind(media):
+    mime_type = (media.mime_type or '').lower()
+    name = (media.original_name or media.file.name or '').lower()
+    if mime_type.startswith('image/') or name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.avif')):
+        return 'image'
+    if mime_type.startswith('video/') or name.endswith(('.mp4', '.mov', '.webm', '.m4v')):
+        return 'video'
+    if mime_type.startswith('audio/') or name.endswith(('.mp3', '.m4a', '.wav', '.ogg', '.aac', '.flac')):
+        return 'audio'
+    if mime_type.startswith('text/') or mime_type == 'application/pdf' or name.endswith(('.pdf', '.txt', '.csv', '.json')):
+        return 'document'
+    return 'other'
+
+
+def _count_related(media, accessor):
+    if not hasattr(media, accessor):
+        return 0
+    related = getattr(media, accessor)
+    if related is None:
+        return 0
+    if hasattr(related, 'count'):
+        return related.count()
+    return 1 if related else 0
+
+
+def _media_usage(media):
+    usage_map = [
+        ('category_icons', '分类图标'),
+        ('category_banners', '分类 Banner'),
+        ('subcategory_icons', '二级分类图标'),
+        ('product_images', '商品主图'),
+        ('shop_logos', '店铺标识'),
+        ('product_detail_images', '商品相册'),
+        ('product_detail_extras', '详情图'),
+        ('specvalue_set', '规格图'),
+        ('sku_set', 'SKU 图'),
+        ('home_banners', '首页 Banner'),
+        ('home_promotions', '促销位'),
+        ('orderproduct_set', '订单快照'),
+        ('review_avatars', '评价头像'),
+        ('review_images', '评价图片'),
+        ('favorite_images', '收藏快照'),
+        ('user_avatars', '用户头像'),
+    ]
+    used_in = []
+    total = 0
+    for accessor, label in usage_map:
+        count = _count_related(media, accessor)
+        if count:
+            used_in.append({'label': label, 'count': count})
+            total += count
+    return total, used_in
+
+
 def _media_payload(media, request):
+    usage_count, used_in = _media_usage(media)
+    name = media.original_name or media.file.name
+    extension = os.path.splitext(name or media.file.name or '')[1].lstrip('.').lower()
     return {
         'id': media.id,
         'url': get_image_url(media, context={'request': request}),
-        'name': media.original_name or media.file.name,
+        'name': name,
+        'extension': extension,
+        'kind': _media_kind(media),
         'mime_type': media.mime_type,
         'size': media.size,
         'uploaded_at': _date_time(media.uploaded_at),
+        'usage_count': usage_count,
+        'used_in': used_in,
     }
 
 
@@ -1025,15 +1129,102 @@ class AdminMediaViewSet(viewsets.ViewSet):
     permission_classes = [IsAdminProfile]
 
     def list(self, request):
-        items = MediaFile.objects.all()[:80]
-        return api_response([_media_payload(item, request) for item in items])
+        qs = MediaFile.objects.all()
+        q = (request.GET.get('q') or '').strip()
+        kind = request.GET.get('kind') or ''
+        if q:
+            qs = qs.filter(Q(original_name__icontains=q) | Q(file__icontains=q) | Q(mime_type__icontains=q))
+        if kind == 'image':
+            qs = qs.filter(
+                Q(mime_type__startswith='image/')
+                | Q(original_name__iendswith='.jpg')
+                | Q(original_name__iendswith='.jpeg')
+                | Q(original_name__iendswith='.png')
+                | Q(original_name__iendswith='.gif')
+                | Q(original_name__iendswith='.webp')
+                | Q(original_name__iendswith='.svg')
+                | Q(original_name__iendswith='.avif')
+            )
+        elif kind == 'video':
+            qs = qs.filter(
+                Q(mime_type__startswith='video/')
+                | Q(original_name__iendswith='.mp4')
+                | Q(original_name__iendswith='.mov')
+                | Q(original_name__iendswith='.webm')
+                | Q(original_name__iendswith='.m4v')
+            )
+        elif kind == 'audio':
+            qs = qs.filter(
+                Q(mime_type__startswith='audio/')
+                | Q(original_name__iendswith='.mp3')
+                | Q(original_name__iendswith='.m4a')
+                | Q(original_name__iendswith='.wav')
+                | Q(original_name__iendswith='.ogg')
+                | Q(original_name__iendswith='.aac')
+                | Q(original_name__iendswith='.flac')
+            )
+        elif kind == 'document':
+            qs = qs.filter(
+                Q(mime_type__startswith='text/')
+                | Q(mime_type='application/pdf')
+                | Q(original_name__iendswith='.pdf')
+                | Q(original_name__iendswith='.txt')
+                | Q(original_name__iendswith='.csv')
+                | Q(original_name__iendswith='.json')
+            )
+        elif kind == 'unused':
+            qs = [media for media in qs if _media_usage(media)[0] == 0]
+
+        all_media = list(MediaFile.objects.all())
+        summary = {
+            'total': len(all_media),
+            'images': sum(1 for media in all_media if _media_kind(media) == 'image'),
+            'videos': sum(1 for media in all_media if _media_kind(media) == 'video'),
+            'audios': sum(1 for media in all_media if _media_kind(media) == 'audio'),
+            'documents': sum(1 for media in all_media if _media_kind(media) == 'document'),
+            'unused': sum(1 for media in all_media if _media_usage(media)[0] == 0),
+            'storage': sum(media.size or 0 for media in all_media),
+        }
+        items = list(qs)[:120] if not isinstance(qs, list) else qs[:120]
+        return api_response({
+            'items': [_media_payload(item, request) for item in items],
+            'summary': summary,
+        })
 
     def create(self, request):
         data_url = request.data.get('file')
-        media = media_from_data_url(data_url, original_prefix=request.data.get('name') or 'admin-upload')
+        media = media_from_data_url(
+            data_url,
+            original_prefix=request.data.get('name') or 'admin-upload',
+            allow_all=True,
+        )
         if not media:
-            return api_response(msg='图片格式无效', code=400)
+            return api_response(msg='文件格式无效或超过 20MB', code=400)
         return api_response(_media_payload(media, request), msg='uploaded')
+
+    def retrieve(self, request, pk=None):
+        media = MediaFile.objects.get(pk=pk)
+        return api_response(_media_payload(media, request))
+
+    def partial_update(self, request, pk=None):
+        media = MediaFile.objects.get(pk=pk)
+        name = _safe_media_name(request.data.get('name'), fallback=media.original_name or media.file.name)
+        if not name:
+            return api_response(msg='资源名称不能为空', code=400)
+        media.original_name = name
+        media.save(update_fields=['original_name'])
+        return api_response(_media_payload(media, request), msg='updated')
+
+    def destroy(self, request, pk=None):
+        media = MediaFile.objects.get(pk=pk)
+        usage_count, used_in = _media_usage(media)
+        force = _bool_value(request.GET.get('force'), False)
+        if usage_count and not force:
+            labels = '、'.join(f"{item['label']} {item['count']}" for item in used_in[:4])
+            return api_response(msg=f'资源仍被引用：{labels}', code=409, data={'usage_count': usage_count, 'used_in': used_in})
+        media.file.delete(save=False)
+        media.delete()
+        return api_response(msg='deleted')
 
 
 class AdminProductViewSet(viewsets.ViewSet):
