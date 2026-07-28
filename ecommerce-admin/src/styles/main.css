@@ -262,11 +262,12 @@ select {
 }
 
 .admin-menu .el-menu-item .el-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: inline-grid;
   place-items: center;
-  border-radius: 7px;
+  border: 0;
+  background: transparent;
   color: #89919d;
   flex-shrink: 0;
   transition: background 0.16s ease, color 0.16s ease;
@@ -310,13 +311,13 @@ select {
 }
 
 .admin-menu .el-menu-item:hover:not(.is-active) .el-icon {
-  background: #e6ebf1;
+  background: transparent;
   color: var(--admin-brand-dark);
 }
 
 .admin-menu .el-menu-item.is-active .el-icon {
-  background: #ffffff;
-  border: 1px solid #d9e2eb;
+  background: transparent;
+  border: 0;
   color: var(--admin-brand-dark);
 }
 
