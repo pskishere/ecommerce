@@ -1485,7 +1485,7 @@ function renderOrderChart() {
     value: dashboard.orderStatus[item.value] || 0,
   }))
   orderChart.setOption({
-    color: ['#111111', '#3f3f46', '#71717a', '#a1a1aa', '#d4d4d8'],
+    color: ['#4b665c', '#7d9b8b', '#9b7a48', '#6f8392', '#c9d5cd'],
     tooltip: { trigger: 'item' },
     legend: { bottom: 0, icon: 'circle', itemWidth: compact ? 8 : 10, itemHeight: compact ? 8 : 10 },
     series: [{
@@ -1507,7 +1507,7 @@ function renderSalesChart() {
   const compact = salesChartRef.value.clientWidth < 520
   const rows = dashboard.salesTrend || []
   salesChart.setOption({
-    color: ['#111111', '#71717a'],
+    color: ['#4b665c', '#8da497'],
     tooltip: { trigger: 'axis' },
     grid: { left: compact ? 34 : 44, right: compact ? 8 : 18, top: compact ? 34 : 28, bottom: 34 },
     legend: { top: 0, right: compact ? 0 : 4, itemWidth: compact ? 12 : 18 },
@@ -1515,12 +1515,12 @@ function renderSalesChart() {
       type: 'category',
       boundaryGap: false,
       data: rows.map(item => item.label),
-      axisLine: { lineStyle: { color: '#dedee2' } },
+      axisLine: { lineStyle: { color: '#dfe6de' } },
       axisTick: { show: false },
       axisLabel: { interval: compact ? 1 : 0 },
     },
     yAxis: [
-      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#eeeeef' } } },
+      { type: 'value', name: 'GMV', axisLabel: { formatter: value => `${value}` }, splitLine: { lineStyle: { color: '#e9eee8' } } },
       { type: 'value', name: '订单', splitLine: { show: false } },
     ],
     series: [
@@ -1528,7 +1528,7 @@ function renderSalesChart() {
         name: 'GMV',
         type: 'line',
         smooth: true,
-        areaStyle: { color: 'rgba(17, 17, 17, 0.08)' },
+        areaStyle: { color: 'rgba(75, 102, 92, 0.1)' },
         data: rows.map(item => Number(item.revenue || 0)),
       },
       {
