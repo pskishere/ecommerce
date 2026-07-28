@@ -51,7 +51,7 @@
         class="admin-menu"
         @select="switchView"
       >
-        <el-menu-item v-for="item in navItems" :key="item.index" :index="item.index" :title="item.label">
+        <el-menu-item v-for="item in navItems" :key="item.index" :index="item.index">
           <el-icon><component :is="item.icon" /></el-icon>
           <span class="menu-label">{{ item.label }}</span>
         </el-menu-item>
