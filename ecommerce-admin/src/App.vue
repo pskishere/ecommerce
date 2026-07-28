@@ -335,10 +335,22 @@
               <el-table-column label="状态" width="100">
                 <template #default="{ row }"><el-tag :type="row.is_in_stock ? 'success' : 'danger'">{{ row.is_in_stock ? '上架' : '下架' }}</el-tag></template>
               </el-table-column>
-              <el-table-column label="操作" width="180">
+              <el-table-column label="操作" width="112">
                 <template #default="{ row }">
-                  <el-button link type="primary" @click="openProduct(row)">编辑</el-button>
-                  <el-button link :type="row.is_in_stock ? 'danger' : 'success'" @click="toggleProduct(row)">{{ row.is_in_stock ? '下架' : '上架' }}</el-button>
+                  <el-dropdown trigger="click" @command="command => handleProductAction(row, command)">
+                    <el-button class="table-action-trigger" size="small">
+                      操作
+                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="edit">编辑商品</el-dropdown-item>
+                        <el-dropdown-item command="toggle" :class="{ 'dropdown-danger': row.is_in_stock }">
+                          {{ row.is_in_stock ? '下架商品' : '上架商品' }}
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </template>
               </el-table-column>
             </el-table>
@@ -393,13 +405,23 @@
                   <span class="subtext">{{ row.tracking_number || row.after_sale_status_text || '' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="300">
+              <el-table-column label="操作" width="112">
                 <template #default="{ row }">
-                  <el-button link type="primary" @click="openOrderDetail(row)">详情</el-button>
-                  <el-button v-if="row.status === 'pending'" link type="success" @click="markPaid(row)">标记支付</el-button>
-                  <el-button v-if="row.status === 'paid'" link type="primary" @click="openShip(row)">发货</el-button>
-                  <el-button link type="primary" @click="openOrderStatus(row)">改状态</el-button>
-                  <el-button link type="warning" @click="openAfterSale(row)">售后</el-button>
+                  <el-dropdown trigger="click" @command="command => handleOrderAction(row, command)">
+                    <el-button class="table-action-trigger" size="small">
+                      操作
+                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="detail">查看详情</el-dropdown-item>
+                        <el-dropdown-item v-if="row.status === 'pending'" command="markPaid">标记支付</el-dropdown-item>
+                        <el-dropdown-item v-if="row.status === 'paid'" command="ship">发货</el-dropdown-item>
+                        <el-dropdown-item command="status" divided>修改状态</el-dropdown-item>
+                        <el-dropdown-item command="afterSale">处理售后</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </template>
               </el-table-column>
             </el-table>
@@ -1779,6 +1801,12 @@ async function toggleProduct(row) {
   })
 }
 
+function handleProductAction(row, command) {
+  if (command === 'edit') return openProduct(row)
+  if (command === 'toggle') return toggleProduct(row)
+  return null
+}
+
 function cloneSpecGroups(groups) {
   return groups.map((group, groupIndex) => ({
     id: group.id || '',
@@ -2103,6 +2131,15 @@ function openAfterSale(row) {
     after_sale_reason: row.after_sale_reason || '',
   })
   orderDrawer.value = true
+}
+
+function handleOrderAction(row, command) {
+  if (command === 'detail') return openOrderDetail(row)
+  if (command === 'markPaid') return markPaid(row)
+  if (command === 'ship') return openShip(row)
+  if (command === 'status') return openOrderStatus(row)
+  if (command === 'afterSale') return openAfterSale(row)
+  return null
 }
 
 async function saveOrderAction() {

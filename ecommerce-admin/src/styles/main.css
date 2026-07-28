@@ -1516,6 +1516,25 @@ select {
   overscroll-behavior-inline: contain;
 }
 
+.table-action-trigger {
+  min-width: 72px;
+  border-color: #d5dde7;
+  background: #ffffff;
+  color: var(--admin-brand-dark);
+  font-weight: 800;
+}
+
+.table-action-trigger:hover,
+.table-action-trigger:focus {
+  border-color: #b8c7d6;
+  background: #f3f6f9;
+  color: var(--admin-brand-dark);
+}
+
+.el-dropdown-menu__item.dropdown-danger {
+  color: var(--admin-danger);
+}
+
 .el-button {
   font-weight: 700;
   transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
