@@ -213,18 +213,6 @@ select {
   margin-top: 4px;
 }
 
-.aside-collapse-button {
-  margin-left: auto;
-  color: rgba(255, 255, 255, 0.74);
-  background: rgba(255, 255, 255, 0.09);
-  flex-shrink: 0;
-}
-
-.aside-collapse-button:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.16);
-}
-
 .admin-aside.collapsed .aside-brand {
   flex-direction: column;
   justify-content: center;
@@ -262,12 +250,6 @@ select {
 
 .admin-aside.collapsed .brand-copy {
   display: none;
-}
-
-.admin-aside.collapsed .aside-collapse-button {
-  width: 26px;
-  height: 26px;
-  margin-left: 0;
 }
 
 .admin-menu {
@@ -1286,12 +1268,6 @@ select {
 
   .admin-aside.collapsed .brand-copy {
     display: block;
-  }
-
-  .admin-aside.collapsed .aside-collapse-button {
-    width: 32px;
-    height: 32px;
-    margin-left: auto;
   }
 
   .admin-aside.collapsed .admin-menu {

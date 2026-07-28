@@ -42,14 +42,6 @@
           <strong>潮流好物</strong>
           <span>管理台</span>
         </div>
-        <el-button
-          class="aside-collapse-button"
-          :icon="isSidebarCollapsed ? Expand : Fold"
-          circle
-          text
-          :aria-label="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
-          @click="toggleSidebar"
-        />
       </div>
 
       <el-menu
@@ -82,6 +74,7 @@
       <el-header height="82px" class="admin-header">
         <div class="header-title-row">
           <el-button
+            v-if="!isCompactViewport || isSidebarCollapsed"
             class="header-collapse-button"
             :icon="isSidebarCollapsed ? Expand : Fold"
             circle
