@@ -1584,6 +1584,24 @@ select {
   overscroll-behavior-inline: contain;
 }
 
+.el-table th.el-table-fixed-column--right,
+.el-table td.el-table-fixed-column--right {
+  background: #ffffff;
+  box-shadow: -1px 0 0 #e2e7ee;
+}
+
+.el-table th.el-table-fixed-column--right {
+  background: #fafbfc;
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table-fixed-column--right {
+  background: #fbfcfe;
+}
+
+.el-table .el-table__row:hover > td.el-table-fixed-column--right {
+  background: #f3f6f9;
+}
+
 .table-action-trigger {
   min-width: 72px;
   border-color: #d5dde7;

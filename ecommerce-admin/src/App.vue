@@ -348,7 +348,7 @@
               <el-table-column label="状态" width="100">
                 <template #default="{ row }"><el-tag :type="row.is_in_stock ? 'success' : 'danger'">{{ row.is_in_stock ? '上架' : '下架' }}</el-tag></template>
               </el-table-column>
-              <el-table-column label="操作" width="112">
+              <el-table-column label="操作" width="112" fixed="right">
                 <template #default="{ row }">
                   <el-dropdown trigger="click" @command="command => handleProductAction(row, command)">
                     <el-button class="table-action-trigger" size="small">
@@ -418,7 +418,7 @@
                   <span class="subtext">{{ row.tracking_number || row.after_sale_status_text || '' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="112">
+              <el-table-column label="操作" width="112" fixed="right">
                 <template #default="{ row }">
                   <el-dropdown trigger="click" @command="command => handleOrderAction(row, command)">
                     <el-button class="table-action-trigger" size="small">
@@ -476,7 +476,7 @@
               <el-table-column label="状态" width="100">
                 <template #default="{ row }"><el-tag :type="row.is_active ? 'success' : 'danger'">{{ row.is_active ? '启用' : '停用' }}</el-tag></template>
               </el-table-column>
-              <el-table-column label="操作" width="100">
+              <el-table-column label="操作" width="100" fixed="right">
                 <template #default="{ row }"><el-button link type="primary" @click="openUser(row)">编辑</el-button></template>
               </el-table-column>
             </el-table>
@@ -527,7 +527,7 @@
               <el-table-column label="状态" width="100">
                 <template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template>
               </el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openCategory(row)">编辑</el-button></template></el-table-column>
+              <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openCategory(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
             <el-table v-else-if="contentKind === 'subcategories'" :data="subcategories" stripe max-height="calc(100vh - 420px)">
@@ -537,7 +537,7 @@
               <el-table-column prop="sort_order" label="排序" width="100" />
               <el-table-column prop="product_count" label="商品" width="100" />
               <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openSubcategory(row)">编辑</el-button></template></el-table-column>
+              <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openSubcategory(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
             <el-table v-else-if="contentKind === 'banners'" :data="banners" stripe max-height="calc(100vh - 420px)">
@@ -554,7 +554,7 @@
               <el-table-column prop="product_count" label="关联商品" width="110" />
               <el-table-column prop="sort_order" label="排序" width="100" />
               <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openBanner(row)">编辑</el-button></template></el-table-column>
+              <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openBanner(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
             <el-table v-else-if="isHomeProductSection" :data="currentHomeSections" stripe max-height="calc(100vh - 420px)">
@@ -583,7 +583,7 @@
               </el-table-column>
               <el-table-column prop="sort_order" label="排序" width="100" />
               <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openHomeSection(row)">编辑</el-button></template></el-table-column>
+              <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openHomeSection(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
             <el-table v-else-if="contentKind === 'promotions'" :data="promotions" stripe max-height="calc(100vh - 420px)">
@@ -599,7 +599,7 @@
               <el-table-column prop="link" label="跳转" min-width="180" />
               <el-table-column prop="sort_order" label="排序" width="100" />
               <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.is_enabled ? 'success' : 'danger'">{{ row.is_enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openPromotion(row)">编辑</el-button></template></el-table-column>
+              <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openPromotion(row)">编辑</el-button></template></el-table-column>
             </el-table>
 
             <el-empty v-else description="暂无内容" />
@@ -710,7 +710,7 @@
               <el-table-column prop="threshold" label="门槛" min-width="150" />
               <el-table-column prop="time" label="有效期" width="140" />
               <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="couponType(row.status)">{{ statusText(row.status) }}</el-tag></template></el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="openCoupon(row)">编辑</el-button></template></el-table-column>
+              <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openCoupon(row)">编辑</el-button></template></el-table-column>
             </el-table>
           </el-card>
         </section>
