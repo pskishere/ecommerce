@@ -278,21 +278,34 @@
               </button>
             </div>
           </div>
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
-              <el-select v-model="productCategory" clearable class="category-filter" placeholder="按分类筛选" @change="loadProducts">
-                <el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" />
-              </el-select>
-              <el-select v-model="productStock" clearable class="stock-filter" placeholder="库存筛选" @change="loadProducts">
-                <el-option v-for="item in productStockOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
+          <div class="toolbar product-toolbar">
+            <div class="toolbar-left product-toolbar-filters">
+              <div class="status-filter">
+                <span class="toolbar-label">状态</span>
+                <el-segmented v-model="productStatus" :options="productStatusOptions" @change="loadProducts" />
+              </div>
+              <div class="select-filter-row">
+                <el-select v-model="productCategory" clearable class="category-filter" placeholder="分类" @change="loadProducts">
+                  <el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" />
+                </el-select>
+                <el-select v-model="productStock" clearable class="stock-filter" placeholder="库存" @change="loadProducts">
+                  <el-option v-for="item in productStockOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+              </div>
             </div>
-            <div class="toolbar-actions">
-              <el-button-group>
-                <el-button :disabled="!selectedProducts.length" @click="bulkSetProductStatus(true)">批量上架</el-button>
-                <el-button :disabled="!selectedProducts.length" @click="bulkSetProductStatus(false)">批量下架</el-button>
-              </el-button-group>
+            <div class="toolbar-actions product-toolbar-actions">
+              <el-dropdown trigger="click" class="bulk-dropdown" :disabled="!selectedProducts.length" @command="handleProductBulkCommand">
+                <el-button :disabled="!selectedProducts.length">
+                  批量操作<span v-if="selectedProducts.length"> · {{ selectedProducts.length }}</span>
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="active">批量上架</el-dropdown-item>
+                    <el-dropdown-item command="inactive">批量下架</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
               <el-button type="primary" :icon="Plus" @click="openProduct()">新增商品</el-button>
             </div>
           </div>
@@ -1791,6 +1804,12 @@ async function bulkSetProductStatus(isInStock) {
     await loadDashboard()
     ElMessage.success(`已批量${actionText}`)
   })
+}
+
+async function handleProductBulkCommand(command) {
+  if (!selectedProducts.value.length) return
+  if (command === 'active') await bulkSetProductStatus(true)
+  else if (command === 'inactive') await bulkSetProductStatus(false)
 }
 
 async function toggleProduct(row) {
