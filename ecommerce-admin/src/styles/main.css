@@ -241,6 +241,7 @@ select {
 
 .admin-menu .el-menu-item {
   height: 44px;
+  border: 1px solid transparent;
   border-radius: 10px;
   margin-bottom: 7px;
   color: var(--admin-aside-muted);
@@ -276,9 +277,10 @@ select {
 }
 
 .admin-menu .el-menu-item.is-active {
-  background: #111111;
-  color: white;
-  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.16);
+  border-color: #111111;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.08);
 }
 
 .admin-menu .el-menu-item:hover:not(.is-active) {
@@ -292,8 +294,8 @@ select {
 }
 
 .admin-menu .el-menu-item.is-active .el-icon {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  background: #eeeeef;
+  color: #111111;
 }
 
 .front-link {
@@ -304,20 +306,20 @@ select {
   justify-content: center;
   border-radius: 10px;
   border: 1px solid #111111;
-  background: #111111;
-  color: #ffffff;
+  background: #ffffff;
+  color: #111111;
   text-decoration: none;
   font-size: 13px;
   font-weight: 800;
   gap: 8px;
   overflow: hidden;
   white-space: nowrap;
-  box-shadow: 0 12px 26px rgba(17, 17, 17, 0.14);
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.06);
   transition: width 0.2s ease, margin 0.2s ease, background 0.14s ease, transform 0.14s ease;
 }
 
 .front-link:hover {
-  background: #2a2a2c;
+  background: #f2f2f3;
   transform: translateY(-1px);
 }
 
@@ -500,10 +502,12 @@ select {
   align-items: stretch;
   gap: 18px;
   padding: 18px;
+  border: 1px solid var(--admin-line);
   border-radius: 12px;
   background:
-    linear-gradient(135deg, #111111 0%, #1e1e1f 58%, #2c2c2e 100%);
-  color: #fff;
+    linear-gradient(135deg, #ffffff 0%, #ffffff 58%, #f0f0f1 100%);
+  color: var(--admin-text);
+  box-shadow: 0 14px 34px rgba(23, 26, 34, 0.045);
   overflow: hidden;
 }
 
@@ -516,7 +520,7 @@ select {
 }
 
 .dashboard-copy .eyebrow {
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--admin-muted);
 }
 
 .dashboard-copy h3 {
@@ -529,7 +533,7 @@ select {
   display: block;
   max-width: 360px;
   margin-top: 8px;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--admin-muted);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -545,23 +549,24 @@ select {
   min-width: 0;
   min-height: 96px;
   padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--admin-line);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: #ffffff;
+  color: var(--admin-text);
   text-align: left;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .brief-action:hover {
-  border-color: rgba(255, 255, 255, 0.34);
-  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(var(--admin-brand-rgb), 0.28);
+  background: #f7f7f8;
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.06);
   transform: translateY(-1px);
 }
 
 .brief-action:focus-visible {
-  outline: 3px solid rgba(255, 255, 255, 0.22);
+  outline: 3px solid rgba(var(--admin-brand-rgb), 0.16);
   outline-offset: 2px;
 }
 
@@ -569,7 +574,7 @@ select {
 .brief-action em {
   display: block;
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--admin-muted);
   font-size: 12px;
   font-style: normal;
   font-weight: 700;
@@ -582,7 +587,7 @@ select {
   display: block;
   overflow: hidden;
   margin: 8px 0 6px;
-  color: #fff;
+  color: var(--admin-text);
   font-size: 28px;
   font-variant-numeric: tabular-nums;
   font-weight: 900;
@@ -1118,6 +1123,28 @@ select {
   transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
 
+.el-button--primary:not(.is-link):not(.is-text) {
+  border-color: #111111;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.06);
+}
+
+.el-button--primary:not(.is-link):not(.is-text):hover,
+.el-button--primary:not(.is-link):not(.is-text):focus {
+  border-color: #111111;
+  background: #f2f2f3;
+  color: #111111;
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.08);
+}
+
+.el-button--primary:not(.is-link):not(.is-text).is-disabled {
+  border-color: #d6d6da;
+  background: #f7f7f8;
+  color: #8a8a8d;
+  box-shadow: none;
+}
+
 .el-button:not(.is-disabled):active {
   transform: translateY(1px);
 }
@@ -1273,8 +1300,8 @@ select {
     z-index: 1090;
     display: block;
     border: 0;
-    background: rgba(17, 17, 17, 0.24);
-    backdrop-filter: blur(3px);
+    background: rgba(244, 244, 245, 0.72);
+    backdrop-filter: blur(4px) saturate(0.86);
     cursor: pointer;
   }
 
