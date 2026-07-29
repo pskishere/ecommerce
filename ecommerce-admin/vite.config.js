@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [react()],
   server: {
     port: 5173,
     proxy: {
@@ -17,13 +17,12 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 1300,
+    chunkSizeWarningLimit: 2200,
     rollupOptions: {
       output: {
         manualChunks: {
-          element: ['element-plus', '@element-plus/icons-vue'],
+          antd: ['antd', '@ant-design/icons', '@ant-design/pro-components'],
           charts: ['echarts'],
-          vue: ['vue'],
         },
       },
     },
